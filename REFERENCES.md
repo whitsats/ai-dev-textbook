@@ -55,6 +55,19 @@
 
 ## 三、按篇的官方出处
 
+### 第 0 篇 · 导论
+
+| 用途 | 官方出处 | 链接 |
+| --- | --- | --- |
+| 岗位职责与能力要求（0.1 章） | Anthropic · Careers | https://www.anthropic.com/careers |
+| 模型能力边界（0.1 章） | Claude · Models 概览 | https://platform.claude.com/docs/en/about-claude/models/overview |
+| 作品展示与仓库规范（0.1、0.2 章） | GitHub 文档 | https://docs.github.com/ |
+| Python 学习边界（0.2 章） | Python 3 官方教程 | https://docs.python.org/3/tutorial/ |
+| FastAPI 学习边界（0.2 章） | FastAPI · Tutorial | https://fastapi.tiangolo.com/tutorial/ |
+| 虚拟环境（0.3 章） | Python 3 · venv | https://docs.python.org/3/library/venv.html |
+| 依赖管理（0.3 章） | Astral · uv | https://docs.astral.sh/uv/ |
+| API Key 与首次调用（0.3 章） | Claude · API 概览 ／ OpenAI · API 文档 | https://platform.claude.com/docs/en/api/overview |
+
 ### 第 1 篇 · 编程地基（Python 与 FastAPI 后端工程）
 
 | 用途 | 官方出处 | 链接 |
@@ -184,9 +197,10 @@
 
 | 用途 | 官方出处 | 链接 |
 | --- | --- | --- |
-| 岗位能力要求（10.1 章） | 各公司招聘页与 JD（引用时逐个标注） | https://www.anthropic.com/careers |
-| 系统设计考点（10.3 章） | Claude · 上下文管理指南 | https://platform.claude.com/docs/en/home |
-| 项目演示与开源（10.2 章） | GitHub 文档 | https://docs.github.com/ |
+| 岗位能力要求与 JD 对照（10.1 章） | 各公司招聘页与 JD（引用时逐个标注） | https://www.anthropic.com/careers |
+| 项目演示与开源仓库规范（10.2 章） | GitHub 文档 | https://docs.github.com/ |
+| 系统设计与上下文管理（10.3 章） | Claude · 平台文档 | https://platform.claude.com/docs/en/home |
+| 可观测性与成本追问（10.3 章） | OpenTelemetry 官方文档 | https://opentelemetry.io/docs/ |
 
 ---
 
