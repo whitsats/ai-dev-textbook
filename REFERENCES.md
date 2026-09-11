@@ -76,6 +76,8 @@
 | 语法学习边界（1.2 章） | Python 3 · 官方教程 | https://docs.python.org/3/tutorial/ |
 | 内置类型与字符串方法（1.2、1.3 章） | Python 3 · 内置类型 | https://docs.python.org/3/library/stdtypes.html |
 | 内置函数（1.2、1.3 章） | Python 3 · 内置函数 | https://docs.python.org/3/library/functions.html |
+| 数据结构与推导式（1.3 章） | Python 3 · 教程 · 数据结构 | https://docs.python.org/3/tutorial/datastructures.html |
+| Counter / defaultdict（1.3、7.2 章） | Python 3 · collections 模块 | https://docs.python.org/3/library/collections.html |
 | 异步编程（1.7 章） | Python 官方文档 · asyncio | https://docs.python.org/3/library/asyncio.html |
 | 代码风格（全篇） | PEP 8 | https://peps.python.org/pep-0008/ |
 | Web 框架（1.9–1.15 章） | FastAPI 官方文档 | https://fastapi.tiangolo.com/ |
