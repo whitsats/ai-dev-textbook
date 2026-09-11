@@ -77,6 +77,9 @@
 | 内置类型与字符串方法（1.2、1.3 章） | Python 3 · 内置类型 | https://docs.python.org/3/library/stdtypes.html |
 | 内置函数（1.2、1.3 章） | Python 3 · 内置函数 | https://docs.python.org/3/library/functions.html |
 | 数据结构与推导式（1.3 章） | Python 3 · 教程 · 数据结构 | https://docs.python.org/3/tutorial/datastructures.html |
+| 函数定义与参数规则（1.4 章） | Python 3 · 教程 · 函数定义 | https://docs.python.org/3/tutorial/controlflow.html |
+| 装饰器与 `wraps` / `lru_cache`（1.4 章） | Python 3 · functools 模块 | https://docs.python.org/3/library/functools.html |
+| 迭代器协议与生成器（1.4、5.4 章） | Python 3 · 数据模型 | https://docs.python.org/3/reference/datamodel.html |
 | Counter / defaultdict（1.3、7.2 章） | Python 3 · collections 模块 | https://docs.python.org/3/library/collections.html |
 | 异步编程（1.7 章） | Python 官方文档 · asyncio | https://docs.python.org/3/library/asyncio.html |
 | 代码风格（全篇） | PEP 8 | https://peps.python.org/pep-0008/ |

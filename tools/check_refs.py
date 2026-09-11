@@ -11,12 +11,18 @@ platform.claude.com 与 code.claude.com，OpenAI 文档迁到 developers.openai.
 LangChain 发布 v1 后旧命名空间被移出主线。人工检查几十个链接既慢又容易漏，
 所以做成可复跑的脚本。
 
-关注三类结果
+关注五种结果
 ------------
   OK      2xx/3xx 正常
   跳转    最终域名与请求域名不同 —— 文档搬家了，正文里的引用要跟着改
-  失效    4xx/5xx —— 链接已死，必须替换
+  失效    4xx/5xx —— 服务器明确说“没有”，链接已死，必须替换（会拦提交）
+  超时    连接层失败（超时 / DNS / TLS）—— 可能是本地网络或对方限流，
+          重跑一次就好的事，**不当作失效**，也不拦提交，但会打印出来提醒
   拦截    401/403 —— 站点拒绝脚本访问，人工确认即可（不算失效）
+
+为何把「超时」单独列一档：早期实现把 status=0 一律归为「失效」，
+结果是本地网络抖一下就提交不了。报警器一旦会因为无关原因响，就会被绕过——
+所以只让服务器明确声明的死链拦提交。
 
 用法
 ----
@@ -69,8 +75,8 @@ def _probe(url: str, method: str, timeout: float) -> tuple[int, str]:
         return resp.status, resp.geturl()
 
 
-def check(url: str, timeout: float) -> dict:
-    # 先 HEAD；不少站点对 HEAD 返回 403/405，再退化为 GET
+def _attempt(url: str, timeout: float) -> dict:
+    """单次尝试：先 HEAD；不少站点对 HEAD 返回 403/405，再退化为 GET。"""
     for method in ("HEAD", "GET"):
         try:
             status, final = _probe(url, method, timeout)
@@ -95,10 +101,24 @@ def check(url: str, timeout: float) -> dict:
     return {"url": url, "status": 0, "final": url, "error": "无法连接"}
 
 
+def check(url: str, timeout: float, attempts: int = 2) -> dict:
+    """带重试的探测。连接层失败多为瞬时的（限流、DNS、TLS 握手），
+    重试一次能挡掉大部分假报警；服务器返回的 4xx/5xx 不重试（那是明确答复）。"""
+    result = _attempt(url, timeout)
+    for _ in range(attempts - 1):
+        if result["status"] != 0:
+            break
+        refreshed = _attempt(url, timeout)
+        if refreshed["status"] != 0:
+            return refreshed
+        result = refreshed
+    return result
+
+
 def verdict(r: dict) -> str:
     st = r["status"]
     if st == 0:
-        return "失效"
+        return "超时"      # 连接层问题（重试已试过），不是链接失效，不拦提交
     if st in (401, 403, 429):
         return "拦截"      # 反爬，非链接失效
     if st >= 400:
@@ -152,9 +172,13 @@ def main() -> int:
     print("\n汇总：" + " ｜ ".join(f"{k} {v}" for k, v in sorted(counts.items())))
     broken = counts.get("失效", 0)
     moved = counts.get("跳转", 0)
+    timeouts = counts.get("超时", 0)
     if broken or moved:
         print(f"\n需要处理：{broken} 个失效、{moved} 个跳转。"
               f"请更新 REFERENCES.md，再同步受影响章节。")
+    if timeouts:
+        print(f"\n提示：{timeouts} 个链接连接超时（已重试），多为本地网络或对方限流——"
+              f"不算失效，建议稍后重跑确认。")
     return 1 if broken else 0
 
 

@@ -21,7 +21,7 @@
     [链接]  正文所有 URL 必须能追溯到 REFERENCES.md（防臆造链接）
     [出处]  「延伸阅读」中官方文档链接是否 ≥ 2 条
     [溯源]  sources/... 路径是否真实存在
-    [篇幅]  实际汉字数与 PLAN.md 计划字数的偏差（默认容忍 ±40%）
+    [篇幅]  有效字数（汉字 + 代码行折算）与 PLAN.md 计划字数的偏差（容忍 ±40%）
     [重复]  跨章重复的长句（防止内容被复制粘贴到多处）
     [标点]  中文后紧跟半角标点的抽查
     [台账]  LEDGER.md 中待写（⬜）与有意省略（⏭）的数量提示
@@ -52,6 +52,10 @@ BANNED_WORDS = ["众所周知", "显而易见", "不难发现", "笔者", "同�
 
 MIN_OFFICIAL_LINKS = 2
 WORD_TOLERANCE = 0.40
+# 一行有效代码（有内容、不含空行与围栏）约等于 15 个汉字的信息量。
+# 技术章节的代码本身就是内容，只数汉字会把「代码密集 + 讲得清楚」的章误判为偷工减料；
+# 也不能简单放宽容差，那会把真问题一起放过。折算成同一口径再比，才既不冤枉也不放水。
+CODE_LINE_EQUIV = 15
 DUP_MIN_HAN = 30  # 跨章重复检测的最小句长（汉字数）
 
 
@@ -220,21 +224,17 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
         if not (ROOT / src).exists():
             rep.err(where, f"素材溯源路径不存在：{src}")
 
-    # [篇幅] 与 PLAN 计划偏差。
-    # 代码密度高的章（如语法、框架章节）汉字天然少——代码本身就是内容，
-    # 因此代码行占比超讨阈值时放宽容差，并把占比一并报出来，避免“数字好看”。
+    # [篇幅] 与 PLAN 计划偏差：统一换算成「有效字数」再比（口径见 CODE_LINE_EQUIV）。
     planned = plan_ch.get(cid)
     actual = han_len(text)
-    body_lines = [ln for ln in text.splitlines() if ln.strip()]
     code_lines = [ln for ln in re.findall(r"```.*?```", text, re.S)
                   for ln in ln.splitlines() if ln.strip()]
-    code_ratio = len(code_lines) / max(len(body_lines), 1)
+    effective = actual + CODE_LINE_EQUIV * len(code_lines)
     if planned:
-        ratio = actual / planned
-        tol = WORD_TOLERANCE + (0.25 if code_ratio >= 0.30 else 0.0)
-        if abs(1 - ratio) > tol:
-            rep.warn(where, f"汉字 {actual}，计划 {planned}（偏差 {ratio - 1:+.0%}，"
-                            f"代码行占比 {code_ratio:.0%}，容差 ±{tol:.0%}）")
+        ratio = effective / planned
+        if abs(1 - ratio) > WORD_TOLERANCE:
+            rep.warn(where, f"有效字数 {effective}（汉字 {actual} + 代码 {len(code_lines)} 行），"
+                            f"计划 {planned}（偏差 {ratio - 1:+.0%}，容差 ±{WORD_TOLERANCE:.0%}）")
 
     # [标点] 中文后紧跟半角标点（代码块与行内代码不适用该规范，先剔除）
     prose = re.sub(r"```.*?```", "", text, flags=re.S)
@@ -264,17 +264,41 @@ def check_ledger(rep: Report) -> None:
     if not LEDGER.exists():
         rep.warn("台账", "未找到 LEDGER.md")
         return
-    # 只统计「知识点行」：排除分隔行、状态图例行（首格是反引号包住的符号）。
-    rows = [ln for ln in LEDGER.read_text(encoding="utf-8").splitlines() if ln.startswith("|")]
-    rows = [r for r in rows if "---" not in r and not r.strip("|").strip().startswith("`")]
-    rows = [r for r in rows if r.strip("|").strip().split("|")[0].strip() != "篇"]
-    body = "\n".join(rows)
-    todo = len(re.findall(r"⬜", body))
-    skip = len(re.findall(r"⏭", body))
-    done = len(re.findall(r"✅", body))
-    print(f"台账 LEDGER.md：已落点 {done} 条 ｜ 待写 {todo} 条 ｜ 有意省略 {skip} 条")
+    # 只统计「知识点行」。
+    # 注意不能简单地「首格以反引号开头就当成图例行」——很多知识点本身就以代码写法开头
+    # （如 `*args` / `**kwargs`、「`global` 的使用」），那样会被误删、导致台账少算
+    # 而“看上去存量变少了”。图例行只有一种：首格恰好是一个状态符号。
+    legend = re.compile(r"^`(?:✅|🔀|⏭|⬜)`$")
+    part = None
+    per_part: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0, 0])  # ✅ 🔀 ⏭ ⬜
+    for ln in LEDGER.read_text(encoding="utf-8").splitlines():
+        if ln.startswith("## ") and "篇级进度" in ln:
+            part = None  # 汇总表自身不参与统计，否则会把合计数字重复计入最后一篇
+        m = re.match(r"##\s*[一-鿿]*、第\s*(\d+)\s*篇", ln)
+        if m:
+            part = f"第 {m.group(1)} 篇"
+        if part is None or not ln.startswith("|") or "---" in ln:
+            continue
+        if legend.match(ln.strip("|").strip().split("|")[0].strip()):
+            continue
+        if ln.strip("|").strip().split("|")[0].strip() == "篇":
+            continue
+        for i, sym in enumerate(("✅", "🔀", "⏭", "⬜")):
+            per_part[part][i] += ln.count(sym)
+    done, merge, skip, todo = (sum(v[i] for v in per_part.values()) for i in range(4))
+    print(f"台账 LEDGER.md：已落点 {done} 条 ｜ 合并 {merge} 条 ｜ 有意省略 {skip} 条 ｜ 待写 {todo} 条")
+    for p, (d, mg, sk, td) in per_part.items():
+        print(f"  {p}：✅{d} ｜🔀{mg} ｜⏭{sk} ｜⬜{td}")
     if todo:
         rep.warn("台账", f"仍有 {todo} 条知识点处于「待写」，篇收尾前必须清零或改标 ⏭")
+    # 防止「台账覆盖不到的篇」：只要求**已经写出正文的篇**建表，
+    # 空目录（预留但尚未开写）不报。否则报警器一旦吵，就没人看了。
+    for pl in sorted({int(d.name[:2]) for d in BOOK.iterdir()
+                      if d.is_dir() and d.name[:2].isdigit()
+                      and any(d.glob("*.md"))}):
+        key = f"第 {pl} 篇"
+        if key not in per_part:
+            rep.warn("台账", f"已有正文的{key}在 LEDGER.md 中没有对应的小节台账")
 
 
 def main() -> int:
@@ -304,7 +328,14 @@ def main() -> int:
             chapters[cid] = text
         if not args.quiet:
             n = len(re.findall(r"[\u4e00-\u9fff]", text))
-            print(f"  {f.name}  汉字 {n}")
+            # 同时报出代码行占比：PLAN.md 的「✅ N 字」一律取这里的汉字数，
+            # 代码占比用来解释“为什么汉字比计划少并不等于偷工减料”。
+            code = [ln for ln in re.findall(r"```.*?```", text, re.S)
+                    for ln in ln.splitlines() if ln.strip()]
+            effective = n + CODE_LINE_EQUIV * len(code)
+            planned = ctx["plan_chapters"].get(cid)
+            tail = f" / 计划 {planned}（达成 {effective / planned:.0%}）" if planned else ""
+            print(f"  {f.name}  有效字数 {effective}（汉字 {n} + 代码 {len(code)} 行）{tail}")
 
     check_duplicates(chapters, rep)
 

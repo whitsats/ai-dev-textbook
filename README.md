@@ -201,6 +201,7 @@ python tools/install_hooks.py --uninstall  # 卸载
 | 单一事实来源 | [`REFERENCES.md`](REFERENCES.md) 技术结论出处 | 事实过时 / 臆造链接 |
 | 单一事实来源 | [`LEDGER.md`](LEDGER.md) 知识点→章节落点 | **关键信息静静漏掉** |
 | 机械校验 | `tools/lint_book.py` 11 项检查 | 体例 / 引用 / 篇幅 / 跨章重复 |
+| 篇幅口径 | 有效字数 = 汉字 + 15 × 有效代码行 | 「代码密集」被误判成偷工减料，或反过来放宽容差遮盖真问题 |
 | 强制流程 | `.githooks/pre-commit`（git 钩子） | 漏跑校验就提交不了 |
 | 最后一道门 | `.github/workflows/book-checks.yml` | 绕过钩子也会在 CI 被拦住 |
 
