@@ -220,16 +220,26 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
         if not (ROOT / src).exists():
             rep.err(where, f"素材溯源路径不存在：{src}")
 
-    # [篇幅] 与 PLAN 计划偏差
+    # [篇幅] 与 PLAN 计划偏差。
+    # 代码密度高的章（如语法、框架章节）汉字天然少——代码本身就是内容，
+    # 因此代码行占比超讨阈值时放宽容差，并把占比一并报出来，避免“数字好看”。
     planned = plan_ch.get(cid)
     actual = han_len(text)
+    body_lines = [ln for ln in text.splitlines() if ln.strip()]
+    code_lines = [ln for ln in re.findall(r"```.*?```", text, re.S)
+                  for ln in ln.splitlines() if ln.strip()]
+    code_ratio = len(code_lines) / max(len(body_lines), 1)
     if planned:
         ratio = actual / planned
-        if abs(1 - ratio) > WORD_TOLERANCE:
-            rep.warn(where, f"汉字 {actual}，计划 {planned}（偏差 {ratio - 1:+.0%}）")
+        tol = WORD_TOLERANCE + (0.25 if code_ratio >= 0.30 else 0.0)
+        if abs(1 - ratio) > tol:
+            rep.warn(where, f"汉字 {actual}，计划 {planned}（偏差 {ratio - 1:+.0%}，"
+                            f"代码行占比 {code_ratio:.0%}，容差 ±{tol:.0%}）")
 
-    # [标点] 中文后紧跟半角标点
-    odd = re.findall(r"[\u4e00-\u9fff][,;:?!](?![0-9])", text)
+    # [标点] 中文后紧跟半角标点（代码块与行内代码不适用该规范，先剔除）
+    prose = re.sub(r"```.*?```", "", text, flags=re.S)
+    prose = re.sub(r"`[^`]*`", "", prose)
+    odd = re.findall(r"[\u4e00-\u9fff][,;:?!](?![0-9])", prose)
     if odd:
         rep.warn(where, f"中文后使用了半角标点 {len(odd)} 处，例如「{odd[0]}」")
 
