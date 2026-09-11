@@ -99,7 +99,9 @@
 ├── GAPS.md            ← AI 开发体系缺口审计：逐项对照能力清单，列出缺失的教程
 ├── COVERAGE.md        ← 素材覆盖度审计报告（由脚本生成，勿手改）
 ├── REFERENCES.md      ← 官方文档出处：按篇映射的权威链接 + 引用规范（82 链接）
-├── STYLE.md           ← 写作体例与文风统一规范（十段式章节结构 + 引用硬规定）
+├── STYLE.md           ← 写作体例与文风统一规范（十段式结构 + 引用硬规定 + 防丢失规程）
+├── GLOSSARY.md        ← 术语表：全书术语的唯一写法（防术语漂移）
+├── LEDGER.md          ← 知识点台账：素材知识点 → 章节落点（防关键信息静静漏掉）
 ├── raw/               ← 原始资料归档（295MB，未纳入 git，原件未做任何删改）
 │   ├── pdf/           ← 12 个原始 PDF
 │   ├── md/            ← 3 个原始面试题 markdown
@@ -115,7 +117,8 @@
 ├── tools/             ← 可复跑脚本
 │   ├── extract_sources.py      raw/ → sources/ 文本抽取
 │   ├── audit_coverage.py       逐章素材覆盖度审计
-│   └── check_refs.py           官方文档链接有效性校验
+│   ├── check_refs.py           官方文档链接有效性校验
+│   └── lint_book.py            正文一致性校验（体例 / 术语 / 引用 / 链接 / 篇幅 / 重复）
 └── book/              ← 教材正文（已开始撰写）
     └── 00-导论/        ← 0.1–0.3 已完成
 ```
@@ -171,6 +174,10 @@ python tools/audit_coverage.py --out COVERAGE.md   # 刷新 COVERAGE.md
 python tools/check_refs.py                 # 校验全部（并发 HEAD，报告失效与跳转）
 python tools/check_refs.py --only-broken   # 只看失效与跳转
 python tools/check_refs.py --offline       # 只解析链接清单，不发请求
+
+# 4. 校验正文一致性（每章写完必跑，零错误才算定稿）
+python tools/lint_book.py                  # 校验全部章节
+python tools/lint_book.py --only 1.1       # 只校验指定章
 ```
 
 依赖：`pdftotext`（poppler）、Python 3.10+。
