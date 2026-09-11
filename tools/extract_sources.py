@@ -82,6 +82,17 @@ HAN = re.compile(r"[\u4e00-\u9fff]")
 
 
 # ---------------------------------------------------------------- 工具函数
+def write_lf(path: Path, text: str) -> None:
+    """以 LF 换行写入文件。
+
+    注意：不能用 Path.write_text 的默认行为——在 Windows 上它会把 \\n 转成 \\r\\n，
+    导致工作区是 CRLF 而仓库里是 LF，产生无意义的换行符噪音。
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+
+
 def run_pdftotext(pdf: Path) -> str:
     """用 pdftotext 抽取文本；-raw 保留阅读顺序（对这批 PDF 明显优于 -layout）。"""
     proc = subprocess.run(
@@ -164,9 +175,7 @@ def convert_pdfs(report_only: bool) -> list[dict]:
             results.append({"name": name, "status": "统计", "stats": stats})
             continue
         md, stats = to_markdown(pdf, f"raw/pdf/{name}")
-        dest = SRC / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(md, encoding="utf-8")
+        write_lf(SRC / rel, md)
         results.append({"name": name, "status": f"→ {rel}", "stats": stats})
     return results
 
@@ -178,10 +187,8 @@ def copy_original_mds() -> list[dict]:
         if not src.exists():
             out.append({"name": name, "status": "缺失"})
             continue
-        dest = SRC / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
         text = src.read_text(encoding="utf-8", errors="ignore")
-        dest.write_text(text.rstrip() + "\n", encoding="utf-8")
+        write_lf(SRC / rel, text.rstrip() + "\n")
         out.append({"name": name, "status": f"→ {rel}（{len(text.splitlines()):,} 行）"})
     return out
 
@@ -236,9 +243,7 @@ def extract_zip() -> list[dict]:
             except Exception as exc:  # 单个失败不影响整体
                 print(f"  ! 转换失败 {name}: {exc}", file=sys.stderr)
                 continue
-            dest = out_dir / rel
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_text(md, encoding="utf-8")
+            write_lf(out_dir / rel, md)
             conv += 1
 
     return [{"name": ZIP_NAME,
@@ -273,7 +278,7 @@ def write_index(pdf_rows, md_rows, zip_rows) -> None:
     for r in zip_rows:
         lines.append(f"- `{r['name']}`：{r['status']}")
     lines.append("")
-    (SRC / "README.md").write_text("\n".join(lines), encoding="utf-8")
+    write_lf(SRC / "README.md", "\n".join(lines))
 
 
 def main() -> int:
