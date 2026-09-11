@@ -1,0 +1,65 @@
+#!/bin/sh
+# 提交前校验（pre-commit）
+#
+# 目的：让「体例 / 术语 / 交叉引用 / 链接登记 / 素材溯源 / 跨章重复」这些检查
+#       不可能被漏跑——有错误就拦下提交。
+#
+# 规则：
+#   1. 每次都跑 tools/lint_book.py（纯本地、秒级）。
+#   2. 默认只离线解析链接清单；只有 REFERENCES.md 被改动时才联网全量校验
+#      （避免每次提交都发几十个网络请求）。
+#   3. 镜像/紧急情况可临时跳过：SKIP_BOOK_CHECKS=1 git commit ...
+#      但 CI 仍会跑同样检查（见 .github/workflows/book-checks.yml）。
+#
+# 安装：python tools/install_hooks.py
+
+set -u
+
+root=$(git rev-parse --show-toplevel) || exit 0
+cd "$root" || exit 0
+
+if [ "${SKIP_BOOK_CHECKS:-0}" = "1" ]; then
+    echo "[pre-commit] ⚠️  已按 SKIP_BOOK_CHECKS=1 跳过检查（CI 仍会拦）"
+    exit 0
+fi
+
+PY=$(command -v python || command -v python3 || true)
+if [ -z "$PY" ]; then
+    echo "[pre-commit] ✖ 找不到 python，无法校验。装好 Python 或设 SKIP_BOOK_CHECKS=1" >&2
+    exit 1
+fi
+
+# 保证中文输出在 Windows 控制台不乱码
+PYTHONIOENCODING=utf-8
+export PYTHONIOENCODING
+
+if [ ! -f tools/lint_book.py ]; then
+    echo "[pre-commit] ✖ 未找到 tools/lint_book.py（是否在教材仓库根目录？）" >&2
+    exit 1
+fi
+
+echo "[pre-commit] 1/2 正文一致性校验 ..."
+if ! "$PY" tools/lint_book.py; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 正文校验有错误，提交被拦下。" >&2
+    echo "            修复后重试；仅想提交素材/脚本改动可设 SKIP_BOOK_CHECKS=1" >&2
+    exit 1
+fi
+
+staged=$(git diff --cached --name-only)
+
+if printf '%s\n' "$staged" | grep -q 'REFERENCES\.md'; then
+    echo "[pre-commit] 2/2 REFERENCES.md 有改动 → 联网校验全部链接 ..."
+    if ! "$PY" tools/check_refs.py --only-broken; then
+        echo "[pre-commit] ✖ 存在失效链接，提交被拦下：先修 REFERENCES.md，再同步受影响章节。" >&2
+        exit 1
+    fi
+else
+    echo "[pre-commit] 2/2 链接清单自检（离线）..."
+    if ! "$PY" tools/check_refs.py --offline >/dev/null; then
+        echo "[pre-commit] ✖ 链接清单解析失败，提交被拦下。" >&2
+        exit 1
+    fi
+fi
+
+echo "[pre-commit] ✔ 通过"

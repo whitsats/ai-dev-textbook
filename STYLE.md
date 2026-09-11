@@ -223,7 +223,26 @@ python tools/lint_book.py --only <章号>
 2. **术语扫描**：跑 `python tools/lint_book.py`，确认无术语违规与跨章重复。
 3. **交叉引用复核**：「见第 X.Y 节」的章号在 [`PLAN.md`](PLAN.md) 中真实存在。
 
-### 8.5 提交粒度
+### 8.5 强制机制（让检查漏不掉）
+
+规范写在纸上会被忘，所以把它接到提交路径上：
+
+| 层 | 文件 | 作用 |
+| --- | --- | --- |
+| 本机钩子 | `.githooks/pre-commit` | 每次提交先跑 `lint_book.py`；改动到 [`REFERENCES.md`](REFERENCES.md) 时再联网校验全部链接 |
+| CI | `.github/workflows/book-checks.yml` | 推送与 PR 时重跑同一套校验（含钩子自检） |
+| 安装/自测 | `python tools/install_hooks.py` | 安装（本仓库 `core.hooksPath`）、查看状态、`--self-test` 验证真能拦下违规提交 |
+
+钩子的行为约定：
+
+- **只有「错误」拦提交**；台账 `⬜` 之类的提示属警告，不阻断。
+- 本地地址（`127.0.0.1` / `localhost`）不算出处，不要求登记。
+- 紧急绕过用 `SKIP_BOOK_CHECKS=1 git commit ...`，**并在 PR 里说明原因**；CI 仍会检查。
+
+> ⚠️ **注意**：钩子脚本无扩展名，必须保持 LF 换行（[`.gitattributes`](.gitattributes) 已强制）。
+> CRLF 的 shebang 会让它在 Linux / macOS / CI 上直接报错。
+
+### 8.6 提交粒度
 
 **一章一提交**，提交信息带章号（例如 `feat: 1.1 环境搭建`）。
 这样任何一次「不对劲」都能用 `git diff` 定位到具体章节，也能单独回滚。

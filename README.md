@@ -114,11 +114,14 @@
 │   ├── 04-AI应用开发框架/      LangChain · LangGraph
 │   ├── 05-RAG与生产级系统/     RAG 入门到深入 · 生产级 RAG · 智能出行 Agent
 │   └── 06-求职冲刺/            四套题库（AI Agent / Android / Flutter-Dart / 后端）
+├── .githooks/         ← 提交钩子（pre-commit 强制校验，安装方式见下）
+├── .github/workflows/ ← CI：推送/PR 时重跑同一套校验
 ├── tools/             ← 可复跑脚本
 │   ├── extract_sources.py      raw/ → sources/ 文本抽取
 │   ├── audit_coverage.py       逐章素材覆盖度审计
 │   ├── check_refs.py           官方文档链接有效性校验
-│   └── lint_book.py            正文一致性校验（体例 / 术语 / 引用 / 链接 / 篇幅 / 重复）
+│   ├── lint_book.py            正文一致性校验（体例 / 术语 / 引用 / 链接 / 篇幅 / 重复）
+│   └── install_hooks.py        安装/查看/自测提交前钩子
 └── book/              ← 教材正文（已开始撰写）
     └── 00-导论/        ← 0.1–0.3 已完成
 ```
@@ -178,7 +181,38 @@ python tools/check_refs.py --offline       # 只解析链接清单，不发请�
 # 4. 校验正文一致性（每章写完必跑，零错误才算定稿）
 python tools/lint_book.py                  # 校验全部章节
 python tools/lint_book.py --only 1.1       # 只校验指定章
+
+# 5. 把校验接成提交前钩子（只需装一次；之后漏跑不了）
+python tools/install_hooks.py              # 安装（设置本仓库 core.hooksPath）
+python tools/install_hooks.py --status     # 看当前是否启用
+python tools/install_hooks.py --self-test  # 用一个临时违规章节验证钩子真能拦下
+python tools/install_hooks.py --uninstall  # 卸载
 ```
+
+---
+
+## 防丢失机制（为什么这部长文不会越写越偏）
+
+三十万字跳 68 章，靠「记得」必然漂移。本仓库把记忆**外置成文件**，并把校验**接成强制流程**：
+
+| 层次 | 做法 | 防的失效 |
+| --- | --- | --- |
+| 单一事实来源 | [`GLOSSARY.md`](GLOSSARY.md) 术语唯一写法 | 术语漂移 |
+| 单一事实来源 | [`REFERENCES.md`](REFERENCES.md) 技术结论出处 | 事实过时 / 臆造链接 |
+| 单一事实来源 | [`LEDGER.md`](LEDGER.md) 知识点→章节落点 | **关键信息静静漏掉** |
+| 机械校验 | `tools/lint_book.py` 11 项检查 | 体例 / 引用 / 篇幅 / 跨章重复 |
+| 强制流程 | `.githooks/pre-commit`（git 钩子） | 漏跑校验就提交不了 |
+| 最后一道门 | `.github/workflows/book-checks.yml` | 绕过钩子也会在 CI 被拦住 |
+
+每章走四步闭环（规范见 [`STYLE.md`](STYLE.md) 第八节）：
+
+```
+通读该章素材 → 知识点逐条进 LEDGER（标 ⬜） → 写正文
+→ 回填状态（✅ / 🔀 / ⏭） → 跑 lint 到零错误 → 一章一提交
+```
+
+紧急情况可绕过本机钩子（`SKIP_BOOK_CHECKS=1 git commit ...` 或 `--no-verify`），
+但 CI 会用同一套脚本再跑一遍——**绕过只是推迟，不是豁免**。
 
 依赖：`pdftotext`（poppler）、Python 3.10+。
 

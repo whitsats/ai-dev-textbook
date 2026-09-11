@@ -15,6 +15,9 @@
 *.html    text eol=lf
 *.yml     text eol=lf
 
+# 钩子脚本（无扩展名）必须 LF：CRLF 的 shebang 会让钩子在 Linux/macOS/CI 上直接报错
+.githooks/* text eol=lf
+
 # 二进制（禁止任何转换与 diff）
 *.pdf     binary
 *.zip     binary

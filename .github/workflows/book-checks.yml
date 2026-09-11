@@ -1,0 +1,57 @@
+name: 教材校验
+
+# 目的：本机钩子可能被 SKIP_BOOK_CHECKS=1 或 --no-verify 绕过，
+# CI 是最后一道门——正文校验与链接校验都在这里强制跑一遍。
+#
+# 说明：链接校验需要访问外网。它把「失效」视为失败（退出码 1），
+# 把「跳转」只作为提示打印（文档换域名时应更新 REFERENCES.md）。
+
+on:
+  push:
+    paths:
+      - "book/**"
+      - "*.md"
+      - "tools/**"
+      - ".githooks/**"
+      - ".github/workflows/book-checks.yml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: 正文一致性校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # 脚本只用标准库，无需 pip install
+      - name: 语法自检（工具脚本）
+        run: python -m compileall -q tools
+      - name: 校验正文（体例 / 术语 / 引用 / 篇幅 / 重复）
+        run: python tools/lint_book.py
+
+  refs:
+    name: 官方文档链接校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 校验 REFERENCES.md 中的链接
+        run: python tools/check_refs.py --only-broken
+
+  hooks:
+    name: 钩子安装脚本自检
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 安装钩子并验证它确实会拦下违规提交
+        run: |
+          python tools/install_hooks.py
+          python tools/install_hooks.py --self-test
