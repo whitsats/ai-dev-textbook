@@ -260,6 +260,32 @@ def check_duplicates(chapters: dict[str, str], rep: Report) -> None:
             rep.warn("跨章重复", f"{'/'.join(uniq)} 出现相同长句（{han_len(s)} 字）：{s[:40]}…")
 
 
+def check_blank_lines(rep: Report) -> None:
+    """标题前必须有空行。
+
+    这条是为脚本改动服务的：用脚本批量回填台账/表格时，很容易把新标题直接粘在
+    上一行末尾（TEXT 拼接丢掉尾随空行），Markdown 渲染会当成普通文字而不成标题。
+    肉眼很难发现，机械校验一抓就有。
+    """
+    heading = re.compile(r"^#{1,6}\s")
+    targets = [LEDGER, PLAN, REFS, GLOSSARY]
+    targets += list(BOOK.rglob("*.md"))
+    for f in targets:
+        if not f.exists():
+            continue
+        lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
+        in_fence = False
+        for i, ln in enumerate(lines):
+            if ln.lstrip().startswith("```"):
+                in_fence = not in_fence
+                continue
+            # 代码块里的 # 是注释（如 # 输出），不是标题，不参与检查
+            if in_fence or not heading.match(ln):
+                continue
+            if i > 0 and lines[i - 1].strip():
+                rep.err(f.name, f"第 {i + 1} 行标题「{ln[:24]}」前缺少空行")
+
+
 def check_ledger(rep: Report) -> None:
     if not LEDGER.exists():
         rep.warn("台账", "未找到 LEDGER.md")
@@ -338,6 +364,7 @@ def main() -> int:
             print(f"  {f.name}  有效字数 {effective}（汉字 {n} + 代码 {len(code)} 行）{tail}")
 
     check_duplicates(chapters, rep)
+    check_blank_lines(rep)
 
     print()
     print(f"校验章节 {len(files)} 章 ｜ 引用库 {len(ctx['refs'])} 条链接 ｜ 术语 {len(ctx['glossary'])} 条禁止写法")

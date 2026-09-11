@@ -284,7 +284,9 @@ PLAN = [
      [("py", "8-11", 1.0), ("py", "21", 1.0), ("pys", "contain", 0.80)], ""),
     ("1", "1.4", "函数、装饰器与高阶用法", 6000,
      [("py", "18-20", 1.0), ("pys", "func", 0.90), ("pys", "gen", 0.50)], ""),
-    ("1", "1.5", "面向对象：类、继承、魔术方法", 6000,
+    # 1.5 计划值按实测校准：概念密度最高的章（类 / 继承 / MRO / 魔术方法 / 选型 / 综合示例），
+    # 初版估 6,000 严重低估，实写 9,418（有效字数）。此处改为 9,000，而不是删掉素材覆盖的内容。
+    ("1", "1.5", "面向对象：类、继承、魔术方法", 9000,
      [("py", "23-24", 1.0), ("pys", "oop", 0.90)], "魔术方法零素材，须原创"),
     ("1", "1.6", "异常处理、文件操作与模块化", 5000,
      [("py", "22", 1.0), ("pys", "base", 0.55)], "异常/日志/模块在此段"),
@@ -655,12 +657,208 @@ def write_report(path: Path) -> None:
     path.write_text("\n".join(L) + "\n", encoding="utf-8", newline="\n")
 
 
+def part_aggregates() -> dict[int, dict[str, float]]:
+    """返回 {篇号: {n, plan, prose, bank, ratio}}，与报表「分篇汇总」同口径。"""
+    rows = build_rows()
+    grouped: dict[str, list] = {}
+    for r in rows:
+        grouped.setdefault(r["part"], []).append(r)
+    out: dict[int, dict[str, float]] = {}
+    for part, rs in grouped.items():
+        plan = sum(x["plan"] for x in rs)
+        pool: dict[str, int] = {}
+        for x in rs:
+            pool.update(x["keys"])
+        prose = sum(v for k, v in pool.items() if not k.startswith("bank:"))
+        bank = sum(v for k, v in pool.items() if k.startswith("bank:"))
+        out[int(part)] = {"n": len(rs), "plan": plan, "prose": prose, "bank": bank,
+                          "ratio": prose / plan if plan else 0.0}
+    return out
+
+
+def _as_int(cell: str) -> int | None:
+    digits = re.sub(r"[^\d]", "", cell)
+    return int(digits) if digits else None
+
+
+def _chapter_effective_words() -> dict[str, int]:
+    """调 lint_book.py 拿到每章实测的有效字数，返回 {章号: 有效字数}。
+
+    不在这里重算公式：字数口径必须只有一份实现，否则两边会各自漂。
+    """
+    import subprocess
+
+    script = Path(__file__).with_name("lint_book.py")
+    if not script.exists():
+        return {}
+    proc = subprocess.run([sys.executable, str(script)], cwd=str(script.parent.parent),
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
+    out: dict[str, int] = {}
+    for line in proc.stdout.splitlines():
+        m = re.search(r"^(\d+\.\d+)-[^\s]*\.md\s+有效字数\s+([\d,]+)", line.strip())
+        if m:
+            out[m.group(1)] = int(m.group(2).replace(",", ""))
+    return out
+
+
+def check_plan(plan_path: Path, coverage_path: Path) -> int:
+    """把 PLAN.md / COVERAGE.md 里手写的汇总数字与实测结果对账。
+
+    为什么需要它：数据一旦在多个文档里各写一遍，就一定会漂——本次就出现过
+    PLAN 写「素材 1.24 / 116,218」而实测已是「1.25 / 121,052」的情况。
+    数量对不上不影响写作，但会持续误导后续的篇幅与优先级判断。
+    """
+    agg = part_aggregates()
+    total_chapters = sum(int(a["n"]) for a in agg.values())
+    total_plan = sum(int(a["plan"]) for a in agg.values())
+    problems: list[str] = []
+
+    text = plan_path.read_text(encoding="utf-8")
+
+    def cells_of(line: str) -> list[str]:
+        return [c.strip().strip("*").strip() for c in line.strip().strip("|").split("|")]
+
+    # 1) 进度看板：| 1 编程地基 | 15 | 94,000 | 1.24 | 0 | 状态 |
+    if "## 八、进度看板" in text:
+        board = text.split("## 八、进度看板", 1)[1].split("前置工作进度", 1)[0]
+        for line in board.splitlines():
+            cells = cells_of(line)
+            if len(cells) < 4:
+                continue
+            if cells[0] == "合计":
+                if _as_int(cells[1]) != total_chapters:
+                    problems.append(f"PLAN 看板合计：章数 {cells[1]} ≠ 实测 {total_chapters}")
+                if _as_int(cells[2]) != total_plan:
+                    problems.append(f"PLAN 看板合计：计划字数 {cells[2]} ≠ 实测 {total_plan:,}")
+                continue
+            m = re.match(r"^(\d+)\s", cells[0])
+            if not m or int(m.group(1)) not in agg:
+                continue
+            p = int(m.group(1))
+            a = agg[p]
+            if _as_int(cells[1]) != a["n"]:
+                problems.append(f"PLAN 看板第 {p} 篇：章数 {cells[1]} ≠ 实测 {a['n']}")
+            if _as_int(cells[2]) != a["plan"]:
+                problems.append(f"PLAN 看板第 {p} 篇：计划字数 {cells[2]} ≠ 实测 {int(a['plan']):,}")
+            if re.fullmatch(r"\d+\.\d+", cells[3]) and abs(float(cells[3]) - a["ratio"]) > 0.005:
+                problems.append(f"PLAN 看板第 {p} 篇：素材比值 {cells[3]} ≠ 实测 {a['ratio']:.2f}")
+
+    # 2) 篇级覆盖度表：| 1 编程地基 | 15 | 94,000 | 116,218 | 0 | 1.24 | 充裕 |
+    header_mark = "| 篇 | 章数 | 计划字数 | 散文素材池 | 题库池 | 散文比值 | 判定 |"
+    if header_mark in text:
+        block = text.split(header_mark, 1)[1]
+        started = False
+        for line in block.splitlines():
+            if not line.strip():
+                continue          # 表头行本身的尾巴是空串，先跳过
+            if not line.startswith("|"):
+                if started:
+                    break
+                continue
+            cells = cells_of(line)
+            if len(cells) < 4:
+                continue
+            started = True
+            if cells[0] == "合计":
+                if _as_int(cells[1]) != total_chapters:
+                    problems.append(f"PLAN 篇级表合计：章数 {cells[1]} ≠ 实测 {total_chapters}")
+                if _as_int(cells[2]) != total_plan:
+                    problems.append(f"PLAN 篇级表合计：计划字数 {cells[2]} ≠ 实测 {total_plan:,}")
+                continue
+            m = re.match(r"^(\d+)\s", cells[0])
+            if not m or int(m.group(1)) not in agg:
+                continue
+            p = int(m.group(1))
+            a = agg[p]
+            if _as_int(cells[1]) != a["n"]:
+                problems.append(f"PLAN 篇级表第 {p} 篇：章数 {cells[1]} ≠ 实测 {a['n']}")
+            if _as_int(cells[2]) != a["plan"]:
+                problems.append(f"PLAN 篇级表第 {p} 篇：计划字数 {cells[2]} ≠ 实测 {int(a['plan']):,}")
+            if re.fullmatch(r"\d+", cells[3].replace(",", "")) and _as_int(cells[3]) != a["prose"]:
+                problems.append(f"PLAN 篇级表第 {p} 篇：散文素材池 {cells[3]} ≠ 实测 {int(a['prose']):,}")
+            if len(cells) >= 6 and re.fullmatch(r"\d+", cells[4].replace(",", "")) \
+                    and _as_int(cells[4]) != a["bank"]:
+                problems.append(f"PLAN 篇级表第 {p} 篇：题库池 {cells[4]} ≠ 实测 {int(a['bank']):,}")
+            if len(cells) >= 6 and re.fullmatch(r"\d+\.\d+", cells[5]) \
+                    and abs(float(cells[5]) - a["ratio"]) > 0.005:
+                problems.append(f"PLAN 篇级表第 {p} 篇：散文比值 {cells[5]} ≠ 实测 {a['ratio']:.2f}")
+
+    # 3) 分篇章节标题里的「N 章 / N 字，素材 X.XX」
+    for m in re.finditer(r"### 第 (\d+) 篇[^\n]*（([\d,]+) 章 / ([\d,]+) 字([^）]*)）", text):
+        p, chapters, words, tail = int(m.group(1)), _as_int(m.group(2)), _as_int(m.group(3)), m.group(4)
+        if p not in agg:
+            continue
+        a = agg[p]
+        if chapters != a["n"]:
+            problems.append(f"PLAN 第 {p} 篇标题：{m.group(2)} 章 ≠ 实测 {a['n']}")
+        if words != a["plan"]:
+            problems.append(f"PLAN 第 {p} 篇标题：{m.group(3)} 字 ≠ 实测 {int(a['plan']):,}")
+        rm = re.search(r"素材\s*(\d+\.\d+)", tail)
+        if rm and abs(float(rm.group(1)) - a["ratio"]) > 0.005:
+            problems.append(f"PLAN 第 {p} 篇标题：素材比值 {rm.group(1)} ≠ 实测 {a['ratio']:.2f}")
+
+    # 3) COVERAGE.md 的分篇汇总表（应由 --out 生成，不一致说明忘了刷新）
+    if coverage_path.exists():
+        cov = coverage_path.read_text(encoding="utf-8")
+        if "## 四、分篇汇总" in cov:
+            block = cov.split("## 四、分篇汇总", 1)[1].split("## 五、", 1)[0]
+            seen: set[int] = set()
+            for line in block.splitlines():
+                cells = [c.strip().strip("*").strip() for c in line.strip().strip("|").split("|")]
+                if len(cells) < 3 or not cells[0].isdigit():
+                    continue
+                p = int(cells[0])
+                seen.add(p)
+                if p not in agg:
+                    problems.append(f"COVERAGE 分篇汇总：第 {p} 篇不在规划中")
+                    continue
+                a = agg[p]
+                if _as_int(cells[1]) != a["n"]:
+                    problems.append(f"COVERAGE 第 {p} 篇：章数 {cells[1]} ≠ 实测 {a['n']}")
+                if _as_int(cells[2]) != a["plan"]:
+                    problems.append(f"COVERAGE 第 {p} 篇：计划字数 {cells[2]} ≠ 实测 {int(a['plan']):,}")
+            missing = set(agg) - seen
+            if missing:
+                problems.append("COVERAGE 分篇汇总缺少篇："
+                                + "、".join(str(x) for x in sorted(missing)))
+        else:
+            problems.append("COVERAGE.md 缺少「四、分篇汇总」——请重跑 --out 刷新")
+    else:
+        problems.append(f"未找到 {coverage_path.name}，请先跑 --out 生成")
+
+    # 4) 逐章状态列里的「✅ N 字」必须等于正文实测的有效字数。
+    #    字数口径由 lint_book.py 单一实现，所以这里直接解析它的输出而不重写公式——
+    #    公式只有一份，才不会“两边各自漂”。
+    for cid, actual in _chapter_effective_words().items():
+        for m in re.finditer(rf"\|\s*{re.escape(cid)}\s*\|([^\n]*)", text):
+            row = m.group(1)
+            sm = re.search(r"✅\s*([\d,]+)\s*字", row)
+            if sm and _as_int(sm.group(1)) != actual:
+                problems.append(
+                    f"PLAN 第 {cid} 章状态：✅ {sm.group(1)} 字 ≠ 正文实测 {actual:,} 字")
+
+    if problems:
+        print("文档数字与实测不一致：")
+        for p in problems:
+            print(f"  ✖ {p}")
+        print("\n修法：先改 tools/audit_coverage.py 里的规划值，再重跑"
+              " `python tools/audit_coverage.py --out COVERAGE.md`，最后同步 PLAN.md。")
+        return 1
+    print("文档对账通过：PLAN.md 与 COVERAGE.md 的汇总数字与实测一致。")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--md", action="store_true", help="输出 markdown 表格")
     ap.add_argument("--pool", action="store_true", help="打印素材池明细")
     ap.add_argument("--out", metavar="FILE", help="把 markdown 报表写入文件（如 COVERAGE.md）")
+    ap.add_argument("--check", action="store_true",
+                    help="对账：PLAN.md / COVERAGE.md 的汇总数字是否与实测一致")
     args = ap.parse_args()
+
+    if args.check:
+        return check_plan(Path("PLAN.md"), Path("COVERAGE.md"))
 
     if args.out:
         write_report(Path(args.out))

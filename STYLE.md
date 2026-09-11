@@ -229,7 +229,7 @@ python tools/lint_book.py --only <章号>
 
 | 层 | 文件 | 作用 |
 | --- | --- | --- |
-| 本机钩子 | `.githooks/pre-commit` | 每次提交先跑 `lint_book.py`；改动到 [`REFERENCES.md`](REFERENCES.md) 时再联网校验全部链接 |
+| 本机钩子 | `.githooks/pre-commit` | 每次提交先跑 `lint_book.py`；再跑 `audit_coverage.py --check` 对账文档数字；改动到 [`REFERENCES.md`](REFERENCES.md) 时再联网校验全部链接 |
 | CI | `.github/workflows/book-checks.yml` | 推送与 PR 时重跑同一套校验（含钩子自检） |
 | 安装/自测 | `python tools/install_hooks.py` | 安装（本仓库 `core.hooksPath`）、查看状态、`--self-test` 验证真能拦下违规提交 |
 
@@ -264,7 +264,23 @@ python tools/lint_book.py --only <章号>
 - 容忍偏差 ±40%，超出即警告。
 - 不要用「放宽容差」代替折算：放宽容差会把真问题一起放过。
 
-### 8.8 台账口径的两个易错点
+### 8.8 单章审阅清单（一章写完必须过一遍）
+
+机械校验只能保证**形式**一致，下面四项必须人看：
+
+1. **台账反向回查**：从 [`LEDGER.md`](LEDGER.md) 逐条看本章条目，确认落点真实存在
+   （不是「填了 ✅ 但正文其实没写」）。素材覆盖的每个知识点都要能指到具体小节。
+2. **声称的输出必须实跑**：带 `# 输出` 的代码块，逐个实际跑一遍再把真实输出粘回去。
+   1.5 的审阅就是这么查出两处错的：「产品公告（10 字）」实际是 8 字，
+   综合示例里 `len(chunk)` 写作 17 而实际是 16、`repr` 截断位数也对不上。
+   这类错误渲染出来没有任何异常，只有跑一遍才会暴露。
+3. **技术结论回到官方文档**：凡是「Python 会……」「必须……」的断言，
+   到 [`REFERENCES.md`](REFERENCES.md) 对应条目确认，而不是凭印象。
+4. **偏差与判定**：有效字数偏离计划 ±40% 时，先问「是写得不够」还是「计划本就估低了」。
+   若是后者，改 `tools/audit_coverage.py` 里的规划值并**记录原因**，
+   再跑 `--out COVERAGE.md` 与 `--check`——不允许只改文档不改工具值。
+
+### 8.9 台账口径的两个易错点
 
 - **不要把「首格以代码写法开头」的行当成图例行**：像「`*args` / `**kwargs`」
   「`global` 的使用」这类知识点，首个单元格本身就是代码写法。误删它们会让台账

@@ -79,7 +79,11 @@
 | 数据结构与推导式（1.3 章） | Python 3 · 教程 · 数据结构 | https://docs.python.org/3/tutorial/datastructures.html |
 | 函数定义与参数规则（1.4 章） | Python 3 · 教程 · 函数定义 | https://docs.python.org/3/tutorial/controlflow.html |
 | 装饰器与 `wraps` / `lru_cache`（1.4 章） | Python 3 · functools 模块 | https://docs.python.org/3/library/functools.html |
-| 迭代器协议与生成器（1.4、5.4 章） | Python 3 · 数据模型 | https://docs.python.org/3/reference/datamodel.html |
+| 迭代器协议与生成器（1.4、5.4 章）；魔术方法全表（1.5.11 章） | Python 3 · 数据模型 | https://docs.python.org/3/reference/datamodel.html |
+| 类、继承与方法查找（1.5 章） | Python 3 · 教程 · 类 | https://docs.python.org/3/tutorial/classes.html |
+| 抽象基类（1.5 章） | Python 3 · abc 模块 | https://docs.python.org/3/library/abc.html |
+| 数据类（1.5、1.5.12 章） | Python 3 · dataclasses 模块 | https://docs.python.org/3/library/dataclasses.html |
+| 结构化类型 Protocol（1.5 章） | Python 3 · typing 模块 | https://docs.python.org/3/library/typing.html |
 | Counter / defaultdict（1.3、7.2 章） | Python 3 · collections 模块 | https://docs.python.org/3/library/collections.html |
 | 异步编程（1.7 章） | Python 官方文档 · asyncio | https://docs.python.org/3/library/asyncio.html |
 | 代码风格（全篇） | PEP 8 | https://peps.python.org/pep-0008/ |
