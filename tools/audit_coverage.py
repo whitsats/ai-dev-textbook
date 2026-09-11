@@ -277,7 +277,9 @@ PLAN = [
     ("1", "1.1", "环境搭建：Python、依赖管理、IDE 与 Git", 4000,
      [("fa", "01", 1.0)], "素材仅 2.2k；venv/Git 须原创"),
     ("1", "1.2", "Python 语法速通：变量、类型、控制流", 6000,
-     [("py", "1-7", 1.0), ("py", "25", 0.5), ("pys", "base", 0.20)], ""),
+     [("py", "1-7", 1.0), ("py", "12-17", 1.0), ("py", "25", 0.5),
+      ("pys", "base", 0.20)],
+     "含控制流（if/for/while）与循环练习"),
     ("1", "1.3", "常用数据结构与推导式", 6000,
      [("py", "8-11", 1.0), ("py", "21", 1.0), ("pys", "contain", 0.80)], ""),
     ("1", "1.4", "函数、装饰器与高阶用法", 6000,
@@ -390,17 +392,38 @@ PLAN = [
      "改用生产级 RAG 自带项目为主干"),
     ("5", "5.9", "项目复盘：从能跑到能讲", 4000, [], "完全原创"),
 
-    # ---------------- 第 6 篇 求职冲刺（题库驱动）
-    ("6", "6.1", "简历：AI 应用开发岗怎么写才有回音", 6000, [], "完全原创"),
-    ("6", "6.2", "项目讲述法：STAR、亮点提炼与追问防御", 6000, [], "完全原创"),
-    ("6", "6.3", "AI Agent 面试考点手册", 15000,
+    # ---------------- 第 6 篇 模型接入与成本工程（方案 A 新增；素材零覆盖）
+    ("6", "6.1", "模型选型：能力、价格与上下文窗口的三角权衡", 7000, [], "完全原创"),
+    ("6", "6.2", "多厂商接入：Messages、Responses 与 OpenAI 兼容层", 7000, [], "完全原创"),
+    ("6", "6.3", "模型网关：统一接口、路由、重试与降级", 7000, [], "完全原创"),
+    ("6", "6.4", "成本与性能工程：Token 计费、缓存与模型分流", 7000, [], "完全原创"),
+
+    # ---------------- 第 7 篇 AI 应用工程化（方案 A 新增；素材零覆盖）
+    ("7", "7.1", "评测流水线：数据集、指标与 CI 回归", 7000, [], "完全原创"),
+    ("7", "7.2", "可观测性：链路追踪、指标与成本看板", 7000, [], "完全原创"),
+    ("7", "7.3", "Prompt 与配置版本化：灰度发布与 A/B 实验", 6000, [], "完全原创"),
+    ("7", "7.4", "安全落地：提示注入、越狱与工具权限治理", 7000, [], "完全原创"),
+    ("7", "7.5", "数据合规与脱敏：留存、隐私与审计", 6000, [], "完全原创"),
+
+    # ---------------- 第 8 篇 交付与产品化（方案 A 新增；素材零覆盖）
+    ("8", "8.1", "容器化部署：Docker、镜像瘦身与 Compose", 7000, [], "完全原创"),
+    ("8", "8.2", "CI/CD 与发布：自动化测试、构建与灰度上线", 7000, [], "完全原创"),
+    ("8", "8.3", "前端流式交互：SSE 与 AI SDK 对话式 UI", 7000, [], "完全原创"),
+    ("8", "8.4", "多租户、配额与计费", 6000, [], "完全原创"),
+    ("8", "8.5", "线上运维：SLO、告警、故障演练与容量规划", 6000, [], "完全原创"),
+
+    # ---------------- 第 10 篇 求职冲刺（题库驱动；第 9 篇预留给进阶方向）
+    ("10", "10.1", "简历：AI 应用开发岗怎么写才有回音", 6000, [], "完全原创"),
+    ("10", "10.2", "项目讲述法：STAR、亮点提炼与追问防御", 6000, [], "完全原创"),
+    ("10", "10.3", "AI 系统设计面试", 8000, [], "完全原创（方案 A 新增）"),
+    ("10", "10.4", "AI Agent 面试考点手册", 15000,
      [("bank", "AI-Agent面试题合集-1038道.md", 0.05)], "题库仅作考点索引，答案须重写"),
-    ("6", "6.4", "后端高频考点（Python / AI 岗位视角）", 15000,
+    ("10", "10.5", "后端高频考点（Python / AI 岗位视角）", 15000,
      [("bank", "后端高频面试题大集合.md", 0.45)], "原档为 Java 体系，须换视角"),
-    ("6", "6.5", "移动端考点：Android 与 Flutter-Dart", 12000,
+    ("10", "10.6", "移动端考点：Android 与 Flutter-Dart", 12000,
      [("bank", "Android面试题合集-1136道.md", 0.30),
       ("bank", "Flutter-Dart面试题合集-714道.md", 0.20)], "须逐题筛选"),
-    ("6", "6.6", "模拟面试与复盘清单", 5000, [], "完全原创"),
+    ("10", "10.7", "模拟面试与复盘清单", 5000, [], "完全原创"),
 ]
 
 BANK_QUALITY = {
@@ -442,6 +465,64 @@ def verdict(ratio: float, has_prose: bool, has_bank: bool = False) -> str:
         if ratio >= t:
             return name
     return "严重不足"
+
+
+def assigned_units() -> tuple[set[int], set[str], set[str]]:
+    """统计计划章已经用到的素材单元：手册编号章 / 进阶块分段 / FastAPI 讲义章。"""
+    py_ids: set[int] = set()
+    seg_names: set[str] = set()
+    fa_ids: set[str] = set()
+    for entry in PLAN:
+        for kind, sel, _factor in entry[4]:
+            for part in str(sel).split(","):
+                part = part.strip()
+                if not part:
+                    continue
+                if kind == "py":
+                    if "-" in part:
+                        a, b = (int(x) for x in part.split("-"))
+                        py_ids.update(range(a, b + 1))
+                    else:
+                        py_ids.add(int(part))
+                elif kind == "pys":
+                    seg_names.add(part)
+                elif kind == "fa":
+                    if "-" in part:
+                        a, b = (int(x) for x in part.split("-"))
+                        fa_ids.update(f"{i:02d}" for i in range(a, b + 1))
+                    else:
+                        fa_ids.add(f"{int(part):02d}")
+    return py_ids, seg_names, fa_ids
+
+
+def unassigned_lines() -> list[str]:
+    """找出「没有被任何计划章用到」的素材单元。
+
+    这是防丢的关键一步：素材没被分配，就等于从教材里静静消失。
+    必须在规划阶段发现，而不是写完 68 章才回头找。
+    """
+    blocks, segs = py_manual()
+    py_ids, seg_names, fa_ids = assigned_units()
+    out: list[str] = []
+
+    miss_py = [(n, han(blocks[n])) for n in sorted(blocks) if n not in py_ids]
+    miss_seg = [(n, han(segs.get(n, ""))) for n, _p, _d in PY_SEGMENTS if n not in seg_names]
+    miss_fa = [(n, name) for n, name in sorted(fa_dirs().items()) if n not in fa_ids]
+
+    if miss_py:
+        out.append("**Python 手册未分配的编号章**：" + "、".join(
+            f"第 {n} 章（{c:,} 汉字）" for n, c in miss_py))
+    if miss_seg:
+        out.append("**手册进阶块未分配的分段**：" + "、".join(
+            f"`{n}`（{c:,} 汉字）" for n, c in miss_seg))
+    if miss_fa:
+        out.append("**FastAPI 讲义未分配的章**：" + "、".join(f"{n} {name}" for n, name in miss_fa))
+    if not out:
+        out.append("全部素材单元均已分配到至少一个计划章。")
+    else:
+        out.append("> ⚠️ 未分配不等于无用：请确认是「有意不用」还是「漏了」。"
+                   "漏掉的需补进对应章的素材池，有意的需在 §[`LEDGER.md`](../LEDGER.md) 里标 `⏭` 并写原因。")
+    return out
 
 
 def build_rows():
@@ -505,6 +586,11 @@ def write_report(path: Path) -> None:
     A("| --- | ---: | --- |")
     for name, _pat, desc in PY_SEGMENTS:
         A(f"| `{name}` | {han(segs.get(name, '')):,} | {desc} |")
+    A("")
+    A("#### 素材分配完整性检查（防丢）")
+    A("")
+    for line in unassigned_lines():
+        A(line)
     A("")
     A("### FastAPI 基础学习文档")
     A("")
@@ -601,6 +687,10 @@ def main() -> int:
         return 0
 
     rows = build_rows()
+
+    print("\n=== 素材分配完整性检查（防丢）===")
+    for line in unassigned_lines():
+        print("  " + line)
 
     if args.md:
         print("| 章 | 标题 | 计划字数 | 散文素材 | 题库素材(折算) | 散文比值 | 判定 | 说明 |")
