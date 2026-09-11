@@ -202,6 +202,9 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
     urls = re.findall(r"https?://[^\s|)\]\uff0c\u3002]+", text)
     refs = ctx["refs"]
     for u in urls:
+        # 本地地址（开发服务器）不是“出处”，无需登记
+        if re.search(r"(127\.0\.0\.1|localhost|0\.0\.0\.0)", u):
+            continue
         if u.rstrip("/") not in refs:
             rep.err(where, f"链接未登记于 REFERENCES.md：{u}")
 

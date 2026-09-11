@@ -76,6 +76,7 @@
 | 异步编程（1.7 章） | Python 官方文档 · asyncio | https://docs.python.org/3/library/asyncio.html |
 | 代码风格（全篇） | PEP 8 | https://peps.python.org/pep-0008/ |
 | Web 框架（1.9–1.15 章） | FastAPI 官方文档 | https://fastapi.tiangolo.com/ |
+| 版本要求与最新变更（1.1 章） | FastAPI · GitHub 仓库 | https://github.com/fastapi/fastapi |
 | 依赖注入（1.11 章） | FastAPI · Dependencies | https://fastapi.tiangolo.com/tutorial/dependencies/ |
 | 中间件（1.11 章） | FastAPI · Middleware | https://fastapi.tiangolo.com/tutorial/middleware/ |
 | 安全与 JWT（1.13 章） | FastAPI · Security | https://fastapi.tiangolo.com/tutorial/security/ |
