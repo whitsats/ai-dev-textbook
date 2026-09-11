@@ -84,6 +84,13 @@
 | 抽象基类（1.5 章） | Python 3 · abc 模块 | https://docs.python.org/3/library/abc.html |
 | 数据类（1.5、1.5.12 章） | Python 3 · dataclasses 模块 | https://docs.python.org/3/library/dataclasses.html |
 | 结构化类型 Protocol（1.5 章） | Python 3 · typing 模块 | https://docs.python.org/3/library/typing.html |
+| 错误与异常（1.6 章） | Python 3 · 教程 · 错误和异常 | https://docs.python.org/3/tutorial/errors.html |
+| 文件读写（1.6 章） | Python 3 · 教程 · 输入与输出 | https://docs.python.org/3/tutorial/inputoutput.html |
+| 日志（1.6、7.2 章） | Python 3 · logging 模块 | https://docs.python.org/3/library/logging.html |
+| 日志最佳实践（1.6 章） | Python 3 · Logging HOWTO | https://docs.python.org/3/howto/logging.html |
+| JSON 读写（1.6 章） | Python 3 · json 模块 | https://docs.python.org/3/library/json.html |
+| 路径与文件系统（1.6 章） | Python 3 · pathlib 模块 | https://docs.python.org/3/library/pathlib.html |
+| 导入机制（1.6 章） | Python 3 · import 系统 | https://docs.python.org/3/reference/import.html |
 | Counter / defaultdict（1.3、7.2 章） | Python 3 · collections 模块 | https://docs.python.org/3/library/collections.html |
 | 异步编程（1.7 章） | Python 官方文档 · asyncio | https://docs.python.org/3/library/asyncio.html |
 | 代码风格（全篇） | PEP 8 | https://peps.python.org/pep-0008/ |

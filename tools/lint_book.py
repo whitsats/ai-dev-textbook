@@ -193,8 +193,16 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
         chap = ".".join(ref.split(".")[:2])
         if chap not in plan_ch:
             rep.err(where, f"交叉引用「第 {ref} 节」指向不存在的章 {chap}")
-    for a, b in re.findall(r"(\d+\.\d+)\s*[\u2013\u2014-]\s*(\d+\.\d+)", text):
-        for x in (a, b):
+    # 只校验「章范围」。
+    # 不能把正文里的小节范围（如延伸阅读写法「1.6.9–1.6.10」）当章范围：
+    # 那会误报，而且 1.5 的「1.5.1–1.5.7」因为第 5 篇恰好有 5.1–5.7 而「碰巧通过」——
+    # 假绿灯比报错更危险。判定依据：后面紧跟「节/章」，或前面是「第」。
+    for m in re.finditer(r"(\d+\.\d+)\s*[\u2013\u2014-]\s*(\d+\.\d+)", text):
+        after = text[m.end():m.end() + 2]
+        before = text[max(0, m.start() - 2):m.start()]
+        if not ("节" in after or "章" in after or "第" in before):
+            continue
+        for x in (m.group(1), m.group(2)):
             if x not in plan_ch:
                 rep.err(where, f"范围引用中的 {x} 在 PLAN.md 中不存在")
     for a, b in re.findall(r"第\s*(\d+)\s*[\u2013\u2014-]\s*(\d+)\s*篇", text):
