@@ -1,0 +1,29 @@
+class ResponseCode:
+    # 用户模块 1xxx
+    USER_SUCCESS = 1000
+    USER_OTHER = 1001
+    USER_ERROR = 1002
+
+    # 文章模块 2xxx
+    ARTICLE_SUCCESS = 2000
+    ARTICLE_OTHER = 2001
+    ARTICLE_ERROR = 2002
+    ARTICLE_SAVE_SUCCESS = 2003
+
+    # 收藏模块 3xxx
+    FAVORITE_SUCCESS = 3000
+    FAVORITE_OTHER = 3001
+    FAVORITE_ERROR = 3002
+
+    # 评论模块 4xxx
+    COMMENT_SUCCESS = 4000
+    COMMENT_OTHER = 4001
+    COMMENT_ERROR = 4002
+
+    # 个人中心模块 5xxx
+    PERSONAL_SUCCESS = 5000
+    PERSONAL_OTHER = 5001
+    PERSONAL_ERROR = 5002
+
+    # 全局
+    UNAUTHORIZED = 9999

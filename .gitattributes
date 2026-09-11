@@ -1,0 +1,27 @@
+# 统一换行符：仓库内一律使用 LF，检出时不自动转换
+# 目的：避免 Windows 上编辑素材/正文时产生整文件级 diff 噪音
+* text=auto eol=lf
+
+# 文本文件
+*.md      text eol=lf
+*.py      text eol=lf
+*.js      text eol=lf
+*.ts      text eol=lf
+*.vue     text eol=lf
+*.json    text eol=lf
+*.toml    text eol=lf
+*.sql     text eol=lf
+*.sh      text eol=lf
+*.html    text eol=lf
+*.yml     text eol=lf
+
+# 二进制（禁止任何转换与 diff）
+*.pdf     binary
+*.zip     binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+
+# 语言统计中排除素材库，避免污染仓库的语言构成
+sources/** linguist-vendored

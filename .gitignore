@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------
+# 原始资料：约 295MB（含单个 129MB 的 PDF），不适合纳入 git
+# 如需恢复：原件仍完整保留在本目录，未做任何删改
+# 如需重建素材库：python tools/extract_sources.py
+# ---------------------------------------------------------------
+raw/
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 构建产物
+build/
+dist/
+*.pdf
+*.epub
+!raw/**
