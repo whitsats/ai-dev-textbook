@@ -16,13 +16,20 @@ LangChain 发布 v1 后旧命名空间被移出主线。人工检查几十个链
   OK      2xx/3xx 正常
   跳转    最终域名与请求域名不同 —— 文档搬家了，正文里的引用要跟着改
   失效    4xx/5xx —— 服务器明确说“没有”，链接已死，必须替换（会拦提交）
-  超时    连接层失败（超时 / DNS / TLS）—— 可能是本地网络或对方限流，
-          重跑一次就好的事，**不当作失效**，也不拦提交，但会打印出来提醒
+  超时    瞬时连接失败（超时 / DNS 抖动 / 连接被重置）—— 重跑一次就好的事，
+          **不当作失效**，也不拦提交，但会打印出来提醒
+  连接异常 非瞬时的连接层失败（如证书校验不通过）—— 必须人工确认：
+          可能是站点换了域名，也可能是 TLS 配置本身有问题。同样不拦提交
   拦截    401/403 —— 站点拒绝脚本访问，人工确认即可（不算失效）
 
 为何把「超时」单独列一档：早期实现把 status=0 一律归为「失效」，
 结果是本地网络抖一下就提交不了。报警器一旦会因为无关原因响，就会被绕过——
 所以只让服务器明确声明的死链拦提交。
+
+为何还要把「连接异常」从「超时」里拆出来：`www.starlette.io` 的证书在本机
+校验不通过，早期实现把它报成「超时（网络抖一下，忽略即可）」，于是整整一轮
+没人去看它——而真实原因是 Starlette 的文档站迁到了 `starlette.dev`。
+**把「重跑就好」和「必须查」混成一档，等于把后者藏起来。**
 
 用法
 ----
@@ -115,10 +122,26 @@ def check(url: str, timeout: float, attempts: int = 2) -> dict:
     return result
 
 
+# 连接层失败里，「重跑一次就好」的那些（异常类名）。
+# 不在这里面的（例如证书校验失败）要人工确认，不能归为「网络抖动」。
+TRANSIENT_ERRORS = {
+    "超时", "TimeoutError", "gaierror", "ConnectionResetError",
+    "ConnectionRefusedError", "ConnectionError", "RemoteDisconnected",
+    "IncompleteRead", "IncompleteReadError", "CannotSendRequest",
+}
+
+
+def is_transient(error: str) -> bool:
+    """判断连接层失败是否属于「重跑一次就好」的瞬时问题。"""
+    return error.split(":", 1)[0].strip() in TRANSIENT_ERRORS
+
+
 def verdict(r: dict) -> str:
     st = r["status"]
     if st == 0:
-        return "超时"      # 连接层问题（重试已试过），不是链接失效，不拦提交
+        # 连接层问题（重试已试过），不是链接失效，不拦提交；
+        # 但要区分「瞬时」与「必须人工确认」。
+        return "超时" if is_transient(r["error"]) else "连接异常"
     if st in (401, 403, 429):
         return "拦截"      # 反爬，非链接失效
     if st >= 400:
@@ -132,7 +155,8 @@ def verdict(r: dict) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="只解析链接，不发请求")
-    ap.add_argument("--only-broken", action="store_true", help="只打印失效/跳转项")
+    ap.add_argument("--only-broken", action="store_true",
+                    help="只打印需要处理的项（失效 / 跳转 / 连接异常）")
     ap.add_argument("--timeout", type=float, default=10.0)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--file", default=str(REFS), help="要校验的文件，默认 REFERENCES.md")
@@ -163,7 +187,7 @@ def main() -> int:
     for r in results:
         v = verdict(r)
         counts[v] = counts.get(v, 0) + 1
-        if args.only_broken and v not in ("失效", "跳转"):
+        if args.only_broken and v not in ("失效", "跳转", "连接异常"):
             continue
         tail = f"  → {r['final']}" if r["final"] != r["url"] else ""
         extra = f"  ({r['error']})" if r["error"] and v != "OK" else ""
@@ -179,6 +203,11 @@ def main() -> int:
     if timeouts:
         print(f"\n提示：{timeouts} 个链接连接超时（已重试），多为本地网络或对方限流——"
               f"不算失效，建议稍后重跑确认。")
+    conn_errors = counts.get("连接异常", 0)
+    if conn_errors:
+        print(f"\n⚠️ {conn_errors} 个链接出现**非瞬时**的连接失败（已重试）——"
+              f"请人工确认：常见原因是文档站换了域名或证书有问题，"
+              f"而不是网络抖动。用 `--only-broken` 或直接打开链接查看。")
     return 1 if broken else 0
 
 

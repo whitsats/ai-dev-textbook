@@ -33,6 +33,15 @@
 | 评测 | Evaluation | 模型评估 | 0.3 |
 | 可观测性 | Observability | 观测性、可观察性 | 0.3 |
 | 服务等级目标 | Service Level Objective, SLO | 服务级别目标 | 0.2 |
+| 数据校验 | Data Validation | 数据验证 | 1.9 |
+| 参数校验 | Parameter Validation | 参数验证 | 1.9 |
+| 校验器 | Validator | 验证器 | 1.9 |
+| 序列化 | Serialization | 串行化 | 1.9 |
+| 状态码 | Status Code | 状态代码、返回码 | 1.9 |
+| 请求体 | Request Body | 请求主体 | 1.9 |
+| 响应模型 | Response Model | 响应模式 | 1.9 |
+| 依赖注入 | Dependency Injection, DI | 依赖插入 | 1.9 |
+| 中间件 | Middleware | 中间层 | 1.9 |
 | 微调 | Fine-tuning | 精调、细调 | 6.1 |
 | 模型网关 | Model Gateway | 模型代理层 | 6.3 |
 | 知舟 | Zhizhou | 智舟 | 0.2 |
@@ -60,3 +69,4 @@
 | 日期 | 变更 | 原因 |
 | --- | --- | --- |
 | 2026-09-11 | 建立本表，登记 20 个术语 | 第 0 篇完稿，第 1 篇开写前统一口径 |
+| 2026-09-11 | 补登 9 个术语（校验 / 序列化 / 状态码 / 请求体 / 响应模型 / 依赖注入 / 中间件） | 1.9 引入 FastAPI 术语，需先定唯一口径 |

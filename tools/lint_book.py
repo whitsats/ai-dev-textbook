@@ -19,7 +19,7 @@
     [术语]  GLOSSARY.md 中「避免的写法」是否出现在正文
     [引用]  「见第 X.Y 节」与「X.Y–X.Z」范围是否指向 PLAN.md 中存在的章
     [链接]  正文所有 URL 必须能追溯到 REFERENCES.md（防臆造链接）
-    [出处]  「延伸阅读」中官方文档链接是否 ≥ 2 条
+    [出处]  「延伸阅读」中官方文档链接是否 ≥ 2 条（代码块内的 URL 不算出处）
     [溯源]  sources/... 路径是否真实存在
     [篇幅]  有效字数（汉字 + 代码行折算）与 PLAN.md 计划字数的偏差（容忍 ±40%）
     [重复]  跨章重复的长句（防止内容被复制粘贴到多处）
@@ -211,7 +211,12 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
                 rep.err(where, f"篇引用「第 {x} 篇」在 PLAN.md 中未启用")
 
     # [链接] 必须登记在 REFERENCES.md
-    urls = re.findall(r"https?://[^\s|)\]\uff0c\u3002]+", text)
+    # 代码块与行内代码里的 URL 是「数据」（如 license_info 里的地址、示例域名），
+    # 不是「出处」——把它们也拉进来登记，会逼着清单收录一堆与权威性无关的链接。
+    # 因此与标点检查一致，先剔除代码，再抽 URL。
+    prose_for_links = re.sub(r"```.*?```", "", text, flags=re.S)
+    prose_for_links = re.sub(r"`[^`]*`", "", prose_for_links)
+    urls = re.findall(r"https?://[^\s|)\]\uff0c\u3002]+", prose_for_links)
     refs = ctx["refs"]
     for u in urls:
         # 本地地址（开发服务器）不是“出处”，无需登记；

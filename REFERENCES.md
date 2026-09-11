@@ -48,6 +48,7 @@
 | MCP | 通用描述 | 规范**按日期版本化**（如 `2026-07-28`），能力与授权模型逐版演进 | [MCP 规范](https://modelcontextprotocol.io/specification/) |
 | AI 前端 | 手写 fetch + SSE | Vercel **AI SDK 7**（2026-06）提供了 Agent 运行时与 UI 层 | [AI SDK 文档](https://ai-sdk.dev/docs/introduction) |
 | Pydantic 文档域 | `docs.pydantic.dev` | 已迁至 **`pydantic.dev/docs`**，且校验库拆出独立文档树 | [Pydantic 文档](https://pydantic.dev/docs/) |
+| Starlette 文档域 | `www.starlette.io` | 已迁至 **`starlette.dev`**（旧域在当前网络下 TLS 校验不通过） | [Starlette Responses](https://starlette.dev/responses/) |
 
 > 这六条正是"为什么不能直接整理素材"的最硬理由。正文每章都要回到官方文档核对。
 
@@ -102,6 +103,24 @@
 | 异步编程（1.7 章） | Python 官方文档 · asyncio | https://docs.python.org/3/library/asyncio.html |
 | 代码风格（全篇） | PEP 8 | https://peps.python.org/pep-0008/ |
 | Web 框架（1.9–1.15 章） | FastAPI 官方文档 | https://fastapi.tiangolo.com/ |
+| 应用元数据与文档地址（1.9 章） | FastAPI · Metadata and Docs URLs | https://fastapi.tiangolo.com/tutorial/metadata/ |
+| 参数声明与 `Annotated`（1.9 章） | FastAPI · Path Parameters | https://fastapi.tiangolo.com/tutorial/path-params/ |
+| 路径参数与数值约束（1.9 章） | FastAPI · Path Parameters and Numeric Validations | https://fastapi.tiangolo.com/tutorial/path-params-numeric-validations/ |
+| 查询参数与字符串约束（1.9 章） | FastAPI · Query Parameters and String Validations | https://fastapi.tiangolo.com/tutorial/query-params-str-validations/ |
+| 请求体基础（1.9 章） | FastAPI · Request Body | https://fastapi.tiangolo.com/tutorial/body/ |
+| 请求体多参数与 `embed`（1.9 章） | FastAPI · Body - Multiple Parameters | https://fastapi.tiangolo.com/tutorial/body-multiple-params/ |
+| 请求头参数（1.9 章） | FastAPI · Header Parameters | https://fastapi.tiangolo.com/tutorial/header-params/ |
+| Cookie 参数（1.9 章） | FastAPI · Cookie Parameters | https://fastapi.tiangolo.com/tutorial/cookie-params/ |
+| 表单数据（1.15 章） | FastAPI · Form Data | https://fastapi.tiangolo.com/tutorial/request-forms/ |
+| 文件上传（1.15 章） | FastAPI · Request Files | https://fastapi.tiangolo.com/tutorial/request-files/ |
+| 响应模型与返回类型（1.9 章） | FastAPI · Response Model - Return Type | https://fastapi.tiangolo.com/tutorial/response-model/ |
+| 响应状态码（1.9 章） | FastAPI · Response Status Code | https://fastapi.tiangolo.com/tutorial/response-status-code/ |
+| 自定义响应类（1.9、1.14 章） | FastAPI · Custom Response | https://fastapi.tiangolo.com/advanced/custom-response/ |
+| 错误处理与异常处理器（1.14 章） | FastAPI · Handling Errors | https://fastapi.tiangolo.com/tutorial/handling-errors/ |
+| 多文件应用与 `APIRouter`（1.9、1.15 章） | FastAPI · Bigger Applications | https://fastapi.tiangolo.com/tutorial/bigger-applications/ |
+| 配置与环境变量（1.9 章） | FastAPI · Settings and Environment Variables | https://fastapi.tiangolo.com/advanced/settings/ |
+| `BaseSettings` 与 `.env`（1.9 章） | Pydantic · Settings 管理 | https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/ |
+| `UploadFile` 与 `FileResponse`（1.9、1.15 章） | Starlette · Responses | https://starlette.dev/responses/ |
 | HTTP 概览、方法、状态码（1.8 章） | MDN · HTTP | https://developer.mozilla.org/en-US/docs/Web/HTTP |
 | HTTP 语义规范（1.8 章） | RFC 9110 · HTTP Semantics | https://www.rfc-editor.org/rfc/rfc9110.html |
 | Cookie 与 Session（1.8、1.13 章） | MDN · HTTP Cookies | https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies |
