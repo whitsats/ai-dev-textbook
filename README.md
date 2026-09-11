@@ -4,7 +4,12 @@
 > 后端开发岗」为目标，从 Python 与 FastAPI 地基出发，经过 AI 编程工具链、大模型与 Agent
 > 原理、LangChain / LangGraph 框架、RAG 与生产级工程，最终落到简历、项目讲述与面试题库。
 
-**当前状态**：📋 **资料已归档，素材已审计，规划待你审阅**（正文尚未开始撰写）
+**当前状态**：📋 **资料已归档，素材已审计，体系缺口已排查，规划待你审阅**（正文尚未开始撰写）
+
+> ⚠️ **一个重要前提**：审计发现素材在几处关键技术上**已经过时**（LangChain 已发布 v1、
+> OpenAI 的 Assistants API 已于 2026-08-26 关停、Claude Code SDK 已更名为 Claude Agent SDK）。
+> 因此本教材的做法是：**素材用于选题与经验，技术结论一律回到官方文档**。
+> 全书引用的官方出处集中在 [`REFERENCES.md`](REFERENCES.md)，可一键校验。
 
 ---
 
@@ -38,6 +43,10 @@
 
 详细章节目录、逐章覆盖度与里程碑见 [`PLAN.md`](PLAN.md) 与 [`COVERAGE.md`](COVERAGE.md)。
 
+> 上表是**当前规划**。体系审计建议再补 3 篇（模型接入与成本工程、AI 应用工程化、
+> 交付与产品化）加 1 章系统设计，扩展后为 **10 篇 68 章 / 约 460,000 字**——
+> 详见 [`GAPS.md`](GAPS.md) 与 [`PLAN.md`](PLAN.md) 第四节，尚未定稿。
+
 ---
 
 ## 素材审计结论（重要）
@@ -57,14 +66,36 @@
 
 ---
 
+## 体系缺口（现有规划少了哪块）
+
+审计还对照「一个能拿到 AI 应用开发岗 Offer 的人应该会什么」逐项检查了一遍。
+结论是：现有规划**不是章节不够细，而是体系少了一整块**——
+从「能做出 demo」到「能交付一个有 SLO 的产品」之间的工程化与交付环节。
+
+| 优先级 | 缺口 | 现状 |
+| --- | --- | --- |
+| **P0** | 模型接入与多厂商 API | 完全没讲「怎么调模型」 |
+| **P0** | 部署与交付（容器化、CI/CD、运维） | 学完只会在本地跑 `uvicorn` |
+| **P0** | AI 系统设计面试 | 题库只覆盖知识点，不覆盖方案设计 |
+| P1 | 评测流水线、可观测性、安全落地、成本工程、前端流式交互、数据合规 | 只有理论或完全没有 |
+| P2 | 本地推理、微调、多模态与语音、多租户计费、GraphRAG | 差异化加分项 |
+
+建议补齐方案（新增 3 篇 14 章，扩展到 68 章 / 约 460,000 字）见
+[`GAPS.md`](GAPS.md) 第四节，三种范围可选。
+注意：这些新增篇章的**素材覆盖度全部为 0**，只能依据官方文档原创撰写。
+
+---
+
 ## 目录说明
 
 ```
 学生就业AI开发教材/
 ├── README.md          ← 你正在看的文件：书籍总览
 ├── PLAN.md            ← 编写计划：章节规划、来源映射、批次、风险、待决策项
+├── GAPS.md            ← AI 开发体系缺口审计：逐项对照能力清单，列出缺失的教程
 ├── COVERAGE.md        ← 素材覆盖度审计报告（由脚本生成，勿手改）
-├── STYLE.md           ← 写作体例与文风统一规范（十段式章节结构）
+├── REFERENCES.md      ← 官方文档出处：按篇映射的权威链接 + 引用规范（79 链接）
+├── STYLE.md           ← 写作体例与文风统一规范（十段式章节结构 + 引用硬规定）
 ├── raw/               ← 原始资料归档（295MB，未纳入 git，原件未做任何删改）
 │   ├── pdf/           ← 12 个原始 PDF
 │   ├── md/            ← 3 个原始面试题 markdown
@@ -79,7 +110,8 @@
 │   └── 06-求职冲刺/            四套题库（AI Agent / Android / Flutter-Dart / 后端）
 ├── tools/             ← 可复跑脚本
 │   ├── extract_sources.py      raw/ → sources/ 文本抽取
-│   └── audit_coverage.py       逐章素材覆盖度审计
+│   ├── audit_coverage.py       逐章素材覆盖度审计
+│   └── check_refs.py           官方文档链接有效性校验
 └── book/              ← 教材正文（待撰写）
 ```
 
@@ -129,6 +161,11 @@ python tools/extract_sources.py            # 重建 sources/ 与 sources/README.
 python tools/audit_coverage.py             # 控制台报表
 python tools/audit_coverage.py --pool      # 素材池明细，核对分段
 python tools/audit_coverage.py --out COVERAGE.md   # 刷新 COVERAGE.md
+
+# 3. 校验官方文档链接
+python tools/check_refs.py                 # 校验全部（并发 HEAD，报告失效与跳转）
+python tools/check_refs.py --only-broken   # 只看失效与跳转
+python tools/check_refs.py --offline       # 只解析链接清单，不发请求
 ```
 
 依赖：`pdftotext`（poppler）、Python 3.10+。

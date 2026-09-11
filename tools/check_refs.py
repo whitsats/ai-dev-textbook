@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+校验 REFERENCES.md 中的官方文档链接是否仍然有效。
+
+为什么需要这个脚本
+------------------
+本教材的技术结论以官方文档为准，但文档会迁移、分支会重命名、API 会关停。
+审计素材时就撞上过一批：Claude 文档从 docs.anthropic.com 迁到
+platform.claude.com 与 code.claude.com，OpenAI 文档迁到 developers.openai.com，
+LangChain 发布 v1 后旧命名空间被移出主线。人工检查几十个链接既慢又容易漏，
+所以做成可复跑的脚本。
+
+关注三类结果
+------------
+  OK      2xx/3xx 正常
+  跳转    最终域名与请求域名不同 —— 文档搬家了，正文里的引用要跟着改
+  失效    4xx/5xx —— 链接已死，必须替换
+  拦截    401/403 —— 站点拒绝脚本访问，人工确认即可（不算失效）
+
+用法
+----
+    python tools/check_refs.py                 # 校验全部链接
+    python tools/check_refs.py --only-broken   # 只打印失效项
+    python tools/check_refs.py --offline       # 只解析链接清单，不发请求
+    python tools/check_refs.py --workers 12 --timeout 12
+"""
+
+from __future__ import annotations
+
+import argparse
+import concurrent.futures as futures
+import re
+import socket
+import ssl
+import sys
+import urllib.error
+import urllib.request
+from pathlib import Path
+from urllib.parse import urlparse
+
+ROOT = Path(__file__).resolve().parent.parent
+REFS = ROOT / "REFERENCES.md"
+URL_RE = re.compile(r"https?://[^\s|)\]}>,；，、]+")
+UA = ("Mozilla/5.0 (compatible; freebuff-textbook-ref-check/1.0; "
+      "+https://example.invalid/bot)")
+
+
+def collect_urls(text: str) -> list[str]:
+    """按出现顺序去重收集链接。"""
+    seen: set[str] = set()
+    out: list[str] = []
+    for m in URL_RE.finditer(text):
+        u = m.group(0).rstrip(".,;）)】").replace("&amp;", "&")
+        if u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
+def _probe(url: str, method: str, timeout: float) -> tuple[int, str]:
+    req = urllib.request.Request(url, method=method, headers={
+        "User-Agent": UA,
+        "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    })
+    ctx = ssl.create_default_context()
+    with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+        return resp.status, resp.geturl()
+
+
+def check(url: str, timeout: float) -> dict:
+    # 先 HEAD；不少站点对 HEAD 返回 403/405，再退化为 GET
+    for method in ("HEAD", "GET"):
+        try:
+            status, final = _probe(url, method, timeout)
+            return {"url": url, "status": status, "final": final, "error": ""}
+        except urllib.error.HTTPError as e:
+            if method == "HEAD" and e.code in (403, 405, 400, 501):
+                continue
+            return {"url": url, "status": e.code, "final": url, "error": f"HTTP {e.code}"}
+        except urllib.error.URLError as e:
+            if method == "HEAD":
+                continue
+            return {"url": url, "status": 0, "final": url,
+                    "error": f"{type(e.reason).__name__}: {e.reason}"}
+        except (socket.timeout, TimeoutError):
+            if method == "HEAD":
+                continue
+            return {"url": url, "status": 0, "final": url, "error": "超时"}
+        except Exception as e:  # noqa: BLE001
+            if method == "HEAD":
+                continue
+            return {"url": url, "status": 0, "final": url, "error": type(e).__name__}
+    return {"url": url, "status": 0, "final": url, "error": "无法连接"}
+
+
+def verdict(r: dict) -> str:
+    st = r["status"]
+    if st == 0:
+        return "失效"
+    if st in (401, 403, 429):
+        return "拦截"      # 反爬，非链接失效
+    if st >= 400:
+        return "失效"
+    a, b = urlparse(r["url"]).netloc, urlparse(r["final"]).netloc
+    if a.replace("www.", "") != b.replace("www.", ""):
+        return "跳转"      # 换域名了，引用需更新
+    return "OK"
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--offline", action="store_true", help="只解析链接，不发请求")
+    ap.add_argument("--only-broken", action="store_true", help="只打印失效/跳转项")
+    ap.add_argument("--timeout", type=float, default=10.0)
+    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--file", default=str(REFS), help="要校验的文件，默认 REFERENCES.md")
+    args = ap.parse_args()
+
+    path = Path(args.file)
+    if not path.exists():
+        print(f"找不到 {path}", file=sys.stderr)
+        return 1
+    urls = collect_urls(path.read_text("utf-8", errors="ignore"))
+    print(f"从 {path.name} 解析出 {len(urls)} 个唯一链接\n")
+
+    if args.offline:
+        for u in urls:
+            print(f"  {u}")
+        return 0
+
+    results: list[dict] = []
+    with futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
+        futs = {pool.submit(check, u, args.timeout): u for u in urls}
+        for fut in futures.as_completed(futs):
+            results.append(fut.result())
+
+    order = {u: i for i, u in enumerate(urls)}
+    results.sort(key=lambda r: order[r["url"]])
+
+    counts: dict[str, int] = {}
+    for r in results:
+        v = verdict(r)
+        counts[v] = counts.get(v, 0) + 1
+        if args.only_broken and v not in ("失效", "跳转"):
+            continue
+        tail = f"  → {r['final']}" if r["final"] != r["url"] else ""
+        extra = f"  ({r['error']})" if r["error"] and v != "OK" else ""
+        print(f"  [{v}] {r['status'] or '-'}  {r['url']}{tail}{extra}")
+
+    print("\n汇总：" + " ｜ ".join(f"{k} {v}" for k, v in sorted(counts.items())))
+    broken = counts.get("失效", 0)
+    moved = counts.get("跳转", 0)
+    if broken or moved:
+        print(f"\n需要处理：{broken} 个失效、{moved} 个跳转。"
+              f"请更新 REFERENCES.md，再同步受影响章节。")
+    return 1 if broken else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
