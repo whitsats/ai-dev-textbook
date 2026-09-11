@@ -214,8 +214,11 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
     urls = re.findall(r"https?://[^\s|)\]\uff0c\u3002]+", text)
     refs = ctx["refs"]
     for u in urls:
-        # 本地地址（开发服务器）不是“出处”，无需登记
+        # 本地地址（开发服务器）不是“出处”，无需登记；
+        # example.com / .invalid 是 RFC 2606 保留的示例域名，代码里当占位符用，也不是出处。
         if re.search(r"(127\.0\.0\.1|localhost|0\.0\.0\.0)", u):
+            continue
+        if re.search(r"\bexample\.(com|org|net)|\bexample\.invalid\b", u):
             continue
         if u.rstrip("/") not in refs:
             rep.err(where, f"链接未登记于 REFERENCES.md：{u}")

@@ -91,6 +91,13 @@
 | JSON 读写（1.6 章） | Python 3 · json 模块 | https://docs.python.org/3/library/json.html |
 | 路径与文件系统（1.6 章） | Python 3 · pathlib 模块 | https://docs.python.org/3/library/pathlib.html |
 | 导入机制（1.6 章） | Python 3 · import 系统 | https://docs.python.org/3/reference/import.html |
+| 线程与锁（1.7 章） | Python 3 · threading 模块 | https://docs.python.org/3/library/threading.html |
+| 进程与多核（1.7 章） | Python 3 · multiprocessing 模块 | https://docs.python.org/3/library/multiprocessing.html |
+| 线程池与进程池（1.7 章） | Python 3 · concurrent.futures | https://docs.python.org/3/library/concurrent.futures.html |
+| 协程与任务（1.7、5.7 章） | Python 3 · asyncio 任务与协程 | https://docs.python.org/3/library/asyncio-task.html |
+| GIL 定义（1.7 章） | Python 3 · 术语表 · GIL | https://docs.python.org/3/glossary.html |
+| 异步路由与并发模型（1.7、1.9 章） | FastAPI · Concurrency and async | https://fastapi.tiangolo.com/async/ |
+| 后台任务（1.7 章） | FastAPI · Background Tasks | https://fastapi.tiangolo.com/tutorial/background-tasks/ |
 | Counter / defaultdict（1.3、7.2 章） | Python 3 · collections 模块 | https://docs.python.org/3/library/collections.html |
 | 异步编程（1.7 章） | Python 官方文档 · asyncio | https://docs.python.org/3/library/asyncio.html |
 | 代码风格（全篇） | PEP 8 | https://peps.python.org/pep-0008/ |
