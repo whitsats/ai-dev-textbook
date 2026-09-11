@@ -198,6 +198,23 @@ def fa_dirs() -> dict[str, str]:
     return _fc_dirs
 
 
+def fa_files(n: str, sub: str = "") -> list[Path]:
+    """取某个讲义章（目录）下的 .md 文件；sub 非空时只取其中第 1 起编号的若干篇。
+
+    为什么需要子文件级选择：`02` 目录的 8 篇横跨三章内容（应用配置 / 生命周期 /
+    中间件与依赖注入 / 生产实践），整目录记到某一章，就会把别的章的素材算进来，
+    让该章看起来比实际充裕。用 `02/01-05` 这种写法只取其中一段。
+    """
+    name = fa_dirs().get(n)
+    if not name:
+        return []
+    files = sorted((FA_DIR / name).rglob("*.md"))
+    if not sub:
+        return files
+    idx = _num_range(sub)
+    return [f for i, f in enumerate(files, 1) if i in idx]
+
+
 def _fa_expand(sel: str) -> list[str]:
     """展开 '02-13' 为 ['02',...,'13']；必须补零，否则匹配不上目录名前缀。"""
     out: list[str] = []
@@ -227,14 +244,20 @@ def resolve(spec) -> dict[str, int]:
                 for n in sel.split(",") if n.strip()}
     if kind == "fa":
         out = {}
-        for n in _fa_expand(sel):
-            name = fa_dirs().get(n)
-            if not name:
+        for part in sel.split(","):
+            part = part.strip()
+            if not part:
                 continue
-            d = FA_DIR / name
-            out[f"fa:{n}"] = sum(
-                file_han(f.relative_to(SRC).as_posix()) for f in d.rglob("*.md")
-            )
+            sub = ""
+            if "/" in part:
+                part, sub = part.split("/", 1)
+            for n in _fa_expand(part):
+                files = fa_files(n, sub)
+                if not files:
+                    continue
+                key = f"fa:{n}" if not sub else f"fa:{n}/{sub}"
+                out[key] = sum(file_han(f.relative_to(SRC).as_posix())
+                               for f in files)
         return out
     if kind == "proj":
         total = 0
@@ -301,20 +324,29 @@ PLAN = [
      "asyncio 须补"),
     # 1.8 按已定稿 8 章的规律预先估：五层模型 + TCP/UDP + HTTP 报文/方法/状态码 +
     # HTTPS + CORS 属多块内容，直接估 8,000（避免事后反复校准）。
+    # fa 04-05（路由 / 请求与响应）被 1.8 与 1.9 共用：1.8 只取其中的 HTTP 协议部分
+    # （方法表、状态码、Cookie），1.9 取 FastAPI 用法。两边按 0.45 / 1.0 分记，
+    # 否则同一份讲义会被完整计入两章，两章都显得比实际充裕。
     ("1", "1.8", "Web 与 HTTP 基础（面试必考）", 8000,
-     [("pys", "net", 0.85), ("fa", "04-05", 1.0)], "网络编程段含 TCP/IP 五层协议"),
-    ("1", "1.9", "FastAPI 入门：路由、请求与响应", 7000,
-     [("fa", "02-13", 1.0)], "素材最充裕"),
+     [("pys", "net", 0.85), ("fa", "04-05", 0.45)],
+     "网络编程段含 TCP/IP 五层协议；fa 04-05 与 1.9 共用，此处只记 HTTP 协议部分"),
+    # 1.9 按已定稿 8 章的规律预先估：本章装「应用与配置 + 路由与 APIRouter +
+    # 四类请求参数 + 请求体 + 响应与统一格式」五块内容，属多块型，
+    # 直接按 7,000 × 1.43 估 10,000，避免事后反复校准。
+    ("1", "1.9", "FastAPI 入门：路由、请求与响应", 10000,
+     [("fa", "02/01-05,03-13", 1.0)],
+     "素材最充裕；02 目录只取第 1-5 篇（其余属 1.11/1.14）"),
     ("1", "1.10", "数据校验：Pydantic 模型", 6000,
      [("fa", "15", 1.0)], "素材仅 1.4k，第 1 篇最薄"),
     ("1", "1.11", "依赖注入与中间件", 6000,
-     [("fa", "16", 1.0), ("fa", "20", 1.0)], ""),
+     [("fa", "16", 1.0), ("fa", "20", 1.0), ("fa", "02/07", 1.0)], ""),
     ("1", "1.12", "数据库与缓存：SQLAlchemy + Redis", 7000,
      [("fa", "17-18", 1.0)], ""),
     ("1", "1.13", "认证与授权：JWT、OAuth2 与权限设计", 6000,
      [("fa", "19", 1.0)], ""),
     ("1", "1.14", "三层架构、日志、异常与单元测试", 7000,
-     [("fa", "21-25", 1.0)], ""),
+     [("fa", "21-25", 1.0), ("fa", "02/06,02/08", 1.0)],
+     "含 02 目录的生命周期与生产实践两篇"),
     ("1", "1.15", "项目实战：知舟博客 API 从零到一", 10000,
      [("proj", "", 1.0)], "两个完整项目 + 17 篇讲解"),
 
@@ -497,11 +529,14 @@ def assigned_units() -> tuple[set[int], set[str], set[str]]:
                 elif kind == "pys":
                     seg_names.add(part)
                 elif kind == "fa":
-                    if "-" in part:
-                        a, b = (int(x) for x in part.split("-"))
-                        fa_ids.update(f"{i:02d}" for i in range(a, b + 1))
-                    else:
-                        fa_ids.add(f"{int(part):02d}")
+                    sub = ""
+                    if "/" in part:
+                        part, sub = part.split("/", 1)
+                    for n in _fa_expand(part):
+                        if not sub:
+                            fa_ids.add(n)          # 整目录
+                        else:
+                            fa_ids.update(f"{n}#{i}" for i in _num_range(sub))
     return py_ids, seg_names, fa_ids
 
 
@@ -517,7 +552,13 @@ def unassigned_lines() -> list[str]:
 
     miss_py = [(n, han(blocks[n])) for n in sorted(blocks) if n not in py_ids]
     miss_seg = [(n, han(segs.get(n, ""))) for n, _p, _d in PY_SEGMENTS if n not in seg_names]
-    miss_fa = [(n, name) for n, name in sorted(fa_dirs().items()) if n not in fa_ids]
+    miss_fa = []
+    for n, name in sorted(fa_dirs().items()):
+        files = fa_files(n)
+        uncovered = [f.relative_to(SRC).as_posix() for i, f in enumerate(files, 1)
+                     if n not in fa_ids and f"{n}#{i}" not in fa_ids]
+        if uncovered:
+            miss_fa.append((n, name, uncovered))
 
     if miss_py:
         out.append("**Python 手册未分配的编号章**：" + "、".join(
@@ -526,7 +567,10 @@ def unassigned_lines() -> list[str]:
         out.append("**手册进阶块未分配的分段**：" + "、".join(
             f"`{n}`（{c:,} 汉字）" for n, c in miss_seg))
     if miss_fa:
-        out.append("**FastAPI 讲义未分配的章**：" + "、".join(f"{n} {name}" for n, name in miss_fa))
+        out.append("**FastAPI 讲义未分配的章**：" + "、".join(
+            (f"{n} {name}" if len(files) == len(fa_files(n))
+             else f"{n} {name}（仅 {len(files)} 篇未分配）")
+            for n, name, files in miss_fa))
     if not out:
         out.append("全部素材单元均已分配到至少一个计划章。")
     else:
