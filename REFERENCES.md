@@ -137,6 +137,10 @@
 | 内置中间件与已知限制（1.11 章） | Starlette · Middleware | https://starlette.dev/middleware/ |
 | `request.state` 与 `app.state`（1.11 章） | Starlette · Requests | https://starlette.dev/requests/ |
 | 安全与 JWT（1.13 章） | FastAPI · Security | https://fastapi.tiangolo.com/tutorial/security/ |
+| JWT 生成与口令哈希（1.13 章） | FastAPI · OAuth2 with JWT | https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/ |
+| 作用域与权限声明（1.13 章） | FastAPI · OAuth2 scopes | https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/ |
+| `get_current_user` 依赖写法（1.13 章） | FastAPI · Get Current User | https://fastapi.tiangolo.com/tutorial/security/get-current-user/ |
+| 表单登录与 `OAuth2PasswordRequestForm`（1.13 章） | FastAPI · Simple OAuth2 | https://fastapi.tiangolo.com/tutorial/security/simple-oauth2/ |
 | 数据校验（1.10 章） | Pydantic 官方文档 | https://pydantic.dev/docs/ |
 | Pydantic 模型与校验器 | Pydantic · Models | https://pydantic.dev/docs/validation/latest/concepts/models/ |
 | 字段约束与 `default_factory`（1.10 章） | Pydantic · Fields | https://pydantic.dev/docs/validation/latest/concepts/fields/ |
@@ -166,6 +170,15 @@
 | HTTP 语义（1.8 章） | RFC 9110 · HTTP Semantics | https://www.rfc-editor.org/rfc/rfc9110.html |
 | JWT 规范（1.13 章） | RFC 7519 · JWT | https://www.rfc-editor.org/rfc/rfc7519.html |
 | OAuth 2.0 规范（1.13 章） | RFC 6749 · OAuth 2.0 | https://www.rfc-editor.org/rfc/rfc6749.html |
+| Bearer 令牌用法与 401/403 语义（1.13 章） | RFC 6750 · Bearer Token Usage | https://www.rfc-editor.org/rfc/rfc6750.html |
+| HMAC 密钥最短长度（1.13 章） | RFC 7518 · JSON Web Algorithms | https://www.rfc-editor.org/rfc/rfc7518.html |
+| 刷新令牌轮换与重放处置（1.13 章） | RFC 9700 · OAuth 2.0 Security BCP | https://www.rfc-editor.org/rfc/rfc9700.html |
+| 口令存储与工作因子（1.13 章） | OWASP · Password Storage Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html |
+| 用户认证与错误文案（1.13 章） | OWASP · Authentication Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html |
+| 对象级授权与越权（1.13 章） | OWASP · Authorization Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html |
+| JWT 库（1.13 章） | PyJWT · Usage | https://pyjwt.readthedocs.io/en/stable/usage.html |
+| 库版本行为变化与安全修复（1.13 章） | PyJWT · Changelog | https://pyjwt.readthedocs.io/en/stable/changelog.html |
+| bcrypt 行为变更（1.13 章） | bcrypt · CHANGELOG | https://github.com/pyca/bcrypt/blob/main/CHANGELOG.rst |
 | 异步任务与队列（1.7 章） | Celery 官方文档 | https://docs.celeryq.dev/ |
 
 ### 第 2 篇 · AI 时代的开发方式

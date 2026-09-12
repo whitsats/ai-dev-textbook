@@ -583,7 +583,82 @@
 | 实跑核对：`scalars().first()` 容忍多行、`scalar_one_or_none()` 多行招 `MultipleResultsFound`、`refresh()` 会多发一次 SELECT | 实跑验证 | 1.12.6、1.12.8 | ✅ |
 | 素材修正：DAO 里同时写 `flush()` 与 `refresh()` | `17…` p.19 | 1.12.8 | ✅ 拿自增 id 只需 `flush`；那句 `refresh` 是一次多余查询（实测 `refresh` 确实另发 SELECT） |
 
-### 1.13–1.15
+### 1.13 认证与授权：JWT、OAuth2 与权限设计
+
+素材：`19FastAPI的认证与授权（集合）`（JWT 2,347 + OAuth2 2,928）+ `13FastAPI管理cookie`（950）
++ 从 1.11 归位的 `20/06`（651）＝ 6,876 汉字（比值 0.34，**严重不足**，须大量原创）。
+
+> ⚠️ **实跑边界与依赖选择**：本机装的是 `PyJWT 2.12.1` + `bcrypt 5.0.0`，
+> **未装** `python-jose` / `passlib`（素材用的栈）。本章因此改用 PyJWT + bcrypt，
+> 理由有二，且两条都有官方出处：① FastAPI 官方教程现已改用 **PyJWT + pwdlib**
+> （[`oauth2-jwt`](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)）；
+> ② `bcrypt 5.0.0` 起对超过 72 字节的口令**直接抛 `ValueError`**
+> （[bcrypt CHANGELOG](https://github.com/pyca/bcrypt/blob/main/CHANGELOG.rst)），
+> 而 passlib 1.7.4 仍按旧行为调用，于是升级后登录会报一个指向错误的 500。
+> pwdlib + Argon2 未安装，正文如实标注**未实跑**。
+
+| 知识点 | 来源 | 正文落点 | 状态 |
+| --- | --- | --- | --- |
+| 认证 vs 授权 vs 会话的边界（素材直接进术语，未做区分） | 原创 | 1.13.1 | ✅ |
+| 无状态（JWT）与有状态（Session）的取舍、撤销难点的根源 | 原创 | 1.13.1、1.13.10 | ✅ |
+| 密码必须哈希而非加密；哈希不可逆、加盐、单向 | `19…JWT` p.5–6 | 1.13.2 | ✅ |
+| `CryptContext(schemes=["bcrypt"], deprecated="auto")`、`hash` / `verify` | `19…JWT` p.6 | 1.13.2 | 🔀 改为 `bcrypt.hashpw` / `checkpw`（passlib 未装且与 bcrypt 5 冲突） |
+| 同一密码两次哈希不同（随机盐） | `19…QAuth2` p.7 | 1.13.2 | ✅ 实跑：两次哈希确实不同 |
+| 工作因子 `bcrypt__rounds=12` 与耗时权衡 | `19…QAuth2` p.12 | 1.13.2 | ✅ 实跑：rounds=4 约 1ms、rounds=12 约 210ms（本机） |
+| 72 字节上限 | 素材未提 | 1.13.2 | ✅ **实跑纠正**：bcrypt 5.0.0 对 >72 字节抛 `ValueError`（素材时代是静默截断） |
+| 长口令的两种解法（限长 + 预哈希 sha256→base64） | 原创 | 1.13.2 | ✅ 实跑：预哈希后 120 字节口令可正常哈希与校验 |
+| JWT 定义（RFC 7519）与「无状态、跨域、签名、灵活」四项优势 | `19…JWT` p.1 | 1.13.3 | ✅ |
+| Header / Payload / Signature 三段与 Base64URL 编码 | `19…JWT` p.1–3 | 1.13.3 | ✅ 实跑：Payload 段直接 base64 解码即得明文 |
+| 声明三类（Registered / Private / Public）与 7 个标准声明 | `19…JWT` p.1–2 | 1.13.3 | ✅ |
+| 签名的作用（防篡改）与三步生成过程 | `19…JWT` p.2–3 | 1.13.3 | ✅ 实跑：改一个字符 → `InvalidSignatureError` |
+| HS256 vs RS256对比（密钥分发、性能、场景） | `19…JWT` p.3–4 | 1.13.3 | ✅ |
+| 算法篡改（`alg: none`）与 `algorithms` 白名单 | `19…JWT` p.11 | 1.13.3 | ✅ 实跑：不传 `algorithms` 直接 `DecodeError`；`none` 被拒 |
+| `jwt.encode` / `jwt.decode` 最小示例 | `19…JWT` p.5 | 1.13.4 | ✅ |
+| 密钥必须来自环境变量、`secrets.token_urlsafe(32)` | `19…JWT` p.6、p.12 | 1.13.4 | ✅ 实跑：短密钥触发 `InsecureKeyLengthWarning`（RFC 7518 §3.2 要求 ≥32 字节） |
+| `exp` / `iat` 写入 Token | `19…JWT` p.6 | 1.13.4 | ✅ 实跑：写成 naive `datetime.utcnow()` 仍可用，但应统一 aware（官方教程用 `datetime.now(timezone.utc)`） |
+| `sub` 存用户 ID | `19…JWT` p.5–7 | 1.13.4 | ✅ **实跑纠正**：PyJWT 2.10 起 `sub` 必须是字符串，传 int 招 `InvalidSubjectError` |
+| `exp` / `iat` / `jti` / `iss` / `aud` / `nbf` 的校验开关 | `19…JWT` p.12 | 1.13.5 | ✅ 实跑：`leeway` / `audience` / `issuer` / `require` 各自的报错类型 |
+| 「缺少 `exp` 的令牌默认也通过」 | 素材未提 | 1.13.5 | ✅ **实跑发现**：`decode` 默认不要求 `exp` 存在，须 `options={"require": ["exp"]}` |
+| 过期与无效的异常层次（`ExpiredSignatureError` ⊂ `PyJWTError`） | `19…JWT` p.7 | 1.13.5 | ✅ 实跑：只捕父类会把「已过期」埋成「无效」，需先捕子类 |
+| `python-jose` 的 `JWTError` 与分层捕获 | `19…QAuth2` p.12 | 1.13.5 | 🔀 改为 PyJWT 的错误层次（同上） |
+| OAuth2 是什么（RFC 6749）与「授权访问而不共享密码」 | `19…QAuth2` p.1 | 1.13.6 | ✅ |
+| OAuth2 与 JWT 的关系（流程 vs 格式，不是二选一） | `19…QAuth2` p.1 | 1.13.6 | ✅ |
+| 四个角色（资源所有者 / 客户端 / 授权服务器 / 资源服务器） | `19…QAuth2` p.1–2 | 1.13.6 | ✅ |
+| 四种授权方式（授权码 / 密码 / 客户端凭证 / 隐式）与选择表 | `19…QAuth2` p.2–6 | 1.13.6 | ✅ |
+| 授权码流程为何要把「令牌传输」放到后端 | `19…QAuth2` p.3–4 | 1.13.6 | ✅ |
+| 密码模式的完整交互与「仅限第一方应用」限制 | `19…QAuth2` p.4–5 | 1.13.6 | ✅ |
+| Scope 的作用（门票类比）与常用 scope 表 | `19…QAuth2` p.6 | 1.13.9 | ✅ |
+| `OAuth2PasswordBearer(tokenUrl=...)` 自动提取 Bearer 令牌 | `19…JWT` p.7、`19…QAuth2` p.8 | 1.13.7 | ✅ |
+| `OAuth2PasswordRequestForm`、`python-multipart` 依赖、表单格式 | `19…JWT` p.4、`19…QAuth2` p.6 | 1.13.7 | ✅ 实跑：表单字段为 `grant_type` / `username` / `password` / `scope` / `client_id` / `client_secret` |
+| 登录接口：验密码 → 签发 → 返回 `access_token` + `token_type` | `19…JWT` p.8 | 1.13.7 | ✅ |
+| `get_current_user` 依赖：验签 → 取 `sub` → 查用户 | `19…JWT` p.7–8 | 1.13.8 | ✅ |
+| 401 必带 `WWW-Authenticate` 头 | `19…JWT` p.7 | 1.13.8 | ✅ 实跑：`auto_error=True` 的默认缺凭据响应是 401 + `WWW-Authenticate: Bearer` + `{"detail":"Not authenticated"}` |
+| 用户名不存在的计时差异（DUMMY_HASH） | 素材未提 | 1.13.8 | ✅ 采 FastAPI 官方教程做法（对不存在用户也跑一次哈希校验） |
+| `SecurityScopes` + `scopes=` 声明、`scope` 声明为空格分隔字符串 | `19…QAuth2` p.6 | 1.13.9 | ✅ 实跑：`security_scopes.scope_str` 与 OpenAPI 的 scope 声明 |
+| 权限不足的状态码：官方示例用 401、RFC 6750 说 403 | `19…QAuth2` p.16 | 1.13.9 | ✅ **实跑核对**：两者都有出处，本章按 HTTP 语义推荐 403 并说明差异 |
+| 刷新令牌机制（访问短 + 刷新长、可撤销） | `19…JWT` p.11 | 1.13.10 | ✅ |
+| 重放攻击与 `jti` + 黑名单 | `19…JWT` p.11 | 1.13.10 | ✅ |
+| 刷新令牌轮换（一次性使用）与类型隔离（`type` 声明） | 原创（素材未给实现） | 1.13.10 | ✅ 实跑：旧 refresh 二次使用 → 401；refresh 当 access 用 → 401 |
+| Cookie 的 `set_cookie` 属性（`max_age`/`expires`/`path`/`domain`/`secure`/`httponly`/`samesite`） | `13…cookie` p.1 | 1.13.11 | ✅ |
+| 读 Cookie：`Cookie(...)` 参数（含 `alias` 与校验）vs `request.cookies` | `13…cookie` p.1–4 | 1.13.11 | ✅ |
+| 删 Cookie：`delete_cookie` 与 path/domain 必须一致 | `13…cookie` p.3 | 1.13.11 | ✅ **实跑纠正**：默认头是 `expires=<当前时间>; Max-Age=0`，不是素材写的 1970；path 不一致时确实删不掉 |
+| 安全三件套与生产配置 | `13…cookie` p.7–8 | 1.13.11 | ✅ 实跑：`secure=True` 的 Cookie 在 http 下不下发；`samesite="none"` 不加 `secure` 也不报错 |
+| Cookie vs Session 对比表（存储位置、安全、传输量、容量） | `13…cookie` p.7 | 1.13.11 | ✅ |
+| `SessionMiddleware`（签名 Cookie 会话）+ 密钥 | `02/07` p.1–2 | 1.13.11 | ✅ 实跑：会话载荷 base64 可读（**只签名不加密**，官方文档原话）；篡改后会话被静默丢弃 |
+| JWT 认证中间件（全局 + 白名单 + 区分过期/缺失/格式） | `20/06` 全文 | 1.13.12 | ✅ **归位到此**；`fastapi-jwt-auth` 不再作为教学库，改用 PyJWT 手写 |
+| 中间件 vs 依赖注入做认证（官方建议依赖，理由） | `20/06` p.4 | 1.13.12 | ✅ 接 1.11 的中间件顺序结论 |
+| 用 TestClient 验证 Cookie 的测试写法 | `13…cookie` p.8 | 1.13.13 | ✅ |
+| 注意事项汇总（HTTPS、强密钥、不过期、不存敏感信息、密码模式限制） | `19…JWT` p.11–12、`19…QAuth2` p.15–17 | 1.13.14 | ✅ |
+| 章节级原创补充：对象级授权（越权访问 IDOR）与所有权校验 | 原创（素材只讲 scope） | 1.13.9 | ✅ |
+| 章节级原创补充：综合示例「知舟认证模块」 | 原创 | 1.13.13 | ✅ |
+| 实跑核对：`OAuth2PasswordRequestForm` 忽略未知字段（多传 `foo` 仍 200），漏 `username` / `password` → 422 | 实跑验证 | 1.13.7 | ✅ |
+| 实跑核对：`auto_error=False` 时过期/无效令牌照样交到你手上，拦截责任转移到业务代码 | 实跑验证 | 1.13.8 | ✅ |
+| 实跑核对：`verify_token` 里的 `leeway=10` 会让「过期 1 秒」的令牌仍然通过（造测试用例要用过期 60 秒的） | 实跑验证 | 1.13.5、1.13.13 | ✅ 初版测试用例就踩到了这个坑 |
+| 实跑核对：TestClient 的**请求级** `cookies=` 不覆盖 Cookie 罐，验证篡改会话必须换一个客户端 | 实跑验证 | 1.13.13 | ✅ |
+| 规范核对：RFC 6750 §3.1 规定 `insufficient_scope` → **403**（FastAPI 官方示例写的是 401） | RFC 6750 | 1.13.9 | ✅ 两个出处不一致，正文列出并说明取舍 |
+| 术语治理：新登「鉴权」为禁止写法，全库替换（0.1 / 0.2 / 1.1 / 1.4 / 1.11 共 15 处） | GLOSSARY | 全书 | ✅ 它同时指认证与授权，是歧义的根源 |
+
+### 1.14–1.15
 
 每章开写前 30 分钟内补全小节台账（流程见 [`STYLE.md`](STYLE.md) 第八节）。
 
@@ -591,7 +666,6 @@
 
 | 章 | 素材 | 内容 | 状态 |
 | --- | --- | --- | --- |
-| 1.13 | `20/06`、`02/07`(Session) | JWT 认证中间件、白名单路径、会话中间件 | ⬜ |
 | 1.14 | `20/08` | 日志记录中间件、结构化日志、滚动日志 | ⬜ |
 
 ---
@@ -601,7 +675,7 @@
 | 篇 | 章数 | `✅` 已落点 | `🔀` 合并 | `⏭` 有意省略 | `⬜` 待写 | 反向核对 |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | 第 0 篇 | 3 | 18 | 0 | 0 | 0 | 已完成（0.1–0.3 逐条回查） |
-| 第 1 篇 | 15 | 399（1.1–1.12） | 19 | 27 | 2 | 进行中（已完成 12/15 章） |
+| 第 1 篇 | 15 | 455（1.1–1.13） | 21 | 27 | 1 | 进行中（已完成 13/15 章） |
 
 > 提交正文时同步更新本表；`python tools/lint_book.py` 会统计 `⬜` 数量并提示未清零的篇，
 > 并按表头逐列核对本表的四个数字（手写汇总最容易漂：本轮就填错过一次，手写 287、实数 286）。
