@@ -243,8 +243,14 @@
 | 规则文件与 `@` 引用（2.4 章） | Cursor · Rules | https://cursor.com/docs/rules |
 | 补全的多行编辑与跳转预测（2.4 章） | Cursor · Tab | https://cursor.com/help/ai-features/tab |
 | 仓库级 / 路径级自定义指令（2.4 章） | GitHub · Adding repository custom instructions | https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions |
+| 斜杠命令、聊天变量与参与者（2.4 章） | GitHub · Copilot Chat cheat sheet | https://docs.github.com/en/copilot/reference/chat-cheat-sheet |
+| Agent / Plan / Ask 三种模式（2.4 章） | GitHub · Asking Copilot questions in your IDE | https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide |
+| 预设命令清单与「可用命令随环境变化」（2.4 章） | Cursor · Slash commands | https://cursor.com/docs/cli/reference/slash-commands |
+| 自定义命令已并入 Skills（2.4、2.5 章） | Claude Code · Extend Claude with skills | https://code.claude.com/docs/en/slash-commands |
+| Vue - Official 取代 Vetur、在 Vue 3 里须禁用 Vetur（2.4 章） | Vue · Using Vue with TypeScript | https://vuejs.org/guide/typescript/overview |
+| Network 面板记录什么与 Initiator（2.4 章） | Chrome DevTools · Inspect network activity | https://developer.chrome.com/docs/devtools/network/ |
 | 跨域：简单请求、预检与凭证限制（2.4 章） | MDN · Cross-Origin Resource Sharing | https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS |
-| CORS 中间件的凭证与反射行为（2.4 章） | Starlette · Middleware | https://www.starlette.io/middleware/ |
+| CORS 中间件的凭证与反射行为（2.4 章） | Starlette · Middleware | https://starlette.dev/middleware/ |
 | 前端环境变量与构建模式（2.4 章） | Vite · Env Variables and Modes | https://vite.dev/guide/env-and-mode |
 | 构建与产物预览（2.4 章） | Vite · Building for Production | https://vite.dev/guide/build |
 | `create-vue` 脚手架与项目结构（2.4 章） | Vue · Quick Start | https://vuejs.org/guide/quick-start |
