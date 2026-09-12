@@ -456,18 +456,44 @@ PLAN = [
     #      USENIX'25 原创。判定因此由「充裕」改为「偏薄」（6,180 / 8,000 = 0.77）。
     ("2", "2.1", "与 AI 协作编程：思维模型、能力边界与风险", 11000,
      [("file", "02-AI编程工具链/AI-Harness入门与实践.md", 0.7)], ""),
-    ("2", "2.2", "Claude Code 实战：从对话到工程化", 7000,
-     [("file", "02-AI编程工具链/Claude-Code从入门到实战.md", 0.9)], "468 个结构化条目"),
+    #     权重按**章节实际用到的节**实测拆分，不再写「整份文件的百分比」：
+    #     原来 2.2 记 0.9、2.5 又记 0.5，合计 1.4——同一份文件被算了两次，
+    #     两章都显得比实际充裕。Codex 与 AI-Harness 同病（详见 weight_sum_lines）。
+    #     拆分依据：2.2 用第 1–8、10–14、17–20 节（含开篇「15 件事」）＝ 12,436；
+    #     2.5 用第 9 节与 16.3–16.5（规则文件 / MCP / Skills / Hooks）≈ 1,627；
+    #     2.6 用第 15 节与 16.1–16.2（Actions / Subagents / 动态工作流）≈ 817。
+    #     事前估按 8.7 公式：11 节 × 约 800 + 固定段约 2,200 + 约 150 行命令/模板 × 15
+    #     ——这一章的「代码」不是算法而是**命令、工单模板与配置**，代码行项占比高，
+    #     不能按纯叙述章估。原定 7,000 是「素材量 × 1.24」倒推的。
+    #     事后校准（实写 20,805，事前估 11,000，达成 189%）：两项都估低了，且原因不同。
+    #     ① 代码行项：事前估 150 行，实际 **324 行**——这一章的提示词模板/工单/配置
+    #        每个都是 10–30 行，而它们是正文内容本身，不是附录；
+    #     ② 散文项：事前估约 8,800 汉字，实际 15,945——多出来的主要是**素材没有的原创**：
+    #        权限模式全集（素材只列了一半且说法过时）、沙箱的平台限制与两个开关、
+    #        会话恢复的“不还原”清单，这三块只能回官方文档写。
+    #     归因结论：不是“装了两章”（§9/§15/§16 已归 2.5/2.6），是估法对
+    #     「模板密集章」失效——同一个错方向第 5 次出现（参见 STYLE 8.7）。
+    ("2", "2.2", "Claude Code 实战：从对话到工程化", 21000,
+     [("file", "02-AI编程工具链/Claude-Code从入门到实战.md", 0.84)], "实测 12,420 汉字"),
+    #     Codex：2.3 用第 1–8、10–14、16–19 节 ＝ 10,325；
+    #     2.5 用第 9 节与 15.4–15.6（AGENTS.md / MCP / Skills / Automations）≈ 1,633；
+    #     2.6 用 15.1–15.3（Plan / Goal / Subagents）≈ 512。
     ("2", "2.3", "Codex 实战：云端与本地的工作流", 6000,
-     [("file", "02-AI编程工具链/Codex从入门到实战.md", 0.9)], ""),
+     [("file", "02-AI编程工具链/Codex从入门到实战.md", 0.81)], "实测 10,325 汉字"),
     ("2", "2.4", "AI 编辑器与 Vibe Coding 全栈开发", 6000,
      [("file", "02-AI编程工具链/Vibe-Coding与AI编辑器全栈开发.md", 0.8)], "截图多，示例须重写"),
+    #     2.5 / 2.6 当初是按「每份文件切一半」估的，与两份手册里真正讲
+    #     上下文工程/流水线的节毫无关系。改为按节实测后，两章的素材量大幅
+    #     回落——判定也跟着从「充裕/够用」变成「偏薄/严重不足」，这是实情：
+    #     规则文件的写法要自己去官方文档补，Skills/Hooks 更是官方文档独有。
     ("2", "2.5", "上下文工程：规则文件、Skills、Hooks 与 MCP", 8000,
-     [("file", "02-AI编程工具链/Claude-Code从入门到实战.md", 0.5),
-      ("file", "02-AI编程工具链/Codex从入门到实战.md", 0.4),
-      ("file", "02-AI编程工具链/AI-Harness入门与实践.md", 0.5)], "跨三份素材，须自行织合"),
+     [("file", "02-AI编程工具链/Claude-Code从入门到实战.md", 0.11),
+      ("file", "02-AI编程工具链/Codex从入门到实战.md", 0.13),
+      ("file", "02-AI编程工具链/AI-Harness入门与实践.md", 0.15)], "跨三份素材，须自行织合"),
     ("2", "2.6", "AI Harness：把 AI 编程接入工程流水线", 6000,
-     [("file", "02-AI编程工具链/AI-Harness入门与实践.md", 0.8)], ""),
+     [("file", "02-AI编程工具链/AI-Harness入门与实践.md", 0.15),
+      ("file", "02-AI编程工具链/Claude-Code从入门到实战.md", 0.05),
+      ("file", "02-AI编程工具链/Codex从入门到实战.md", 0.05)], "跨三份素材，须自行织合"),
 
     # ---------------- 第 3 篇 大模型与 Agent 原理
     ("3", "3.1", "大模型基础：从 Transformer 到 Token", 7000, [], "素材零覆盖，完全原创"),
@@ -886,6 +912,12 @@ def _chapter_effective_words() -> dict[str, int]:
     """调 lint_book.py 拿到每章实测的有效字数，返回 {章号: 有效字数}。
 
     不在这里重算公式：字数口径必须只有一份实现，否则两边会各自漂。
+
+    这里曾被文件名里的**一个空格**骗过去：原来的正则写的是 `(\d+\.\d+)-[^\s]*\.md`，
+    而 `2.2-Claude Code 实战.md` 的说明部分含空格，于是这一章**被静默跳过**——
+    它既不计入实测总数、也不算作“已完成”，而输出上没有任何异常。
+    所以现在两道保险：文件名部分用 `[^-]` 而不是 `[^\s]`；
+    再用 `uncounted_chapter_files()` 揪出“文件在、但一个数字都没被解析出来”的章。
     """
     import subprocess
 
@@ -896,9 +928,54 @@ def _chapter_effective_words() -> dict[str, int]:
                           capture_output=True, text=True, encoding="utf-8", errors="replace")
     out: dict[str, int] = {}
     for line in proc.stdout.splitlines():
-        m = re.search(r"^(\d+\.\d+)-[^\s]*\.md\s+有效字数\s+([\d,]+)", line.strip())
+        # 章号后面一律宽松匹配：文件名里可能有空格、可能有连字符，
+        # 这两种都曾让某章静默漏计（空格一次、`-` 尚未发生但同样致命）。
+        m = re.search(r"^(\d+\.\d+)-.*?\.md\s+有效字数\s+([\d,]+)", line.strip())
         if m:
             out[m.group(1)] = int(m.group(2).replace(",", ""))
+    return out
+
+
+def uncounted_chapter_files(measured: dict[str, int]) -> list[str]:
+    """book/ 下已存在的章文件，但没有出现在实测字典里——即“写了却没被统计到”。
+
+    这正是上面那次静默跳过的形态：文件明明在，字数却不算进完成度，
+    于是汇报里看起来就是“没写”。这类“静默漏账”比数字算错更危险，
+    因为报表本身不会看起来奇怪。
+    """
+    out: list[str] = []
+    book = Path(__file__).resolve().parents[1] / "book"
+    for f in sorted(book.rglob("*.md")):
+        # 守卫自己用**更宽松**的写法（不要求有连字符），这样“解析器漏掉”才会被它抓到；
+        # 若守卫与解析器用同一条规则，它就只能永远沉默。
+        m = re.match(r"^(\d+\.\d+)", f.name)
+        if m and m.group(1) not in measured:
+            out.append(f"{f.relative_to(book.parent).as_posix()}（章号 {m.group(1)} 不在实测里）")
+    return out
+
+
+def weight_sum_lines() -> list[str]:
+    """同一份素材被多章计入的权重之和超过 1.0 的文件。
+
+    `STYLE.md` 8.9 要求「共用素材按权重分记」，但此前只检查了「有没有被分配」
+    （`unassigned_lines`），没检查「有没有被重复计入」——于是同一份文件可以在
+    2.1 记 0.7、2.5 再记 0.5、2.6 又记 0.8，合计 2.0：三章都显得比实际充裕，
+    而没有任何一处会报错。这类「静默虚高」比虚低更危险——它同时把篇幅基线与
+    判定都抬高，让「素材充裕」成为错觉。
+
+    第 2 篇已按实测的**节级拆分**修正（见各行注释）；第 4、5 篇的三份仍有此问题，
+    需逐份量出各章实际用到的节才能改，不能拍脑袋对半砍。
+    """
+    acc: dict[str, list[tuple[str, float]]] = {}
+    for row in PLAN:
+        for kind, key, w in row[4]:
+            acc.setdefault(f"{kind}:{key}", []).append((row[1], w))
+    out: list[str] = []
+    for key, users in sorted(acc.items()):
+        total = sum(w for _, w in users)
+        if total > 1.0001:
+            out.append(f"{key} 合计 {total:.2f} ← "
+                       + "、".join(f"{c}（{w}）" for c, w in users))
     return out
 
 
@@ -942,7 +1019,8 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
     # 不采信文档里手写的「已完成」——本轮它就报过一个 stale 值：第 0 篇 3 章 + 第 1 篇 9 章，
     # 看板的合计却写着 3。
     done: dict[int, int] = {}
-    for cid in _chapter_effective_words():
+    measured_words = _chapter_effective_words()
+    for cid in measured_words:
         head = cid.split(".")[0]
         if head.isdigit():
             done[int(head)] = done.get(int(head), 0) + 1
@@ -1186,6 +1264,22 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
         if _as_int(pm.group(3)) != measured:
             problems.append(f"PLAN 文首进度：实测 {pm.group(3)} 字 ≠ 正文实测 {measured:,} 字")
 
+    # 8) 章文件存在、却没被统计到（**拦提交**）。这是「写了却没记账」的另一种形态：
+    #    文件名一旦不符合解析规则，这章的字数就不进完成度，报表上看起来就是“没写”，
+    #    而所有数字之间仍然自洽——所以它必须自己报出来，不能靠人盯着看。
+    for line in uncounted_chapter_files(measured_words):
+        problems.append(f"章文件未被统计：{line}")
+
+    # 9) 素材重复计入（提示，不拦提交）。它不是文档数字漂移，而是**规划本身**
+    #    的错：不报出来就会被当成「这两章素材很充裕」而一路写下去。
+    over = weight_sum_lines()
+    if over:
+        print("⚠️ 同一份素材被多章重复计入（权重之和 > 1.0）：")
+        for line in over:
+            print(f"  · {line}")
+        print("  影响：这些章的素材量与判定偏高，篇幅基线不可直接采信。"
+              "\n  修法：按章节**实际用到的节**量出拆分比例，再改 tools/audit_coverage.py。")
+
     if problems:
         print("文档数字与实测不一致：")
         for p in problems:
@@ -1255,6 +1349,11 @@ def main() -> int:
     print("\n=== 素材分配完整性检查（防丢）===")
     for line in unassigned_lines():
         print("  " + line)
+    over = weight_sum_lines()
+    if over:
+        print("\n  ⚠️ 重复计入（权重之和 > 1.0，素材量与判定会偏高）：")
+        for line in over:
+            print("    · " + line)
 
     if args.md:
         print("| 章 | 标题 | 计划字数 | 散文素材 | 题库素材(折算) | 散文比值 | 判定 | 说明 |")
