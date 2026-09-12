@@ -213,6 +213,11 @@
 | MCP 规范与授权模型 | MCP · Specification | https://modelcontextprotocol.io/specification/ |
 | MCP 官方 SDK | MCP · SDKs | https://modelcontextprotocol.io/docs/2026-07-28/sdk |
 | GitHub Copilot 对照（2.3 章） | GitHub · Copilot 文档 | https://docs.github.com/en/copilot |
+| 开发者生产力的对照实验（2.1 章） | METR · 2025 AI 与开源开发者生产力实验 | https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/ |
+| 同一实验的 2026 更新（选择效应与重设计） | METR · 实验设计变更说明 | https://metr.org/blog/2026-02-24-uplift-update/ |
+| AI 采用率、信任与交付稳定性（2.1 章） | DORA · State of AI-assisted Software Development 2025 | https://dora.dev/dora-report-2025/ |
+| 上表关键数字的官方公告（2.1 章） | Google Cloud · 2025 DORA 报告发布 | https://cloud.google.com/blog/products/ai-machine-learning/announcing-the-2025-dora-report |
+| 风险分类与治理口径（2.1、3.8 章） | OWASP · GenAI LLM Top 10 2026 | https://genai.owasp.org/llm-top-10/ |
 
 ### 第 3 篇 · 大模型与 Agent 原理
 
@@ -321,7 +326,10 @@
 | 工具学习（3.5 章） | Toolformer (2023) | https://arxiv.org/abs/2302.04761 |
 | 自我反思与迭代（3.4 章） | Reflexion: Language Agents with Verbal Reinforcement Learning (2023) | https://arxiv.org/abs/2303.11366 |
 | RAG 原始论文（5.1 章） | Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (2020) | https://arxiv.org/abs/2005.11401 |
-| 长上下文与位置敏感（5.2、5.4 章） | Lost in the Middle (2023) | https://arxiv.org/abs/2307.03172 |
+| 长上下文与位置敏感（2.1、5.2、5.4 章） | Lost in the Middle (2023) | https://arxiv.org/abs/2307.03172 |
+| 包幻觉与仿冒投递（2.1、7.4 章） | We Have a Package for You! A Comprehensive Analysis of Package Hallucinations by Code Generating LLMs (USENIX Security 2025) | https://arxiv.org/abs/2406.10279 |
+| AI 助手与不安全代码（2.1、7.4 章） | Do Users Write More Insecure Code with AI Assistants? (CCS 2023) | https://arxiv.org/abs/2211.03622 |
+| 生成式 AI 与批判性思考（2.1 章） | The Impact of Generative AI on Critical Thinking (CHI 2025) | https://www.microsoft.com/en-us/research/publication/the-impact-of-generative-ai-on-critical-thinking-self-reported-reductions-in-cognitive-effort-and-confidence-effects-from-a-survey-of-knowledge-workers/ |
 | 自反思检索（5.4 章） | Self-RAG (2023) | https://arxiv.org/abs/2310.11511 |
 | RAG 自动评估（5.6 章） | Ragas: Automated Evaluation of Retrieval Augmented Generation (2023) | https://arxiv.org/abs/2309.15217 |
 | LoRA 低秩微调（9.2 章） | LoRA: Low-Rank Adaptation of Large Language Models (2021) | https://arxiv.org/abs/2106.09685 |

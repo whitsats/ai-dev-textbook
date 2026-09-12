@@ -68,6 +68,13 @@
 | 三层架构 | Layered Architecture | 三层分层、三层结构 | 1.14 |
 | 微调 | Fine-tuning | 精调、细调 | 6.1 |
 | 模型网关 | Model Gateway | 模型代理层 | 6.3 |
+| Harness | Agent Harness | 工装、外挂框架、工作底座 | 2.1 |
+| Vibe Coding | Vibe Coding | 氛围编程、感觉式编程 | 2.1 |
+| 提示注入 | Prompt Injection | 提示词注入、注入攻击（需与其他注入区分时写全称） | 2.1 |
+| 包幻觉 | Package Hallucination | 依赖幻觉、包臆造 | 2.1 |
+| 过度代理 | Excessive Agency | 代理过度、权力过大 | 2.1 |
+| 上下文腐烂 | Context Rot | 上下文腐化、上下文失效 | 2.1 |
+| 完成标准 | Done Criteria | 完成条件、完结标准 | 2.1 |
 | 知舟 | Zhizhou | 智舟 | 0.2 |
 | 素材库 | — | 参考资料库 | 0.3 |
 | 官方文档 | — | 官网资料、权威文献 | 0.3 |
