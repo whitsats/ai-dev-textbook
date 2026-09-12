@@ -59,6 +59,21 @@ WORD_TOLERANCE = 0.40
 CODE_LINE_EQUIV = 15
 DUP_MIN_HAN = 30  # 跨章重复检测的最小句长（汉字数）
 
+# ---------------- 交叉引用与台账落点（篇收尾的反向核对用） ----------------
+#
+# 为什么要单独一套判定：`1.6.0`、`3.5.3`、`3.11`、`2.10` 这些**版本号**与章号长得一样
+# （Starlette 1.6.0、redis 3.5.3、PyJWT 2.10、Python 3.11）。只按「像章号」判定，
+# 会把每一个版本号都当成悬空引用。实测过：裸扫描得 8 条命中，**全是版本号**。
+# 所以只有出现引用语境（第…节 / 见 / 详见 / 括号包裹）才算引用——宁可少报，不可乱报。
+REF_SOFT_PREFIX = "第见详参接与和同如按到在从（(，,、"
+REF_HARD_PREFIX = ("第", "见", "详见", "参见", "参照")
+# 台账落点里这些**文字落点**是合法的（它们指向章末固定小节或全书层面的说明）
+LANDING_WORDS = ("延伸阅读", "练习", "常见坑", "本章小结", "面试视角", "学习目标",
+                 "前言", "全书", "见 PLAN", "——", "同上")
+SEC_REF = re.compile(r"(?<![\d.])(\d{1,2}\.\d{1,2}\.\d{1,3})(?![\d.])")
+CHAP_REF = re.compile(r"(?<![\d.])(\d{1,2}\.\d{1,2})(?![\d.])")
+LEDGER_SYMBOLS = ("✅", "🔀", "⏭", "⬜")
+
 
 class Report:
     def __init__(self) -> None:
@@ -328,6 +343,148 @@ def check_blank_lines(rep: Report) -> None:
                 rep.err(f.name, f"第 {i + 1} 行标题「{ln[:24]}」前缺少空行")
 
 
+def build_book_index() -> tuple[set[str], dict[str, set[str]]]:
+    """扫描 book/ 已有正文，返回（有正文的章号，{章号: {小节号}}）。
+
+    交叉引用可能指向**别的章**（「详见 1.12」写在第 1.15 章里），所以索引必须扫全书，
+    不能只看本次校验的章。
+    """
+    body: set[str] = set()
+    secs: dict[str, set[str]] = defaultdict(set)
+    for f in BOOK.rglob("*.md"):
+        m = re.match(r"(\d+\.\d+)-(.*)\.md$", f.name)
+        if not m:
+            continue
+        cid = m.group(1)
+        body.add(cid)
+        text = f.read_text(encoding="utf-8", errors="replace")
+        secs[cid] |= set(re.findall(r"^##\s+(\d+\.\d+\.\d+)", text, re.M))
+    return body, secs
+
+
+def _is_section_ref(prose: str, m: re.Match, strict: bool) -> bool:
+    """判断一个 x.y.z / x.y 记号是不是**交叉引用**，而不是版本号。
+
+    strict=True 用于两段式记号（`1.14`）：它和常见版本号（`3.11`、`2.10`）无法仅凭
+    上下文区分，只认「第 … 节」「见 …」「（…）」三种明确写法。
+    三段式（`1.14.9`）的误报率实测为 0，因此允许中文语境前缀（「与 1.12.3」「接 1.13.5」）。
+    """
+    pre = prose[:m.start()]
+    suf = prose[m.end():]
+    if suf.startswith(("节", "章")):
+        return True
+    if pre.rstrip()[-1:] == "第" or pre.rstrip()[-2:] in ("详见", "参见", "参照"):
+        return True
+    if pre.rstrip()[-1:] == "见":
+        return True
+    if not strict:
+        # 只对三段式（`（1.12.3）`）认这个写法：两段式的括号里几乎都是版本号
+        # （「PyJWT 的类型校验（2.10）」），而版本号与「章号」在字面上无法区分。
+        wrapped = pre.rstrip()[-1:] in "（(" and suf.startswith(("）", ")"))
+        if wrapped:
+            # `Python（3.11.9）`：括号前是产品名 → 版本号，不是引用
+            before = pre.rstrip()[:-1]
+            if re.search(r"[A-Za-z0-9][\w.\- ]*$", before):
+                return False
+            return True
+    if strict:
+        return False
+    tail = pre.rstrip()[-1:]
+    if tail in REF_SOFT_PREFIX:
+        # `本书统一按 3.11+ 执行`：前缀是「按」且后面跟 +/- → 版本号
+        if suf[:1] in ("+", "-") and re.search(r"\d$", pre.rstrip()[:-1]):
+            return False
+        return True
+    return False
+
+
+def check_cross_refs(chapters: dict[str, str], rep: Report) -> None:
+    """章内交叉引用必须真实存在。
+
+    已有的引用校验只查到「章」这一级（且只认「第 x.y 节」写法）。改编号、拆章节之后
+    最容易悄悄坏掉的正是**小节级**引用——「详见 1.14.6」在 1.14 只剩 5 节时就悬空了，
+    而正文渲染出来看不出任何异常。这里把两种粒度的引用都落到真实标题上。
+    """
+    plan_ch = load_plan_chapters()
+    body, secs = build_book_index()
+    for cid, text in chapters.items():
+        prose = re.sub(r"```.*?```", "", text, flags=re.S)
+        for m in SEC_REF.finditer(prose):
+            ref = m.group(1)
+            chap = ".".join(ref.split(".")[:2])
+            if chap not in plan_ch or not _is_section_ref(prose, m, strict=False):
+                continue
+            # `1.6.0`、`3.11.0` 这类第三段为 0 的记号是版本号：本书小节从 1 开始编号。
+            if ref.endswith(".0"):
+                continue
+            if ref not in secs.get(chap, set()):
+                rep.err(cid, f"交叉引用「{ref}」悬空：{chap} 中没有这一小节")
+        for m in CHAP_REF.finditer(prose):
+            ref = m.group(1)
+            if not _is_section_ref(prose, m, strict=True):
+                continue
+            if ref not in plan_ch:
+                rep.err(cid, f"交叉引用「{ref}」悬空：PLAN.md 中没有这一章")
+            # 指向「还没写的章」不报警：这是**正常的前置铺垫**
+            # （1.4 讲重试装饰器时预告 6.3，1.2 讲推导式时预告 6.2），
+            # 全书写完之前这类引用本来就该存在。报警器一旦吵，就没人看了。
+
+
+def check_ledger_landings(rep: Report) -> None:
+    """台账反向核对：每条 `✅` 的落点必须能在正文里指到真实位置。
+
+    台账最容易出现的一种假绿灯是：知识点标了 `✅`，落点也填了，但**那一节并不存在**
+    （章节拆分/改编号后落点没跟着改）。这类行只有把落点逐个解析出来才对得上，
+    靠人翻 600 多条是不可能的。
+    """
+    if not LEDGER.exists():
+        return
+    plan_ch = load_plan_chapters()
+    body, secs = build_book_index()
+    current = None
+    for ln in LEDGER.read_text(encoding="utf-8").splitlines():
+        if ln.startswith("### "):
+            m = re.match(r"###\s+(\d+\.\d+)", ln)
+            current = m.group(1) if m else None
+            continue
+        if ln.startswith("## "):
+            current = None
+            continue
+        if current is None or not ln.startswith("|") or "---" in ln:
+            continue
+        cells = [c.strip() for c in ln.strip("|").split("|")]
+        if len(cells) < 3:
+            continue
+        landing, status = cells[-2], cells[-1]
+        if landing in ("落点", "正文落点", "计划落点"):
+            continue
+        sym = next((s for s in LEDGER_SYMBOLS if s in status), None)
+        if sym is None:
+            continue
+        where = f"台账 {current}"
+        sec_refs = SEC_REF.findall(landing)
+        chap_refs = CHAP_REF.findall(landing)
+        for ref in sec_refs:
+            chap = ".".join(ref.split(".")[:2])
+            if chap in plan_ch and ref not in secs.get(chap, set()):
+                rep.err(where, f"落点「{ref}」不存在"
+                               f"（{cells[0][:18]}…）")
+        for ref in chap_refs:
+            if ref not in plan_ch:
+                rep.err(where, f"落点「{ref}」不在 PLAN.md 中（{cells[0][:18]}…）")
+        if sym == "✅":
+            refs = sec_refs + chap_refs
+            if not refs and not any(w in landing for w in LANDING_WORDS):
+                rep.err(where, f"标了 ✅ 但落点无法定位：「{landing[:24]}」（{cells[0][:18]}…）")
+            elif refs:
+                # 只在落点指向的章**真实存在**时才问「有没有正文」：
+                # 章号不存在已经报过了，再报一条“没正文”只是重复。
+                chaps = [".".join(x.split(".")[:2]) for x in refs]
+                known = [c for c in chaps if c in plan_ch]
+                if known and not any(c in body for c in known):
+                    rep.err(where, f"标了 ✅ 但落点的章都还没有正文（{cells[0][:18]}…）")
+
+
 def check_ledger(rep: Report) -> None:
     if not LEDGER.exists():
         rep.warn("台账", "未找到 LEDGER.md")
@@ -445,6 +602,8 @@ def main() -> int:
 
     check_duplicates(chapters, rep)
     check_blank_lines(rep)
+    check_cross_refs(chapters, rep)
+    check_ledger_landings(rep)
 
     print()
     print(f"校验章节 {len(files)} 章 ｜ 引用库 {len(ctx['refs'])} 条链接 ｜ 术语 {len(ctx['glossary'])} 条禁止写法")
