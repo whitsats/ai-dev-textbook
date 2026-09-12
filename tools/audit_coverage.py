@@ -338,8 +338,16 @@ PLAN = [
     ("1", "1.9", "FastAPI 入门：路由、请求与响应", 15000,
      [("fa", "02/01-05,03-09", 1.0)],
      "素材最充裕；02 只取第 1-5 篇，03-09 为路由与四类参数"),
-    ("1", "1.10", "数据校验：Pydantic 模型", 6000,
-     [("fa", "15", 1.0)], "素材仅 1.4k，第 1 篇最薄"),
+    # 1.10 的教训与 1.5/1.6/1.7 相反方向：那几章是「素材多、计划少」，这章是
+    # 「素材几乎为零，但绝不是薄章」。素材只有 1,356 字（最薄），可 Pydantic v2
+    # 的完整面貌（数据契约 → 模型定义 → Field → 常用类型 → ConfigDict → 校验器 →
+    # 嵌套继承联合 → 别名序列化 → FastAPI 集成 → 综合示例）本身就是十节的量，
+    # 实写 11,807（有效字数，达成按 6,000 算的 197%）。
+    # 处理同 1.5：按实测校准为 11,500，而不是删掉已覆盖的内容。
+    # 估法教训：字数按「小节数 × 800~1,100 + 代码折算」估，不按素材量估——
+    # 零素材只说明要自己写，不说明写得少。
+    ("1", "1.10", "数据校验：Pydantic 模型", 11500,
+     [("fa", "15", 1.0)], "素材仅 1.4k（最薄），几乎全原创"),
     ("1", "1.11", "依赖注入与中间件", 6000,
      [("fa", "16", 1.0), ("fa", "20", 1.0), ("fa", "02/07", 1.0)], ""),
     ("1", "1.12", "数据库与缓存：SQLAlchemy + Redis", 7000,
@@ -769,6 +777,17 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
     agg = part_aggregates()
     total_chapters = sum(int(a["n"]) for a in agg.values())
     total_plan = sum(int(a["plan"]) for a in agg.values())
+
+    # 已完稿章数以**正文文件是否存在**为准（判定口径见 lint_book.py），
+    # 不采信文档里手写的「已完成」——本轮它就报过一个 stale 值：第 0 篇 3 章 + 第 1 篇 9 章，
+    # 看板的合计却写着 3。
+    done: dict[int, int] = {}
+    for cid in _chapter_effective_words():
+        head = cid.split(".")[0]
+        if head.isdigit():
+            done[int(head)] = done.get(int(head), 0) + 1
+    done_total = sum(done.values())
+
     problems: list[str] = []
 
     text = plan_path.read_text(encoding="utf-8")
@@ -788,6 +807,10 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
                     problems.append(f"PLAN 看板合计：章数 {cells[1]} ≠ 实测 {total_chapters}")
                 if _as_int(cells[2]) != total_plan:
                     problems.append(f"PLAN 看板合计：计划字数 {cells[2]} ≠ 实测 {total_plan:,}")
+                if len(cells) >= 5 and re.fullmatch(r"\d+", cells[4]) \
+                        and _as_int(cells[4]) != done_total:
+                    problems.append(
+                        f"PLAN 看板合计：已完成 {cells[4]} ≠ 实测 {done_total}")
                 continue
             m = re.match(r"^(\d+)\s", cells[0])
             if not m or int(m.group(1)) not in agg:
@@ -800,6 +823,10 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
                 problems.append(f"PLAN 看板第 {p} 篇：计划字数 {cells[2]} ≠ 实测 {int(a['plan']):,}")
             if re.fullmatch(r"\d+\.\d+", cells[3]) and abs(float(cells[3]) - a["ratio"]) > 0.005:
                 problems.append(f"PLAN 看板第 {p} 篇：素材比值 {cells[3]} ≠ 实测 {a['ratio']:.2f}")
+            if len(cells) >= 5 and re.fullmatch(r"\d+", cells[4]) \
+                    and _as_int(cells[4]) != done.get(p, 0):
+                problems.append(
+                    f"PLAN 看板第 {p} 篇：已完成 {cells[4]} ≠ 实测 {done.get(p, 0)}")
 
     # 2) 篇级覆盖度表：| 1 编程地基 | 15 | 94,000 | 116,218 | 0 | 1.24 | 充裕 |
     header_mark = "| 篇 | 章数 | 计划字数 | 散文素材池 | 题库池 | 散文比值 | 判定 |"
@@ -887,13 +914,53 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
     # 4) 逐章状态列里的「✅ N 字」必须等于正文实测的有效字数。
     #    字数口径由 lint_book.py 单一实现，所以这里直接解析它的输出而不重写公式——
     #    公式只有一份，才不会“两边各自漂”。
+    #
+    #    章号必须**锚定在行的第一个单元格**。曾经写成 `\|\s*1\.10\s*\|`，结果
+    #    1.8 那一行的「素材比值」列恰好是 1.10，于是把 1.8 的状态当成 1.10 的状态，
+    #    报出「第 1.10 章：✅ 6,237 字 ≠ 11,807 字」这种看起来很像真问题、其实是
+    #    误报的错误。校验器的误报会被当成噪声而整体忽略，所以这类锚定必须写死。
     for cid, actual in _chapter_effective_words().items():
-        for m in re.finditer(rf"\|\s*{re.escape(cid)}\s*\|([^\n]*)", text):
+        for m in re.finditer(rf"^\|\s*{re.escape(cid)}\s*\|([^\n]*)", text, re.M):
             row = m.group(1)
             sm = re.search(r"✅\s*([\d,]+)\s*字", row)
-            if sm and _as_int(sm.group(1)) != actual:
+            if not sm:
+                problems.append(
+                    f"PLAN 第 {cid} 章：正文已存在，但章节表状态仍是 ⬜——"
+                    "请回填「✅ N 字（达成 N%）」")
+                continue
+            if _as_int(sm.group(1)) != actual:
                 problems.append(
                     f"PLAN 第 {cid} 章状态：✅ {sm.group(1)} 字 ≠ 正文实测 {actual:,} 字")
+
+    # 5) 批次表：批次一写「106,000」而第 1 篇已是 116,500 —— 同一份数字抄了两处
+    #    就会漂，而且漂在**没有人会去核对**的地方（开工顺序表看起来不像数字表）。
+    batch_mark = "| 批次 | 范围 | 章数 | 字数 | 工作量特征 | 里程碑 |"
+    if batch_mark in text:
+        block = text.split(batch_mark, 1)[1]
+        for line in block.splitlines():
+            if not line.strip():
+                continue
+            if not line.startswith("|"):
+                break
+            cells = cells_of(line)
+            if len(cells) < 4:
+                continue
+            if cells[0] == "合计":
+                if _as_int(cells[2]) != total_chapters:
+                    problems.append(f"PLAN 批次表合计：章数 {cells[2]} ≠ 实测 {total_chapters}")
+                if _as_int(cells[3]) != total_plan:
+                    problems.append(f"PLAN 批次表合计：字数 {cells[3]} ≠ 实测 {total_plan:,}")
+                continue
+            parts = [int(x) for x in re.findall(r"第\s*(\d+)\s*篇", cells[1])]
+            if not parts or any(p not in agg for p in parts):
+                continue
+            want_n = sum(int(agg[p]["n"]) for p in parts)
+            want_plan = sum(int(agg[p]["plan"]) for p in parts)
+            if _as_int(cells[2]) != want_n:
+                problems.append(f"PLAN 批次表 {cells[0]}：章数 {cells[2]} ≠ 实测 {want_n}")
+            if _as_int(cells[3]) != want_plan:
+                problems.append(
+                    f"PLAN 批次表 {cells[0]}：字数 {cells[3]} ≠ 实测 {want_plan:,}")
 
     if problems:
         print("文档数字与实测不一致：")

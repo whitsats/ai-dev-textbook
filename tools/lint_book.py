@@ -23,7 +23,8 @@
     [溯源]  sources/... 路径是否真实存在
     [篇幅]  有效字数（汉字 + 代码行折算）与 PLAN.md 计划字数的偏差（容忍 ±40%）
     [重复]  跨章重复的长句（防止内容被复制粘贴到多处）
-    [标点]  中文后紧跟半角标点的抽查
+    [标点]  中文后紧跟半角标点的抽查（代码区不适用）
+    [术语]  避免的写法（代码块、反引号与素材溯源区为逐字引用区，不参与）
     [台账]  LEDGER.md 中待写（⬜）与有意省略（⏭）的数量提示
 
 退出码：存在「错误」时为 1，只有「警告」时为 0。
@@ -175,12 +176,37 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
         rep.err(where, f"缺少小节：{'、'.join(missing)}")
 
     # [术语] 避免的写法（排除作为首选写法子串出现的情况）
-    for preferred, bad in ctx["glossary"]:
-        hits = text.count(bad)
+    #
+    # 代码块与反引号里是**逐字引用**（素材文件名、标识符、报错原文），不能改写：
+    # 素材文件名里就带着「数据验证」这类写法，改成「数据校验」等于把可追溯性改坏。
+    # 因此这两区不判错。但反引号里的出现会降级提示一次：它既可能是逐字引用，
+    # 也可能是顺手写错，这个区别只有人能判断，不应静默放过。
+    # 含路径分隔符或扩展名的反引号片段视为逐字引用（如 `sources/…/xx.md`），不提示。
+    # 注意：不要用「截掉素材溯源小节」的办法来避开文件名——那会把该小节之后
+    # 的一切正文一起豁免掉（负向验证时正是这个缺陷让一处真违规降成了警告）。
+    term_text = re.sub(r"```.*?```", "", text, flags=re.S)
+    quoted_text = re.sub(r"`[^`]*`", "", term_text)
+
+    def _term_hits(hay: str, preferred: str, bad: str) -> int:
+        n = hay.count(bad)
         if bad in preferred:
-            hits -= text.count(preferred)
+            n -= hay.count(preferred)
+        return n
+
+    for preferred, bad in ctx["glossary"]:
+        hits = _term_hits(quoted_text, preferred, bad)
         if hits > 0:
             rep.err(where, f"术语违规：应写「{preferred}」，正文出现「{bad}」{hits} 次")
+            continue
+        ambiguous = sum(
+            1 for span in re.findall(r"`([^`]*)`", term_text)
+            if bad in span and not re.search(r"[/\\._]", span)
+        )
+        if bad in preferred:
+            ambiguous -= term_text.count(preferred)
+        if ambiguous > 0:
+            rep.warn(where, f"「{bad}」在反引号里出现 {ambiguous} 次"
+                            f"（逐字引用则正常，若是笔误请改为「{preferred}」）")
 
     # [禁用词]
     for w in BANNED_WORDS:
@@ -341,6 +367,44 @@ def check_ledger(rep: Report) -> None:
         key = f"第 {pl} 篇"
         if key not in per_part:
             rep.warn("台账", f"已有正文的{key}在 LEDGER.md 中没有对应的小节台账")
+
+    # 「篇级进度」表是**手写**的汇总，最容易漂——本轮就填错过一次：手写 287，
+    # 脚本实数是 286。所以这里按**表头定位列**逐个对账（加列、调列序都不会错位），
+    # 缺列则跳过（表结构还没加就当作不知道，不报错）。
+    in_progress = False
+    cols: dict[str, int] = {}
+    for ln in LEDGER.read_text(encoding="utf-8").splitlines():
+        if ln.startswith("## ") and "篇级进度" in ln:
+            in_progress = True
+            continue
+        if in_progress and ln.startswith("## "):
+            break
+        if not in_progress or not ln.startswith("|"):
+            continue
+        cells = [c.strip() for c in ln.strip("|").split("|")]
+        if "已落点" in "".join(cells):
+            for i, c in enumerate(cells):
+                for sym in ("✅", "🔀", "⏭", "⬜"):
+                    if c.startswith(f"`{sym}`"):
+                        cols[sym] = i
+            continue
+        if not cols:
+            continue
+        m = re.match(r"^第\s*(\d+)\s*篇$", cells[0].strip("`*"))
+        if not m:
+            continue
+        key = f"第 {int(m.group(1))} 篇"
+        if key not in per_part:
+            continue
+        for sym, idx in cols.items():
+            if idx >= len(cells):
+                continue
+            got = re.match(r"^(\d+)", cells[idx])
+            if not got:
+                continue
+            want = per_part[key][("✅", "🔀", "⏭", "⬜").index(sym)]
+            if int(got.group(1)) != want:
+                rep.err("台账", f"LEDGER 篇级进度 {key}：{sym} 写 {got.group(1)} ≠ 实测 {want}")
 
 
 def main() -> int:
