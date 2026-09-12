@@ -52,6 +52,13 @@ PY_MANUAL = SRC / "01-编程地基" / "Python核心语法手册.md"
 
 PROSE_KINDS = {"file", "py", "pys", "fa", "proj"}
 
+# 参考项目里**有意不采用**的讲解文档（前缀匹配，相对项目目录）。
+# 白名单必须带理由——没有理由的白名单与「静默跳过」没有区别。
+PROJ_UNUSED: dict[str, str] = {
+    "fastapi_project/项目讲解/前端讲解/":
+        "第 1 篇是后端工程；前端形态属第 8 篇（SSE 与流式 UI），素材形态不同",
+}
+
 # 解析素材规格时发现的问题（如选择器写错、指向不存在的子文件）。
 # 这些错误以前是**静默跳过**的：选择器没匹配上就 continue，结果两篇素材既没进
 # 素材池、也没进分配检查，总量少了一截而报表照常漂亮。收集起来一并报出。
@@ -273,13 +280,31 @@ def resolve(spec) -> dict[str, int]:
                 _WARNINGS.append(f"素材选择器无匹配：{kind} {sel}（片段 {part!r}）")
         return out
     if kind == "proj":
-        total = 0
-        for d in FA_DIR.iterdir():
-            if d.is_dir() and d.name in ("fastapi_project", "fastapi_best_practice"):
-                total += sum(
-                    file_han(f.relative_to(SRC).as_posix()) for f in d.rglob("*.md")
-                )
-        return {"proj": total}
+        # 一个项目目录里有三块内容：后端讲解、前端讲解、源码注释。整目录计入会把
+        # 前端讲解（3,597 汉字）算给「后端 API」那一章——与 1.9 「一个目录装了三个章
+        # 的素材」是同一个错误，所以支持按路径过滤：
+        #   ("proj", "项目讲解/后端讲解", 1.0)    只要后端讲解那 7 篇
+        # 子选择器用 `+` 分隔（逗号是顶层素材规格的分隔符）。
+        out: dict[str, int] = {}
+        # 注意：这里**不能**对空片断 `continue`。空选择器（`sel=""`）就是「整目录」，
+        # 写成空片断列表后 `all(... for s in [])` 恒为真，天然匹配全部文件；
+        # 若在此处跳过，整目录引用会静默变成 0 汉字（比「未分配」更难发现）。
+        for part in sel.split("+"):
+            segs = [s for s in part.strip().split("/") if s]
+            hit = False
+            for d in sorted(FA_DIR.iterdir()):
+                if not (d.is_dir() and d.name in ("fastapi_project", "fastapi_best_practice")):
+                    continue
+                for f in d.rglob("*.md"):
+                    rel = f.relative_to(d).as_posix()
+                    if not all(s in rel for s in segs):
+                        continue
+                    hit = True
+                    key = f"proj:{rel}" if segs else f"proj:{d.name}"
+                    out[key] = out.get(key, 0) + file_han(f.relative_to(SRC).as_posix())
+            if not hit:
+                _WARNINGS.append(f"素材选择器无匹配：{kind} {sel}（片段 {part!r}）")
+        return out
     if kind == "bank":
         return {f"bank:{sel}": file_han("06-求职冲刺/" + sel)}
     raise ValueError(f"未知素材类型：{kind}")
@@ -412,9 +437,16 @@ PLAN = [
      [("fa", "21-25", 1.0), ("fa", "10", 1.0), ("fa", "02/06,02/08", 1.0),
       ("fa", "20/08", 1.0)],
      "含统一响应格式与异常处理器、生命周期与生产实践、日志中间件"),
-    ("1", "1.15", "项目实战：知舟博客 API 从零到一", 12000,
-     [("proj", "", 1.0), ("fa", "11-12", 1.0)],
-     "两个完整项目；含表单与文件上传"),
+    # 原计划 12,000 是按「素材 10,991 × 0.92」倒推的，但 10,991 里有 3,597 是
+    # **前端讲解**（不属于本篇：第 1 篇是后端工程）。修正素材归属后，后端可用的散文
+    # 只有 ~7,000，比值降到 0.35（严重不足）——这是实情：表设计、表单、上传、
+    # 下载与断点续传、静态挂载、图片路径契约、评论树与楼层号都要按官方文档原创，
+    # 但这些技术点**只在这一章讲**（fa 11-12 从 1.9 归位过来，1.9–1.14 都没覆盖）。
+    # 按 8.7 公式事前估：14 小节 × 800 = 11,200 + 代码（表格/示例密集，按 675 行）
+    # ≈ 10,125 → 21,325，取 21,000。
+    ("1", "1.15", "项目实战：知舟博客 API 从零到一", 21000,
+     [("proj", "项目讲解/后端讲解+backend/README", 1.0), ("fa", "11-12", 1.0)],
+     "两个完整项目（只用后端角度）；含表单与文件上传；前端讲解归第 8 篇"),
 
     # ---------------- 第 2 篇 AI 时代的开发方式
     ("2", "2.1", "与 AI 协作编程：思维模型、能力边界与风险", 5000,
@@ -575,6 +607,47 @@ def verdict(ratio: float, has_prose: bool, has_bank: bool = False) -> str:
     return "严重不足"
 
 
+def assigned_proj_segs() -> list[list[str]]:
+    """计划里所有 `proj` 选择器的路径片断列表。
+
+    空选择器（`sel=""`）表示「整目录都要」，写成空片断列表——`all(s in rel for s in [])`
+    恒为真，天然覆盖全部文件，不会把整目录误报为「未分配」。
+    """
+    out: list[list[str]] = []
+    for entry in PLAN:
+        for kind, sel, _factor in entry[4]:
+            if kind != "proj":
+                continue
+            for part in str(sel).split("+"):
+                part = part.strip()
+                out.append([s for s in part.split("/") if s])
+    return out
+
+
+def project_doc_lines() -> list[str]:
+    """两个参考项目的讲解文档是否都被某条计划覆盖。
+
+    与 fa 的检查同源：`proj` 支持路径过滤后，只写 `项目讲解/后端讲解` 就会把
+    前端那七篇**静静地排除在外**（总量少了、报表却没有异常）。所以任何一篇
+    没被覆盖的讲解文档都必须显式报出来。
+    """
+    sel_segs = assigned_proj_segs()
+    miss: list[str] = []
+    for d in sorted(FA_DIR.iterdir()):
+        if not (d.is_dir() and d.name in ("fastapi_project", "fastapi_best_practice")):
+            continue
+        for f in sorted(d.rglob("*.md")):
+            key = f"{d.name}/{f.relative_to(d).as_posix()}"
+            if any(key.startswith(p) for p in PROJ_UNUSED):
+                continue
+            rel = f.relative_to(d).as_posix()
+            if not any(all(s in rel for s in segs) for segs in sel_segs):
+                miss.append(key)
+    if not miss:
+        return []
+    return ["**参考项目未分配的讲解文档**：" + "、".join(f"`{m}`" for m in miss)]
+
+
 def assigned_units() -> tuple[set[int], set[str], set[str]]:
     """统计计划章已经用到的素材单元：手册编号章 / 进阶块分段 / FastAPI 讲义章。"""
     py_ids: set[int] = set()
@@ -637,6 +710,7 @@ def unassigned_lines() -> list[str]:
             (f"{n} {name}" if len(files) == len(fa_files(n))
              else f"{n} {name}（仅 {len(files)} 篇未分配）")
             for n, name, files in miss_fa))
+    out.extend(project_doc_lines())
     if not out:
         out.append("全部素材单元均已分配到至少一个计划章。")
     else:
@@ -757,7 +831,10 @@ def write_report(path: Path) -> None:
     A(f"| **合计** | **{len(rows)}** | **{sum(r['plan'] for r in rows):,}** | | | | |")
     A("")
 
-    prose_rows = [r for r in rows if not r["num"].startswith("6.") and r["plan"]]
+    # 全书口径：第 9 篇（进阶方向）预留未启用，本就不在 rows 里；
+    # 旧版这里写死排除 `6.`，那是改编号之前「第 6 篇 = 未启用的进阶篇」的遗留——
+    # 现在的第 6 篇是零素材的「模型接入与成本工程」，被它静默漏掉 4 章。
+    prose_rows = [r for r in rows if r["plan"]]
     weak = [r for r in prose_rows if needs_original(r)]
     zero = [r for r in weak if r["prose"] == 0]
     weak_plan = sum(r["plan"] for r in weak)
@@ -766,9 +843,10 @@ def write_report(path: Path) -> None:
     A("")
     A("1. **第 1、2、5 篇素材可靠**（散文比值 0.94–1.36），可以「整理改写」为主。")
     A("2. **第 3、4 篇素材严重不足**（0.22 / 0.14），必须原创撰写或压缩篇幅。")
-    A("3. **第 6 篇为题库驱动**：题量充足但质量分层，只能取考点与问法，答案须逐题重写。")
-    A(f"4. 第 1–5 篇中需原创补写 **{len(weak)} / {len(prose_rows)} 章**，"
-      f"合计计划 {weak_plan:,} 字，占这五篇的 {weak_plan/base_plan:.0%}；"
+    A("3. **第 10 篇为题库驱动**：题量充足但质量分层，只能取考点与问法，答案须逐题重写；"
+      "**第 6–8 篇零素材**（扩展篇），须逐条回到官方文档原创。")
+    A(f"4. 全书需原创补写 **{len(weak)} / {len(prose_rows)} 章**，"
+      f"合计计划 {weak_plan:,} 字，占全书的 {weak_plan/base_plan:.0%}；"
       f"其中 {len(zero)} 章散文素材为零："
       + "、".join(r["num"] for r in zero) + "。")
     A("")
@@ -1107,13 +1185,14 @@ def main() -> int:
     tp = sum(r["plan"] for r in rows)
     print(f"{'合计':<4}{len(rows):>5}{tp:>10,}")
 
-    # 需原创补写：散文素材不足以支撑成章者（口径见 needs_original）
-    prose_rows = [r for r in rows if not r["num"].startswith("6.") and r["plan"]]
+    # 需原创补写：散文素材不足以支撑成章者（口径见 needs_original）。
+    # 全书口径——第 9 篇（进阶方向）预留未启用，不在 rows 里，无需排除。
+    prose_rows = [r for r in rows if r["plan"]]
     weak = [r for r in prose_rows if needs_original(r)]
     total_plan = sum(r["plan"] for r in prose_rows)
     print(f"\n需原创补写的章节：{len(weak)} / {len(prose_rows)} 章"
-          f"（第 1–5 篇口径），合计计划 {sum(r['plan'] for r in weak):,} 字"
-          f"，占这五篇的 {sum(r['plan'] for r in weak)/total_plan:.0%}")
+          f"（全书口径），合计计划 {sum(r['plan'] for r in weak):,} 字"
+          f"，占全书的 {sum(r['plan'] for r in weak)/total_plan:.0%}")
     zero = [r for r in weak if r["prose"] == 0]
     print(f"其中散文素材为零（只能原创）：{len(zero)} 章 —— "
           + "、".join(r["num"] for r in zero))
