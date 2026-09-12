@@ -337,10 +337,19 @@ def check_blank_lines(rep: Report) -> None:
                 in_fence = not in_fence
                 continue
             # 代码块里的 # 是注释（如 # 输出），不是标题，不参与检查
-            if in_fence or not heading.match(ln):
+            if in_fence:
                 continue
-            if i > 0 and lines[i - 1].strip():
-                rep.err(f.name, f"第 {i + 1} 行标题「{ln[:24]}」前缺少空行")
+            if heading.match(ln):
+                if i > 0 and lines[i - 1].strip():
+                    rep.err(f.name, f"第 {i + 1} 行标题「{ln[:24]}」前缺少空行")
+                continue
+            # 标题被粘在上一行末尾（用脚本回填台账时最容易出）：
+            # `| … | ✅ |### 1.11 依赖注入与中间件`。行首不是 #，所以上面那条规则
+            # 完全看不到它——渲染后标题变成表格里的一串文字，而且把它当“小节”的
+            # 台账会静默归属到上一章（本轮就是这么发现的）。用 `### 1.11` 这种
+            # 「# 号 + 章号」的形状判定，不会误伤 `C# 语言` 这类正文。
+            if re.search(r"#{2,6}\s*\d+\.\d+", ln):
+                rep.err(f.name, f"第 {i + 1} 行里粘着一个标题（前缺少空行）：「{ln[-32:]}")
 
 
 def build_book_index() -> tuple[set[str], dict[str, set[str]]]:
@@ -417,7 +426,9 @@ def check_cross_refs(chapters: dict[str, str], rep: Report) -> None:
             # `1.6.0`、`3.11.0` 这类第三段为 0 的记号是版本号：本书小节从 1 开始编号。
             if ref.endswith(".0"):
                 continue
-            if ref not in secs.get(chap, set()):
+            # 只在目标章**已有正文**时才能判定小节是否存在：
+            # 预告尚未开写的章（）“详见 6.3.2”）不是错误，只是此刻无法校验。
+            if chap in body and ref not in secs.get(chap, set()):
                 rep.err(cid, f"交叉引用「{ref}」悬空：{chap} 中没有这一小节")
         for m in CHAP_REF.finditer(prose):
             ref = m.group(1)
@@ -442,7 +453,11 @@ def check_ledger_landings(rep: Report) -> None:
     plan_ch = load_plan_chapters()
     body, secs = build_book_index()
     current = None
-    for ln in LEDGER.read_text(encoding="utf-8").splitlines():
+    # 先把「粘在行尾的标题」拆出来，否则它们后面的行会被静默算到上一章头上，
+    # 报错信息里的章号就是错的。这种形状本身由 check_blank_lines 报错。
+    ledger_text = re.sub(r"^(\|.*?\S)###\s+(?=\d+\.\d+)", r"\1\n\n### ",
+                         LEDGER.read_text(encoding="utf-8"), flags=re.M)
+    for ln in ledger_text.splitlines():
         if ln.startswith("### "):
             m = re.match(r"###\s+(\d+\.\d+)", ln)
             current = m.group(1) if m else None
@@ -466,7 +481,8 @@ def check_ledger_landings(rep: Report) -> None:
         chap_refs = CHAP_REF.findall(landing)
         for ref in sec_refs:
             chap = ".".join(ref.split(".")[:2])
-            if chap in plan_ch and ref not in secs.get(chap, set()):
+            # 同上：目标章还没开写时不判小节存在性（否则预置的「归位行」会被误报）
+            if chap in body and ref not in secs.get(chap, set()):
                 rep.err(where, f"落点「{ref}」不存在"
                                f"（{cells[0][:18]}…）")
         for ref in chap_refs:

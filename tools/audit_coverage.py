@@ -449,7 +449,12 @@ PLAN = [
      "两个完整项目（只用后端角度）；含表单与文件上传；前端讲解归第 8 篇"),
 
     # ---------------- 第 2 篇 AI 时代的开发方式
-    ("2", "2.1", "与 AI 协作编程：思维模型、能力边界与风险", 5000,
+    # 2.1 由 5,000 提到 8,000（事前重估，按 8.7 公式：9 小节 × 约 600 + 固定段约 2,000
+    #      + 实跑演示约 80 行代码）。原值是按「素材充裕就少写」倒推的，但素材（6,180）
+    #      只覆盖「思维模型」一条主线（Vibe Coding → Harness 的框架与五阶段）；
+    #      「能力边界」与「风险」两节必须回到 OWASP LLM Top 10 / METR / DORA / CCS'23 /
+    #      USENIX'25 原创。判定因此由「充裕」改为「偏薄」（6,180 / 8,000 = 0.77）。
+    ("2", "2.1", "与 AI 协作编程：思维模型、能力边界与风险", 8000,
      [("file", "02-AI编程工具链/AI-Harness入门与实践.md", 0.7)], ""),
     ("2", "2.2", "Claude Code 实战：从对话到工程化", 7000,
      [("file", "02-AI编程工具链/Claude-Code从入门到实战.md", 0.9)], "468 个结构化条目"),
@@ -1061,6 +1066,32 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
             if _as_int(sm.group(1)) != actual:
                 problems.append(
                     f"PLAN 第 {cid} 章状态：✅ {sm.group(1)} 字 ≠ 正文实测 {actual:,} 字")
+
+    # 4.5) 「素材 X.XX」示意图：它长着注释的样子，漂了两个月也没人发现
+    #      （1.8 已从 1.36 降到 1.26，而图上还写着 1.36）。按「篇号与数值
+    #      在文档里出现的先后**成对**」校验：先攒篇号，碰到一行数值就成对消掉。
+    fence = None
+    for m in re.finditer(r"```\n(.*?)```", text, re.S):
+        if "素材" in m.group(1) and re.search(r"第\s*\d+\s*篇", m.group(1)):
+            fence = m.group(1)
+            break
+    if fence:
+        pending: list[int] = []
+        for line in fence.splitlines():
+            parts = [int(x) for x in re.findall(r"第\s*(\d+)\s*篇", line)]
+            vals = [float(x) for x in re.findall(r"素材\s*(\d+\.\d+)", line)]
+            if parts:
+                pending.extend(parts)
+            if not vals:
+                continue
+            if len(vals) > len(pending):
+                problems.append(f"PLAN 素材示意图：{len(vals)} 个数值配 {len(pending)} 个篇号")
+                continue
+            for p, v in zip(pending, vals):
+                if p in agg and abs(v - agg[p]["ratio"]) > 0.005:
+                    problems.append(
+                        f"PLAN 素材示意图第 {p} 篇：{v:.2f} ≠ 实测 {agg[p]['ratio']:.2f}")
+            pending = pending[len(vals):]
 
     # 5) 批次表：批次一写「106,000」而第 1 篇已是 116,500 —— 同一份数字抄了两处
     #    就会漂，而且漂在**没有人会去核对**的地方（开工顺序表看起来不像数字表）。
