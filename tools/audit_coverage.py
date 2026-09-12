@@ -454,7 +454,7 @@ PLAN = [
     #      只覆盖「思维模型」一条主线（Vibe Coding → Harness 的框架与五阶段）；
     #      「能力边界」与「风险」两节必须回到 OWASP LLM Top 10 / METR / DORA / CCS'23 /
     #      USENIX'25 原创。判定因此由「充裕」改为「偏薄」（6,180 / 8,000 = 0.77）。
-    ("2", "2.1", "与 AI 协作编程：思维模型、能力边界与风险", 8000,
+    ("2", "2.1", "与 AI 协作编程：思维模型、能力边界与风险", 11000,
      [("file", "02-AI编程工具链/AI-Harness入门与实践.md", 0.7)], ""),
     ("2", "2.2", "Claude Code 实战：从对话到工程化", 7000,
      [("file", "02-AI编程工具链/Claude-Code从入门到实战.md", 0.9)], "468 个结构化条目"),
@@ -902,6 +902,31 @@ def _chapter_effective_words() -> dict[str, int]:
     return out
 
 
+def weak_summary(part_max: int = 5) -> list[tuple[str, list[str], int, int]]:
+    """PLAN「判定为偏薄及以下的章节汇总」表应有的内容（限第 0–part_max 篇）。
+
+    这张表是手写的，数据源却在 build_rows() 里，两者已经漂过一次：
+    `1.14`、`1.15` 被判定为严重不足却没进表，`2.1` 降为偏薄也没进——
+    而漏记的后果很实际：后续排期会低估「需原创补写」的工作量。
+    所以这里算一份，交给 check_plan 对账（与 8.5「机器能查的不靠人记」一致）。
+    """
+    rows = [r for r in build_rows()
+            if str(r["part"]).isdigit() and int(r["part"]) <= part_max]
+    groups = [
+        ("严重不足", lambda r: r["verdict"] == "严重不足"),
+        ("偏薄", lambda r: r["verdict"] == "偏薄"),
+        ("无素材", lambda r: r["verdict"] == "无素材"),
+        ("题库驱动（散文为零）",
+         lambda r: r["verdict"] == "题库驱动" and r["prose"] == 0),
+    ]
+    out: list[tuple[str, list[str], int, int]] = []
+    for label, pred in groups:
+        sel = [r for r in rows if pred(r)]
+        out.append((label, [r["num"] for r in sel], len(sel),
+                    sum(r["plan"] for r in sel)))
+    return out
+
+
 def check_plan(plan_path: Path, coverage_path: Path) -> int:
     """把 PLAN.md / COVERAGE.md 里手写的汇总数字与实测结果对账。
 
@@ -1123,6 +1148,44 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
                 problems.append(
                     f"PLAN 批次表 {cells[0]}：字数 {cells[3]} ≠ 实测 {want_plan:,}")
 
+    # 6) 风险汇总表（手写、且此前无人核对）。它漏记的后果很实际：
+    #    排期会低估「需原创补写」的量，所以按整块文本对账而不只比合计。
+    risk_mark = "| 判定 | 章节 | 章数 | 计划字数 |"
+    if risk_mark in text:
+        got: list[str] = []
+        for line in text.split(risk_mark, 1)[1].splitlines():
+            if not line.strip():
+                continue
+            if not line.startswith("|"):
+                break
+            got.append(line.strip())
+        want = [f"| {label} | {'、'.join(nums)} | {n:,} | {plan:,} |"
+                for label, nums, n, plan in weak_summary()]
+        summary = weak_summary()
+        want.append(f"| **合计** | | **{sum(x[2] for x in summary):,}** | "
+                    f"**{sum(x[3] for x in summary):,}** |")
+        body = [ln for ln in got if not set(ln) <= set("|-: ")]
+        if body != want:
+            problems.append("PLAN 风险汇总表与实测不一致，应为：\n    "
+                            + "\n    ".join(want))
+    else:
+        problems.append("PLAN 缺少「判定为偏薄及以下的章节汇总」表")
+
+    # 7) 文首的进度句。它同时携带三个数（已完稿章数 / 总章数 / 实测字数），
+    #    而这三个数在别处都有单一来源——漂了就会出现「文首 18/68、看板 19/68」
+    #    这种同一页里自相矛盾的状态。
+    pm = re.search(r"全书进度\s*\*\*(\d+)\s*/\s*(\d+)\s*章\*\*，实测\s*([\d,]+)\s*字", text)
+    if not pm:
+        problems.append("PLAN 文首缺少「全书进度 **N / 68 章**，实测 N 字」句")
+    else:
+        measured = sum(_chapter_effective_words().values())
+        if _as_int(pm.group(1)) != done_total:
+            problems.append(f"PLAN 文首进度：已完稿 {pm.group(1)} 章 ≠ 实测 {done_total}")
+        if _as_int(pm.group(2)) != total_chapters:
+            problems.append(f"PLAN 文首进度：总章数 {pm.group(2)} ≠ 实测 {total_chapters}")
+        if _as_int(pm.group(3)) != measured:
+            problems.append(f"PLAN 文首进度：实测 {pm.group(3)} 字 ≠ 正文实测 {measured:,} 字")
+
     if problems:
         print("文档数字与实测不一致：")
         for p in problems:
@@ -1141,6 +1204,8 @@ def main() -> int:
     ap.add_argument("--out", metavar="FILE", help="把 markdown 报表写入文件（如 COVERAGE.md）")
     ap.add_argument("--check", action="store_true",
                     help="对账：PLAN.md / COVERAGE.md 的汇总数字是否与实测一致")
+    ap.add_argument("--risk-table", action="store_true",
+                    help="打印 PLAN「偏薄及以下」汇总表的应有内容，便于粘回去")
     args = ap.parse_args()
 
     if args.check:
@@ -1173,6 +1238,16 @@ def main() -> int:
         print("\n=== 题库 ===")
         for name, q in BANK_QUALITY.items():
             print(f"  {name:<34} {file_han('06-求职冲刺/' + name):>9,} 汉字\n      {q}")
+        return 0
+
+    if args.risk_table:
+        summary = weak_summary()
+        print("| 判定 | 章节 | 章数 | 计划字数 |")
+        print("| --- | --- | ---: | ---: |")
+        for label, nums, n, plan in summary:
+            print(f"| {label} | {'、'.join(nums)} | {n:,} | {plan:,} |")
+        print(f"| **合计** | | **{sum(x[2] for x in summary):,}** | "
+              f"**{sum(x[3] for x in summary):,}** |")
         return 0
 
     rows = build_rows()

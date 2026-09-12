@@ -51,6 +51,22 @@ REQUIRED_NON_INTRO = ["## 前置知识", "## 常见坑", "## 面试视角", "## 
 
 BANNED_WORDS = ["众所周知", "显而易见", "不难发现", "笔者", "同学们", "我们大家", "见上文", "据说"]
 
+# 禁用词的合法复合词：一刀切会把正确用法也拦下来——「判据说」里的「据说」
+# 是「判据 + 说」而不是「据说」传闻。与术语表的 _term_hits 同一套处理。
+BANNED_ALLOW = {"据说": ["判据说"]}
+
+# 指代「写作原料」的词：读者手里没有素材，正文里出现它们就是在跟一份
+# 他看不到的文档对话（STYLE.md 六.6）。
+# 豁免两区：章末「素材溯源」（它的职责就是做素材与正文的对照），
+# 以及 0.3 使用说明章（它本身就在讲全书的资料分工）。
+RAW_WORDS = ["素材", "讲义", "资料包"]
+RAW_EXEMPT_CH = {"0.3"}
+RAW_TAIL_MARK = "**素材溯源**"
+
+# 「我核过」的过程叙述（STYLE.md 六.7）：读者不需要知道写作过程，他需要的是结论。
+# 注意不要连「未实跑」一起禁——那是**对读者有行动意义**的标注，必须留着。
+PROCESS_WORDS = ["实跑核对", "实跑确认", "实跑验证", "实跑纠正", "实跑发现", "已实跑"]
+
 MIN_OFFICIAL_LINKS = 2
 WORD_TOLERANCE = 0.40
 # 一行有效代码（有内容、不含空行与围栏）约等于 15 个汉字的信息量。
@@ -225,8 +241,32 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
 
     # [禁用词]
     for w in BANNED_WORDS:
-        if w in text:
-            rep.err(where, f"出现规范禁用词「{w}」")
+        n = text.count(w) - sum(text.count(ok) for ok in BANNED_ALLOW.get(w, ()))
+        if n > 0:
+            rep.err(where, f"出现规范禁用词「{w}」（{n} 次）")
+
+    # [视角] 正文不得指代写作原料（STYLE.md 六.6）
+    # 代词出现在标题里比出现在段落里更刺眼——读者翻目录就会撞上
+    # 「素材的顺序说明是反的」这种只对作者有意义的标题，所以逐行点名行号。
+    # 行号必须在原始文本上数（剔代码块会打乱行号），因此用状态机而不是正则。
+    if cid not in RAW_EXEMPT_CH:
+        cut = text.find(RAW_TAIL_MARK)
+        body = text[:cut] if cut != -1 else text
+        in_fence = False
+        for lineno, line in enumerate(body.splitlines(), start=1):
+            if line.lstrip().startswith("```"):
+                in_fence = not in_fence
+                continue
+            if in_fence:
+                continue
+            hit = next((w for w in RAW_WORDS if w in line), None)
+            if hit:
+                rep.err(where, f"第 {lineno} 行正文出现「{hit}」：读者看不到素材，"
+                                f"请直接给结论（对照写进章末「素材溯源」）")
+            hit = next((w for w in PROCESS_WORDS if w in line), None)
+            if hit:
+                rep.err(where, f"第 {lineno} 行出现过程叙述「{hit}」："
+                                f"写结论（「实测得到 X」），不要写核对过程")
 
     # [引用] 交叉引用必须存在于 PLAN
     plan_ch = ctx["plan_chapters"]
