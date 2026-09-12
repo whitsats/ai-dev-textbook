@@ -181,6 +181,7 @@
 | 用配置管理日志（1.14 章） | Python 3 · logging.config | https://docs.python.org/3/library/logging.config.html |
 | 依赖与虚拟环境（1.1 章） | uv 官方文档 | https://docs.astral.sh/uv/ |
 | 版本控制（1.1 章） | Git 官方文档 | https://git-scm.com/doc |
+| 工作树并行隔离（2.2 章） | Git · git-worktree | https://git-scm.com/docs/git-worktree |
 | HTTP 语义（1.8 章） | RFC 9110 · HTTP Semantics | https://www.rfc-editor.org/rfc/rfc9110.html |
 | JWT 规范（1.13 章） | RFC 7519 · JWT | https://www.rfc-editor.org/rfc/rfc7519.html |
 | OAuth 2.0 规范（1.13 章） | RFC 6749 · OAuth 2.0 | https://www.rfc-editor.org/rfc/rfc6749.html |
@@ -200,6 +201,18 @@
 | 用途 | 官方出处 | 链接 |
 | --- | --- | --- |
 | Claude Code 使用与工程化（2.2、2.5 章） | Claude Code 官方文档 | https://code.claude.com/docs |
+| 代理循环、内置工具与执行环境（2.2 章） | Claude Code · How Claude Code works | https://code.claude.com/docs/en/how-claude-code-works |
+| 权限模式全集与各模式免询问范围（2.2 章） | Claude Code · Choose a permission mode | https://code.claude.com/docs/en/permission-modes |
+| Allow/Ask/Deny 规则与优先级（2.2 章） | Claude Code · Configure permissions | https://code.claude.com/docs/en/permissions |
+| 沙箱 Bash 的平台要求与设置（2.2 章） | Claude Code · Configure the sandboxed Bash tool | https://code.claude.com/docs/en/sandboxing |
+| 命令面与标志（2.2 章） | Claude Code · CLI reference | https://code.claude.com/docs/en/cli-reference |
+| 会话恢复、命名与「不还原的配置」（2.2 章） | Claude Code · Manage sessions | https://code.claude.com/docs/en/sessions |
+| 上下文窗口与 prompt caching（2.2、2.5 章） | Claude Code · Prompt caching | https://code.claude.com/docs/en/prompt-caching |
+| CLAUDE.md 与自动记忆（2.2、2.5 章） | Claude Code · How Claude remembers your project | https://code.claude.com/docs/en/memory |
+| 常见工作流与最佳实践（2.2 章） | Claude Code · Common workflows ／ Best practices | https://code.claude.com/docs/en/common-workflows |
+| 会话隔离到 git worktree（2.2 章） | Claude Code · Run parallel sessions with worktrees | https://code.claude.com/docs/en/worktrees |
+| 平台与入口对照（2.2 章） | Claude Code · Platforms and integrations | https://code.claude.com/docs/en/platforms |
+| Hooks 的触发时机与进出参（2.2、2.5 章） | Claude Code · Automate actions with hooks | https://code.claude.com/docs/en/hooks-guide |
 | 子代理、Hooks、权限、Skills | Claude Code · Agent SDK 概览 | https://code.claude.com/docs/en/agent-sdk/overview |
 | 用代码驱动 Agent（2.6 章） | Claude Agent SDK · Python 参考 | https://code.claude.com/docs/en/agent-sdk/python |
 | Claude API 与 Messages 格式 | Claude 平台文档 | https://platform.claude.com/docs/en/home |
