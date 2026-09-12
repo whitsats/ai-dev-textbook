@@ -128,8 +128,14 @@
 | TLS 与证书（1.8 章） | MDN · Transport Layer Security | https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security |
 | 最小 HTTP 服务端示例（1.8 章） | Python 3 · http.server | https://docs.python.org/3/library/http.server.html |
 | 版本要求与最新变更（1.1 章） | FastAPI · GitHub 仓库 | https://github.com/fastapi/fastapi |
-| 依赖注入（1.11 章） | FastAPI · Dependencies | https://fastapi.tiangolo.com/tutorial/dependencies/ |
-| 中间件（1.11 章） | FastAPI · Middleware | https://fastapi.tiangolo.com/tutorial/middleware/ |
+| 依赖注入基础（1.11 章） | FastAPI · Dependencies | https://fastapi.tiangolo.com/tutorial/dependencies/ |
+| `yield` 依赖与资源清理（1.11 章） | FastAPI · Dependencies with yield | https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/ |
+| 测试与依赖覆盖（1.11 章） | FastAPI · Testing Dependencies with Overrides | https://fastapi.tiangolo.com/advanced/testing-dependencies/ |
+| 中间件与执行顺序（1.11 章） | FastAPI · Middleware | https://fastapi.tiangolo.com/tutorial/middleware/ |
+| 高级中间件与纯 ASGI 写法（1.11 章） | FastAPI · Advanced Middleware | https://fastapi.tiangolo.com/advanced/middleware/ |
+| CORS 中间件配置（1.8、1.11 章） | FastAPI · CORS | https://fastapi.tiangolo.com/tutorial/cors/ |
+| 内置中间件与已知限制（1.11 章） | Starlette · Middleware | https://starlette.dev/middleware/ |
+| `request.state` 与 `app.state`（1.11 章） | Starlette · Requests | https://starlette.dev/requests/ |
 | 安全与 JWT（1.13 章） | FastAPI · Security | https://fastapi.tiangolo.com/tutorial/security/ |
 | 数据校验（1.10 章） | Pydantic 官方文档 | https://pydantic.dev/docs/ |
 | Pydantic 模型与校验器 | Pydantic · Models | https://pydantic.dev/docs/validation/latest/concepts/models/ |
