@@ -133,6 +133,15 @@
 | 安全与 JWT（1.13 章） | FastAPI · Security | https://fastapi.tiangolo.com/tutorial/security/ |
 | 数据校验（1.10 章） | Pydantic 官方文档 | https://pydantic.dev/docs/ |
 | Pydantic 模型与校验器 | Pydantic · Models | https://pydantic.dev/docs/validation/latest/concepts/models/ |
+| 字段约束与 `default_factory`（1.10 章） | Pydantic · Fields | https://pydantic.dev/docs/validation/latest/concepts/fields/ |
+| 校验器与 `mode` 语义（1.10 章） | Pydantic · Validators | https://pydantic.dev/docs/validation/latest/concepts/validators/ |
+| `ConfigDict` 配置项与继承（1.10 章） | Pydantic · Configuration | https://pydantic.dev/docs/validation/latest/concepts/config/ |
+| 序列化与 `field_serializer`（1.10 章） | Pydantic · Serialization | https://pydantic.dev/docs/validation/latest/concepts/serialization/ |
+| 别名三级开关（1.10 章） | Pydantic · Aliases | https://pydantic.dev/docs/validation/latest/concepts/alias/ |
+| 常用类型与 `EmailStr` 依赖（1.10 章） | Pydantic · Types | https://pydantic.dev/docs/validation/latest/concepts/types/ |
+| 可辨识联合（1.10 章） | Pydantic · Unions | https://pydantic.dev/docs/validation/latest/concepts/unions/ |
+| 计算字段（1.10 章） | Pydantic · Computed Fields | https://pydantic.dev/docs/validation/latest/concepts/computed_fields/ |
+| 模型与 OpenAPI 契约（1.10 章） | Pydantic · JSON Schema | https://pydantic.dev/docs/validation/latest/concepts/json_schema/ |
 | ORM（1.12 章） | SQLAlchemy 2.0 文档 | https://docs.sqlalchemy.org/ |
 | 缓存（1.12 章） | Redis 官方文档 | https://redis.io/docs/latest/ |
 | 单元测试（1.14 章） | pytest 官方文档 | https://docs.pytest.org/ |
