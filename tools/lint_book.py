@@ -541,6 +541,26 @@ def check_ledger_landings(rep: Report) -> None:
                     rep.err(where, f"标了 ✅ 但落点的章都还没有正文（{cells[0][:18]}…）")
 
 
+def split_cells(row: str) -> list[str]:
+    """按单元格切分表格行，**跳过反引号里的竖线与转义竖线**。
+
+    台账里 `Mapped[int \\| None]`、`int | str` 这类写法很常见：
+    直接 `row.split("|")` 会把一格切成两格，状态格就跑到前面去了。
+    """
+    cells, cur, in_code = [], "", False
+    for ch in row.strip().strip("|"):
+        if ch == "`":
+            in_code = not in_code
+            cur += ch
+        elif ch == "|" and not in_code and not cur.endswith("\\"):
+            cells.append(cur.strip())
+            cur = ""
+        else:
+            cur += ch
+    cells.append(cur.strip())
+    return cells
+
+
 def check_ledger(rep: Report) -> None:
     if not LEDGER.exists():
         rep.warn("台账", "未找到 LEDGER.md")
@@ -564,8 +584,13 @@ def check_ledger(rep: Report) -> None:
             continue
         if ln.strip("|").strip().split("|")[0].strip() == "篇":
             continue
-        for i, sym in enumerate(("✅", "🔀", "⏭", "⬜")):
-            per_part[part][i] += ln.count(sym)
+        # 状态只看**最后一格的开头**，不数整行里出现的符号。
+        # 原因：说明文字里提到状态符号是常事（例如「既没落点也没标 ⏭」），
+        # 而按整行计数会把它当成一条「有意省略」——本表自己就踩过一次。
+        cells = split_cells(ln)
+        m2 = re.match(r"([✅🔀⏭⬜])", cells[-1]) if cells else None
+        if m2:
+            per_part[part][("✅", "🔀", "⏭", "⬜").index(m2.group(1))] += 1
     done, merge, skip, todo = (sum(v[i] for v in per_part.values()) for i in range(4))
     print(f"台账 LEDGER.md：已落点 {done} 条 ｜ 合并 {merge} 条 ｜ 有意省略 {skip} 条 ｜ 待写 {todo} 条")
     for p, (d, mg, sk, td) in per_part.items():
