@@ -148,8 +148,18 @@
 | 可辨识联合（1.10 章） | Pydantic · Unions | https://pydantic.dev/docs/validation/latest/concepts/unions/ |
 | 计算字段（1.10 章） | Pydantic · Computed Fields | https://pydantic.dev/docs/validation/latest/concepts/computed_fields/ |
 | 模型与 OpenAPI 契约（1.10 章） | Pydantic · JSON Schema | https://pydantic.dev/docs/validation/latest/concepts/json_schema/ |
-| ORM（1.12 章） | SQLAlchemy 2.0 文档 | https://docs.sqlalchemy.org/ |
-| 缓存（1.12 章） | Redis 官方文档 | https://redis.io/docs/latest/ |
+| ORM 模型定义（1.12 章） | SQLAlchemy · ORM Quick Start | https://docs.sqlalchemy.org/en/20/orm/quickstart.html |
+| 异步引擎与会话（1.12 章） | SQLAlchemy · Asyncio Extension | https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html |
+| 会话与事务边界（1.12 章） | SQLAlchemy · Session Basics | https://docs.sqlalchemy.org/en/20/orm/session_basics.html |
+| `expire_on_commit` 参数（1.12 章） | SQLAlchemy · Session API | https://docs.sqlalchemy.org/en/20/orm/session_api.html |
+| 查询与结果提取（1.12 章） | SQLAlchemy · Querying Guide | https://docs.sqlalchemy.org/en/20/orm/queryguide/index.html |
+| N+1 与预加载（1.12 章） | SQLAlchemy · Relationship Loading | https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html |
+| 连接池参数（1.12 章） | SQLAlchemy · Connection Pooling | https://docs.sqlalchemy.org/en/20/core/pooling.html |
+| 数据库迁移（1.12 章） | Alembic · Tutorial | https://alembic.sqlalchemy.org/en/latest/tutorial.html |
+| FastAPI 与 SQLAlchemy 集成（1.12 章） | FastAPI · SQL Databases | https://fastapi.tiangolo.com/tutorial/sql-databases/ |
+| Redis 异步客户端（1.12 章） | Redis · Python client | https://redis.io/docs/latest/develop/clients/redis-py/ |
+| Redis 数据结构（1.12 章） | Redis · Data types | https://redis.io/docs/latest/develop/data-types/ |
+| Redis 过期与淘汰（1.12 章） | Redis · EXPIRE 命令 | https://redis.io/docs/latest/commands/expire/ |
 | 单元测试（1.14 章） | pytest 官方文档 | https://docs.pytest.org/ |
 | 依赖与虚拟环境（1.1 章） | uv 官方文档 | https://docs.astral.sh/uv/ |
 | 版本控制（1.1 章） | Git 官方文档 | https://git-scm.com/doc |

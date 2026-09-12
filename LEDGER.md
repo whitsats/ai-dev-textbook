@@ -514,7 +514,76 @@
 | 数据库连接池中间件（lifespan 管理连接 + 会话依赖） | `20/09` | 1.12 | ⏭ **归位**：连接池与会话生命周期属 1.12 |
 | Session 中间件（`SessionMiddleware` + 密钥） | `02/07` p.1–2 | 1.13 | ⏭ 会话与 Cookie 属 1.13 |
 
-### 1.12–1.15
+### 1.12 数据库与缓存：SQLAlchemy + Redis
+
+素材：`17FastAPI使用sqlAIchemy连接数据库`（4,860 汉字）+ `18FastAPI的Redis缓存`（1,878）
++ 从 1.11 归位的 `20/09`（669）＝ 7,407 汉字（比值 0.57，偏薄）。
+
+> ⚠️ **实跑边界**：本机 `sqlalchemy 2.0.50` + `aiosqlite 0.21.0` 可跑，ORM 全部结论均已实跑；
+> 但 `redis 3.5.3` **没有** `redis.asyncio`（需 ≥ 4.2），且无 Redis 服务，
+> 故 Redis 各段**未实跑**，正文已逐处标明。
+
+| 知识点 | 来源 | 正文落点 | 状态 |
+| --- | --- | --- | --- |
+| ORM 概念（对象↔表映射）与五项优势 | `17…` p.1 | 1.12.1 | ✅ |
+| 安装：`sqlalchemy[asyncio]` + 具体数据库的异步驱动 | `17…` p.1 | 1.12.2 | ✅ |
+| 驱动对照表（`aiomysql`/`asyncmy`/`asyncpg`/`aiosqlite`）与 URL 前缀 | `17…` p.2 | 1.12.2 | ✅ |
+| `create_async_engine` 与连接 URL 各段含义（含 `charset` 防乱码） | `17…` p.3 | 1.12.2 | ✅ |
+| 引擎参数：`echo` / `pool_size` / `max_overflow` / `pool_recycle` / `pool_pre_ping` | `17…` p.3–4、p.16 | 1.12.2 | ✅ 实测：SQLite 文件库也接受这些参数（`AsyncAdaptedQueuePool`）；内存库为 `StaticPool` |
+| 连接池概念（预建连接、复用、避免频繁创建销毁） | `20/09` p.1 | 1.12.2 | ✅ |
+| 模型定义：`DeclarativeBase` 基类 + 公共字段（`create_time`/`update_time`） | `17…` p.4–5 | 1.12.3 | ✅ |
+| `Mapped[类型]` 与 `mapped_column(...)` 各参数（`primary_key`/`String(255)`/`comment`/`nullable`） | `17…` p.5 | 1.12.3 | ✅ 实测：`Mapped[str]` 自动 `nullable=False`，`Mapped[int \| None]` 自动可空 |
+| `insert_default` / `onupdate` 与 `func.now()` | `17…` p.4–5 | 1.12.3 | ✅ |
+| `CheckConstraint`（如 `price >= 0`）作为库级兵底约束 | `17…` p.18 | 1.12.3 | ✅ 实测违反 → `IntegrityError: CHECK constraint failed` |
+| 建表：`lifespan` + `engine.begin()` + `run_sync(Base.metadata.create_all)` | `17…` p.5–6 | 1.12.4 | ✅ |
+| 关闭：`await engine.dispose()` 释放所有连接 | `17…` p.6 | 1.12.4 | ✅ |
+| `lifespan` 替代废弃的 `@app.on_event` | `17…` p.6、`20/09` p.5 | 1.12.4 | ✅ |
+| 用 `lifespan` 管理连接生命周期（启动建连、关闭断开） | `20/09` p.1 | 1.12.4 | ✅ |
+| `async_sessionmaker`（`bind` / `class_` / `expire_on_commit`） | `17…` p.6 | 1.12.5 | ✅ |
+| `get_database` 依赖：`yield` + 提交/回滚/关闭 | `17…` p.6 | 1.12.5 | ✅（本章给出正确写法，接 1.11.3 的纠错） |
+| 两种拿会话的方式：依赖注入（推荐）vs 中间件存 `request.state` | `20/09` p.2–3 | 1.12.5 | ✅ 并说明为何不推荐后者 |
+| `execute(select(...))` 与结果提取：`scalars().all()` / `first()` / `scalar_one_or_none()` / `scalar()` | `17…` p.7–8 | 1.12.6 | ✅ 实测四者语义（含查不到返回 `None`） |
+| 查询条件：`where` 多条件=AND、比较运算符、`like` 的通配符 `%` 与 `_` | `17…` p.8–9 | 1.12.7 | ✅ |
+| 条件组合 `&` / `\|` / `~`（每个条件需加括号） | `17…` p.10 | 1.12.7 | ✅ |
+| 包含查询 `in_()` | `17…` p.10 | 1.12.7 | ✅ |
+| 聚合 `func.count/avg/max/min/sum` + `scalar()` | `17…` p.10–11 | 1.12.7 | ✅ 实测 `avg` 返回浮点、空表返回 `None` |
+| 分页 `offset/limit` 与 `skip = (page-1)*page_size`、`total_pages` 向上取整 | `17…` p.11–12 | 1.12.7 | ✅ 实测分页返回结构 |
+| 新增：`Book(**data.model_dump())` → `add` → `commit` | `17…` p.12–13 | 1.12.8 | ✅ |
+| 更新：`get` → 属性赋值 → `commit`（脏检查只 UPDATE 改过的列） | `17…` p.13–14 | 1.12.8 | ✅ 实跑捕获 SQL：`UPDATE book SET price=? WHERE book.id = ?` |
+| 删除：`get` → `delete` → `commit`；不存在返回 404 | `17…` p.14–15 | 1.12.8 | ✅ |
+| CRUD 方法速查表 | `20/09` p.5 | 1.12.8 | ✅ |
+| `db.get(Model, id)` 按主键查询（等价 select.where） | `17…` p.14 | 1.12.8 | ✅ |
+| 请求体 Schema：`BookBase` / `BookCreate` / `BookUpdate` / `BookResponse` | `17…` p.18 | 1.12.9 | ✅ |
+| `BookResponse` 配 `from_attributes=True` 直接接 ORM 对象 | `17…` p.18 | 1.12.9 | ✅ 实测可用 |
+| `model_dump(exclude_unset=True)` 用于 PATCH 语义 | `17…` p.21 | 1.12.9 | 🔀 已在 1.10 讲透，此处只接一句 |
+| **接 1.10 的归位行**：与 SQLAlchemy ORM 配合（`from_attributes` / `model_dump` 建实例 / `IntegrityError` → 400） | 1.10 台账 `⏭` 预置 | 1.12.9 | ✅ **本章兑现**：`IntegrityError` 处理器实测 → 409 |
+| 三层架构：`config/` / `models/` / `schemas/` / `routers/` / `dao/` | `17…` p.15、p.23 | 1.12.10 | ✅ |
+| DAO 层：`BookDAO` 封装 CRUD，用 `flush()` 拿自增 id | `17…` p.19 | 1.12.10 | ✅ |
+| `get_book_dao` 依赖（在 DAO 上再包一层依赖） | `17…` p.20 | 1.12.10 | ✅ |
+| `main.py`：`lifespan` + `include_router` | `17…` p.22 | 1.12.10 | ✅ |
+| 最佳实践：每请求独立会话、长任务不持连接 | `20/09` p.5 | 1.12.13 | ✅ |
+| Redis 为何快（内存 vs 磁盘，50–100 倍） | `18…` p.1 | 1.12.11 | ✅ |
+| String 结构与场景（Token / 验证码 / 计数 / 批量 / `setex`） | `18…` p.1–2 | 1.12.11 | ✅ |
+| Key 命名规范（`业务:模块:标识:属性`、避特殊字符、长度、统一前缀） | `18…` p.2 | 1.12.11 | ✅ |
+| Hash / List / Set / Sorted Set 四种结构与场景 | `18…` p.2–4 | 1.12.11 | ✅ |
+| 接入：`redis.asyncio` + 连接池（`ConnectionPool` / `from_url`）+ `lifespan` 存 `app.state` + `ping` 校验 | `18…` p.4–5 | 1.12.11 | ✅ 正文已标注**未实跑**（本机 redis 3.5.3 无 `redis.asyncio`） |
+| 缓存查询流程（查缓存→未命中查库→写缓存带过期） | `18…` p.6 | 1.12.12 | ✅ 未实跑 |
+| 过期时间建议表（验证码 / 缓存 / Token / 空值标记） | `18…` p.6 | 1.12.12 | ✅ |
+| 更新时删缓存：先更库再删缓存；不直接更新缓存；延迟双删 | `18…` p.6 | 1.12.12 | ✅ |
+| 缓存穿透（空值标记）与代码 | `18…` p.7–8 | 1.12.12 | ✅ 未实跑 |
+| 缓存雪崩（过期时间加随机偏移） | `18…` p.8 | 1.12.12 | ✅ 未实跑 |
+| 缓存击穿（双检锁 + 锁超时 + 重试而非递归） | `18…` p.9 | 1.12.12 | ✅ 未实跑；并纠正素材示例里的 `redis` 未定义/缩进错误 |
+| 生产配置：RDB+AOF、`volatile-lru`、集群/哨兵 | `18…` p.7 | 1.12.12 | ✅ |
+| 章节级原创补充：ORM 的边界（什么时候不该用 ORM） | 原创（素材只讲好处） | 1.12.1 | ✅ |
+| 章节级原创补充：`expire_on_commit` 的真实失败场景与报错原文 | 原创·**实跑** | 1.12.5 | ✅ 实跑复现：路由内 `commit()` 后返回 ORM 对象 → `ResponseValidationError` / `MissingGreenlet` |
+| 章节级原创补充：`create_all` 与 Alembic 迁移的分工 | 原创（素材只说"生产建议用 Alembic"） | 1.12.4 | ✅ |
+| 章节级原创补充：本地 SQLite / 生产 PostgreSQL 的差异（池类与驱动） | 原创·实测 | 1.12.2 | ✅ |
+| 章节级原创补充：综合示例「知舟文章接口：ORM + 缓存」 | 原创 | 1.12.13 | ✅ |
+| N+1 查询（素材只在「优势」里提一句「配置不当会引入 N+1」） | `17…` p.1 | 1.12.1、面试视角 Q4、练习进阶 | ✅ 给出判据与 `selectinload` 方向；完整实现留给 5.x 检索接口 |
+| 实跑核对：`scalars().first()` 容忍多行、`scalar_one_or_none()` 多行招 `MultipleResultsFound`、`refresh()` 会多发一次 SELECT | 实跑验证 | 1.12.6、1.12.8 | ✅ |
+| 素材修正：DAO 里同时写 `flush()` 与 `refresh()` | `17…` p.19 | 1.12.8 | ✅ 拿自增 id 只需 `flush`；那句 `refresh` 是一次多余查询（实测 `refresh` 确实另发 SELECT） |
+
+### 1.13–1.15
 
 每章开写前 30 分钟内补全小节台账（流程见 [`STYLE.md`](STYLE.md) 第八节）。
 
@@ -522,7 +591,6 @@
 
 | 章 | 素材 | 内容 | 状态 |
 | --- | --- | --- | --- |
-| 1.12 | `20/09` | 数据库连接池、`lifespan` 管理连接、会话依赖 | ⬜ |
 | 1.13 | `20/06`、`02/07`(Session) | JWT 认证中间件、白名单路径、会话中间件 | ⬜ |
 | 1.14 | `20/08` | 日志记录中间件、结构化日志、滚动日志 | ⬜ |
 
@@ -533,7 +601,7 @@
 | 篇 | 章数 | `✅` 已落点 | `🔀` 合并 | `⏭` 有意省略 | `⬜` 待写 | 反向核对 |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | 第 0 篇 | 3 | 18 | 0 | 0 | 0 | 已完成（0.1–0.3 逐条回查） |
-| 第 1 篇 | 15 | 343（1.1–1.11） | 18 | 26 | 3 | 进行中（已完成 11/15 章） |
+| 第 1 篇 | 15 | 399（1.1–1.12） | 19 | 27 | 2 | 进行中（已完成 12/15 章） |
 
 > 提交正文时同步更新本表；`python tools/lint_book.py` 会统计 `⬜` 数量并提示未清零的篇，
 > 并按表头逐列核对本表的四个数字（手写汇总最容易漂：本轮就填错过一次，手写 287、实数 286）。
