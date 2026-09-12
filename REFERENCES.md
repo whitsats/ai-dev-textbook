@@ -182,6 +182,7 @@
 | 依赖与虚拟环境（1.1 章） | uv 官方文档 | https://docs.astral.sh/uv/ |
 | 版本控制（1.1 章） | Git 官方文档 | https://git-scm.com/doc |
 | 工作树并行隔离（2.2 章） | Git · git-worktree | https://git-scm.com/docs/git-worktree |
+| 补丁应用与退出码语义（2.3 章） | Git · git-apply | https://git-scm.com/docs/git-apply |
 | HTTP 语义（1.8 章） | RFC 9110 · HTTP Semantics | https://www.rfc-editor.org/rfc/rfc9110.html |
 | JWT 规范（1.13 章） | RFC 7519 · JWT | https://www.rfc-editor.org/rfc/rfc7519.html |
 | OAuth 2.0 规范（1.13 章） | RFC 6749 · OAuth 2.0 | https://www.rfc-editor.org/rfc/rfc6749.html |
@@ -218,6 +219,19 @@
 | Claude API 与 Messages 格式 | Claude 平台文档 | https://platform.claude.com/docs/en/home |
 | API 鉴权、限流、SDK（2.1 章） | Claude · API 概览 | https://platform.claude.com/docs/en/api/overview |
 | 工具调用与函数编排 | Claude · Tool use | https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview |
+| Codex 的沙箱与审批两层控制（2.3 章） | OpenAI · Agent approvals & security | https://learn.chatgpt.com/docs/agent-approvals-security |
+| 沙箱模式与平台前置依赖（2.3 章） | OpenAI · Sandbox | https://learn.chatgpt.com/docs/sandboxing |
+| Codex CLI 安装与用法（2.3 章） | OpenAI · Codex CLI | https://learn.chatgpt.com/docs/codex/cli |
+| 命令与斜杠命令参考（2.3 章） | OpenAI · Command line options | https://learn.chatgpt.com/docs/developer-commands |
+| 非交互运行与脚本化（2.3 章） | OpenAI · Non-interactive mode | https://learn.chatgpt.com/docs/non-interactive-mode |
+| 云端任务、两阶段运行与环境（2.3 章） | OpenAI · Codex cloud | https://learn.chatgpt.com/docs/cloud |
+| 云端联网控制（2.3 章） | OpenAI · Agent internet access | https://learn.chatgpt.com/docs/cloud/internet-access |
+| 代码审查（2.3 章） | OpenAI · Code review | https://learn.chatgpt.com/docs/code-review |
+| 自动审批复核（2.3 章） | OpenAI · Automatic approval review | https://learn.chatgpt.com/docs/sandboxing/auto-review |
+| 自动复核的实现与默认策略（开源仓库，2.3 章） | Codex · guardian | https://github.com/openai/codex/tree/main/codex-rs/core/src/guardian |
+| 原生 Windows 沙箱（2.3 章） | OpenAI · Windows sandbox | https://learn.chatgpt.com/docs/windows/windows-sandbox |
+| AGENTS.md 项目说明（2.3、2.5 章） | OpenAI · Custom instructions with AGENTS.md | https://learn.chatgpt.com/docs/agent-configuration/agents-md |
+| 本地配置入门与参考（2.3、2.5 章） | OpenAI · Config basics ／ Configuration reference | https://learn.chatgpt.com/docs/config-file/config-basic |
 | OpenAI 侧能力与 Responses API | OpenAI API 文档 | https://developers.openai.com/api/docs |
 | Assistants → Responses 迁移 | OpenAI · 迁移指南 | https://developers.openai.com/api/docs/guides/migrate-to-responses |
 | 版本变更追踪（2.1 章） | OpenAI · Changelog | https://developers.openai.com/api/docs/changelog |
