@@ -210,6 +210,11 @@
 | 会话恢复、命名与「不还原的配置」（2.2 章） | Claude Code · Manage sessions | https://code.claude.com/docs/en/sessions |
 | 上下文窗口与 prompt caching（2.2、2.5 章） | Claude Code · Prompt caching | https://code.claude.com/docs/en/prompt-caching |
 | CLAUDE.md 与自动记忆（2.2、2.5 章） | Claude Code · How Claude remembers your project | https://code.claude.com/docs/en/memory |
+| 「什么时候该加什么机制」的触发表与扩展机制对照（2.5 章） | Claude Code · Extend Claude Code | https://code.claude.com/docs/en/features-overview |
+| `.claude` 目录逐文件说明（何时读、是否提交）（2.5 章） | Claude Code · Explore the .claude directory | https://code.claude.com/docs/en/claude-directory |
+| 技能正文按需加载、支持文件与动态上下文注入（2.5 章） | Claude Code · Extend Claude with skills | https://code.claude.com/docs/en/skills |
+| Hooks 事件全表、三种节奏与处理器类型（2.5 章） | Claude Code · Hooks reference | https://code.claude.com/docs/en/hooks |
+| MCP 接入信号、三种传输与 `.mcp.json` 的 `type` 陷阱（2.5 章） | Claude Code · Connect Claude Code to tools via MCP | https://code.claude.com/docs/en/mcp |
 | 常见工作流与最佳实践（2.2 章） | Claude Code · Common workflows ／ Best practices | https://code.claude.com/docs/en/common-workflows |
 | 会话隔离到 git worktree（2.2 章） | Claude Code · Run parallel sessions with worktrees | https://code.claude.com/docs/en/worktrees |
 | 平台与入口对照（2.2 章） | Claude Code · Platforms and integrations | https://code.claude.com/docs/en/platforms |
@@ -231,6 +236,9 @@
 | 自动复核的实现与默认策略（开源仓库，2.3 章） | Codex · guardian | https://github.com/openai/codex/tree/main/codex-rs/core/src/guardian |
 | 原生 Windows 沙箱（2.3 章） | OpenAI · Windows sandbox | https://learn.chatgpt.com/docs/windows/windows-sandbox |
 | AGENTS.md 项目说明（2.3、2.5 章） | OpenAI · Custom instructions with AGENTS.md | https://learn.chatgpt.com/docs/agent-configuration/agents-md |
+| 命令规则 `prefix_rule`、三种决策与复合命令判定（2.5 章） | OpenAI · Rules | https://learn.chatgpt.com/docs/agent-configuration/rules |
+| 技能目录/加载位置与初始列表的上下文预算（2.5 章） | OpenAI · Build skills | https://learn.chatgpt.com/docs/build-skills |
+| 定时任务与事件触发的可用面（2.5 章） | OpenAI · Automations | https://learn.chatgpt.com/docs/automations |
 | 本地配置入门与参考（2.3、2.5 章） | OpenAI · Config basics ／ Configuration reference | https://learn.chatgpt.com/docs/config-file/config-basic |
 | OpenAI 侧能力与 Responses API | OpenAI API 文档 | https://developers.openai.com/api/docs |
 | Assistants → Responses 迁移 | OpenAI · 迁移指南 | https://developers.openai.com/api/docs/guides/migrate-to-responses |
