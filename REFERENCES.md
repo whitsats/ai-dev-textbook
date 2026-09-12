@@ -240,6 +240,21 @@
 | MCP 规范与授权模型 | MCP · Specification | https://modelcontextprotocol.io/specification/ |
 | MCP 官方 SDK | MCP · SDKs | https://modelcontextprotocol.io/docs/2026-07-28/sdk |
 | GitHub Copilot 对照（2.3 章） | GitHub · Copilot 文档 | https://docs.github.com/en/copilot |
+| 规则文件与 `@` 引用（2.4 章） | Cursor · Rules | https://cursor.com/docs/rules |
+| 补全的多行编辑与跳转预测（2.4 章） | Cursor · Tab | https://cursor.com/help/ai-features/tab |
+| 仓库级 / 路径级自定义指令（2.4 章） | GitHub · Adding repository custom instructions | https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions |
+| 跨域：简单请求、预检与凭证限制（2.4 章） | MDN · Cross-Origin Resource Sharing | https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS |
+| CORS 中间件的凭证与反射行为（2.4 章） | Starlette · Middleware | https://www.starlette.io/middleware/ |
+| 前端环境变量与构建模式（2.4 章） | Vite · Env Variables and Modes | https://vite.dev/guide/env-and-mode |
+| 构建与产物预览（2.4 章） | Vite · Building for Production | https://vite.dev/guide/build |
+| `create-vue` 脚手架与项目结构（2.4 章） | Vue · Quick Start | https://vuejs.org/guide/quick-start |
+| 本机与私有网地址判定（2.3、2.4 章） | Python · ipaddress | https://docs.python.org/3/library/ipaddress.html |
+| Vibe Coding 的定义与事件索引（2.4 章） | Wikipedia · Vibe coding | https://en.wikipedia.org/wiki/Vibe_coding |
+| AI 生成代码的安全通过率与测试方法（2.4 章） | Veracode · 2025 GenAI Code Security Report | https://www.veracode.com/resources/analyst-reports/2025-genai-code-security-report/ |
+| 语法与安全通过率的长期对比（2.4 章） | Veracode · Spring 2026 GenAI Code Security Update | https://www.veracode.com/blog/spring-2026-genai-code-security/ |
+| AI 与人类 PR 的缺陷对比（2.4 章） | CodeRabbit · State of AI vs Human Code Generation | https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report |
+| 重构比例与重复代码（2.4 章） | GitClear · AI Assistant Code Quality Research 2025 | https://www.gitclear.com/ai_assistant_code_quality_2025_research |
+| rsync 争议的维护者说明（2.4 章） | LWN · Tridgell: rsync and outrage | https://lwn.net/Articles/1076040/ |
 | 开发者生产力的对照实验（2.1 章） | METR · 2025 AI 与开源开发者生产力实验 | https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/ |
 | 同一实验的 2026 更新（选择效应与重设计） | METR · 实验设计变更说明 | https://metr.org/blog/2026-02-24-uplift-update/ |
 | AI 采用率、信任与交付稳定性（2.1 章） | DORA · State of AI-assisted Software Development 2025 | https://dora.dev/dora-report-2025/ |
