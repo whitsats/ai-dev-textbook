@@ -117,6 +117,8 @@
 | 响应状态码（1.9 章） | FastAPI · Response Status Code | https://fastapi.tiangolo.com/tutorial/response-status-code/ |
 | 自定义响应类（1.9、1.14 章） | FastAPI · Custom Response | https://fastapi.tiangolo.com/advanced/custom-response/ |
 | 错误处理与异常处理器（1.14 章） | FastAPI · Handling Errors | https://fastapi.tiangolo.com/tutorial/handling-errors/ |
+| 应用生命周期与 `lifespan`（1.12、1.14 章） | FastAPI · Lifespan Events | https://fastapi.tiangolo.com/advanced/events/ |
+| `TestClient` 与 `raise_server_exceptions`（1.14 章） | FastAPI · Testing | https://fastapi.tiangolo.com/tutorial/testing/ |
 | 多文件应用与 `APIRouter`（1.9、1.15 章） | FastAPI · Bigger Applications | https://fastapi.tiangolo.com/tutorial/bigger-applications/ |
 | 配置与环境变量（1.9 章） | FastAPI · Settings and Environment Variables | https://fastapi.tiangolo.com/advanced/settings/ |
 | `BaseSettings` 与 `.env`（1.9 章） | Pydantic · Settings 管理 | https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/ |
@@ -165,6 +167,11 @@
 | Redis 数据结构（1.12 章） | Redis · Data types | https://redis.io/docs/latest/develop/data-types/ |
 | Redis 过期与淘汰（1.12 章） | Redis · EXPIRE 命令 | https://redis.io/docs/latest/commands/expire/ |
 | 单元测试（1.14 章） | pytest 官方文档 | https://docs.pytest.org/ |
+| fixture 与作用域（1.14 章） | pytest · Fixtures | https://docs.pytest.org/en/stable/how-to/fixtures.html |
+| 标准库测试框架（1.14 章） | Python 3 · unittest | https://docs.python.org/3/library/unittest.html |
+| 替身与 `assert_not_called`（1.14 章） | Python 3 · unittest.mock | https://docs.python.org/3/library/unittest.mock.html |
+| 日志轮转 handler（1.14 章） | Python 3 · logging.handlers | https://docs.python.org/3/library/logging.handlers.html |
+| 用配置管理日志（1.14 章） | Python 3 · logging.config | https://docs.python.org/3/library/logging.config.html |
 | 依赖与虚拟环境（1.1 章） | uv 官方文档 | https://docs.astral.sh/uv/ |
 | 版本控制（1.1 章） | Git 官方文档 | https://git-scm.com/doc |
 | HTTP 语义（1.8 章） | RFC 9110 · HTTP Semantics | https://www.rfc-editor.org/rfc/rfc9110.html |
