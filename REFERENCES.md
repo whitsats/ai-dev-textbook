@@ -113,6 +113,13 @@
 | Cookie 参数（1.9 章） | FastAPI · Cookie Parameters | https://fastapi.tiangolo.com/tutorial/cookie-params/ |
 | 表单数据（1.15 章） | FastAPI · Form Data | https://fastapi.tiangolo.com/tutorial/request-forms/ |
 | 文件上传（1.15 章） | FastAPI · Request Files | https://fastapi.tiangolo.com/tutorial/request-files/ |
+| 表单与文件混合上传（1.15 章） | FastAPI · Request Files and Form | https://fastapi.tiangolo.com/tutorial/request-forms-and-files/ |
+| 静态文件挂载（1.15 章） | FastAPI · Static Files | https://fastapi.tiangolo.com/tutorial/static-files/ |
+| 静态挂载实现与目录校验（1.15 章） | Starlette · Static Files | https://starlette.dev/staticfiles/ |
+| 异步路由与阻塞调用（1.7、1.15 章） | FastAPI · Concurrency and async / await | https://fastapi.tiangolo.com/async/ |
+| 文件名唯一化（1.15 章） | Python 3 · uuid | https://docs.python.org/3/library/uuid.html |
+| 内存/磁盘自动切换的临时文件（1.15 章） | Python 3 · tempfile | https://docs.python.org/3/library/tempfile.html |
+| 图片缩放与格式转换（1.15 章） | Pillow · Image 模块 | https://pillow.readthedocs.io/en/stable/reference/Image.html |
 | 响应模型与返回类型（1.9 章） | FastAPI · Response Model - Return Type | https://fastapi.tiangolo.com/tutorial/response-model/ |
 | 响应状态码（1.9 章） | FastAPI · Response Status Code | https://fastapi.tiangolo.com/tutorial/response-status-code/ |
 | 自定义响应类（1.9、1.14 章） | FastAPI · Custom Response | https://fastapi.tiangolo.com/advanced/custom-response/ |
