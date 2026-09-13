@@ -40,8 +40,11 @@ PLAN.md 初版的篇幅估算是按"素材页数"拍的，而页数会骗人：
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -1105,6 +1108,14 @@ def weak_summary(part_max: int = 5) -> list[tuple[str, list[str], int, int]]:
     return out
 
 
+# 文首篇级小计句：「第 0–1 篇正文**已完成**（18 章，实测 180,090 字）」。
+# 句式是**约定**，所以集中定义一份——门用它解析，自检的夹具也用它定位。
+_PART_SENTENCE = re.compile(r"第\s*(\d+)(?:\s*[–\-—~]\s*(\d+))?\s*篇正文\*\*已完成\*\*"
+                            r"（(\d+)\s*章，实测\s*([\d,]+)\s*字）")
+# README 的进度句：「（共 24 章，实测 291,740 字）」。
+_README_PROGRESS = re.compile(r"（共\s*(\d+)\s*章，实测\s*([\d,]+)\s*字）")
+
+
 def check_plan(plan_path: Path, coverage_path: Path) -> int:
     """把 PLAN.md / COVERAGE.md 里手写的汇总数字与实测结果对账。
 
@@ -1126,6 +1137,14 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
         if head.isdigit():
             done[int(head)] = done.get(int(head), 0) + 1
     done_total = sum(done.values())
+    measured_total = sum(measured_words.values())
+    # 篇级字数：篇号直接取自章号（2.6 → 第 2 篇）。同一条数据既给看板用，
+    # 也给文首的篇级小计句与 README 用——**篇级数字必须和章级加起来一样**。
+    part_words: dict[int, int] = {}
+    for cid, n in measured_words.items():
+        head = cid.split(".")[0]
+        if head.isdigit():
+            part_words[int(head)] = part_words.get(int(head), 0) + n
 
     problems: list[str] = []
 
@@ -1357,7 +1376,7 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
     if not pm:
         problems.append("PLAN 文首缺少「全书进度 **N / 68 章**，实测 N 字」句")
     else:
-        measured = sum(_chapter_effective_words().values())
+        measured = measured_total
         if _as_int(pm.group(1)) != done_total:
             problems.append(f"PLAN 文首进度：已完稿 {pm.group(1)} 章 ≠ 实测 {done_total}")
         if _as_int(pm.group(2)) != total_chapters:
@@ -1382,6 +1401,83 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
                 f"PLAN 需原创补写：写 {pm2.group(1)}/{pm2.group(2)} 章、零素材 {pm2.group(3)} 章"
                 f" ≠ 实测 {want_w}/{want_t} 章、零素材 {want_z} 章")
 
+    # 11) PLAN 文首的**篇级小计**句。门一直只看同一行里的「全书进度 N/68 章，实测 N 字」，
+    #     于是篇级子数字成了盲区：本轮它就写着「第 2 篇 92,607 字」，而实测已是 117,020
+    #     （第 2 篇 6 章之和）。篇级是读者判断「这一篇值不值得先读」的依据，
+    #     错了可以一直错下去——因为它既不在章表里，也不在合计里。
+    part_done = {p: done.get(p, 0) for p in agg}
+    seen_parts: set[int] = set()
+    for m in _PART_SENTENCE.finditer(text):
+        lo = int(m.group(1))
+        hi = int(m.group(2) or lo)
+        spans = [p for p in range(lo, hi + 1) if p in agg]
+        seen_parts.update(spans)
+        label = f"第 {lo} 篇" if lo == hi else f"第 {lo}–{hi} 篇"
+        want_n = sum(part_done.get(p, 0) for p in spans)
+        want_w = sum(part_words.get(p, 0) for p in spans)
+        if _as_int(m.group(3)) != want_n:
+            problems.append(f"PLAN 文首{label}小计：已完成 {m.group(3)} 章 ≠ 实测 {want_n}")
+        if _as_int(m.group(4)) != want_w:
+            problems.append(f"PLAN 文首{label}小计：实测 {m.group(4)} 字 ≠ 正文实测 {want_w:,} 字")
+    if not seen_parts:
+        problems.append("PLAN 文首缺少「第 X 篇正文**已完成**（N 章，实测 N 字）」篇级小计")
+    else:
+        missing = sorted(p for p, n in part_done.items() if n and p not in seen_parts)
+        if missing:
+            problems.append("PLAN 文首篇级小计漏了已完稿的篇："
+                            + "、".join(f"第 {p} 篇" for p in missing))
+
+    # 12) README 的数字。它是读者第一眼看的那份，却一直不在门的视野里：
+    #     本轮它同时漂了两处——规划总量停在方案 A 之前的 581,000（PLAN 已是 628,000）、
+    #     进度句停在 2.1–2.5 完成（实际 2.1–2.6）。三类都验：
+    #     ①「（共 N 章，实测 N 字）」　②「约 N 字」的规划总量
+    #     ③「全书结构」表的章数与素材充裕度（它们与「文首的 92,607」同族：
+    #       抄了一遍、却没有一处会拿它对账）。
+    readme = plan_path.parent / "README.md"
+    if not readme.exists():
+        problems.append("找不到 README.md，无法核对其中的汇总数字")
+    else:
+        rtext = readme.read_text(encoding="utf-8")
+
+        def rd_line(offset: int) -> int:
+            return rtext[:offset].count("\n") + 1
+
+        rm = _README_PROGRESS.search(rtext)
+        if not rm:
+            problems.append("README 缺少「（共 N 章，实测 N 字）」的进度句")
+        else:
+            if _as_int(rm.group(1)) != done_total:
+                problems.append(f"README 第 {rd_line(rm.start())} 行：已完稿 {rm.group(1)} 章"
+                                f" ≠ 实测 {done_total} 章")
+            if _as_int(rm.group(2)) != measured_total:
+                problems.append(f"README 第 {rd_line(rm.start())} 行：实测 {rm.group(2)} 字"
+                                f" ≠ 正文实测 {measured_total:,} 字")
+
+        totals = re.findall(r"约\s*([\d,]+)\s*字", rtext)
+        if not totals:
+            problems.append("README 未写规划总量「约 N 字」")
+        for t in sorted({t for t in totals if _as_int(t) != total_plan}):
+            problems.append(f"README 「约 {t} 字」的规划总量 ≠ PLAN 合计 {total_plan:,} 字")
+
+        struct_mark = "## 全书结构"
+        if struct_mark in rtext:
+            block = re.split(r"\n## ", rtext.split(struct_mark, 1)[1], 1)[0]
+            for line in block.splitlines():
+                cells = cells_of(line)
+                if len(cells) < 5 or not re.fullmatch(r"\d+", cells[0]):
+                    continue
+                p = int(cells[0])
+                if p not in agg:
+                    continue      # 第 9 篇是预留，不在规划内
+                if _as_int(cells[3]) != agg[p]["n"]:
+                    problems.append(f"README 全书结构第 {p} 篇：章数 {cells[3]} ≠ 实测 {agg[p]['n']}")
+                mm = re.match(r"^(\d+\.\d+)", cells[4])
+                if mm and abs(float(mm.group(1)) - agg[p]["ratio"]) > 0.005:
+                    problems.append(f"README 全书结构第 {p} 篇：素材充裕度 {mm.group(1)}"
+                                    f" ≠ 实测 {agg[p]['ratio']:.2f}")
+        else:
+            problems.append("README 缺少「## 全书结构」一节")
+
     # 8) 章文件存在、却没被统计到（**拦提交**）。这是「写了却没记账」的另一种形态：
     #    文件名一旦不符合解析规则，这章的字数就不进完成度，报表上看起来就是“没写”，
     #    而所有数字之间仍然自洽——所以它必须自己报出来，不能靠人盯着看。
@@ -1403,10 +1499,100 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
         for p in problems:
             print(f"  ✖ {p}")
         print("\n修法：先改 tools/audit_coverage.py 里的规划值，再重跑"
-              " `python tools/audit_coverage.py --out COVERAGE.md`，最后同步 PLAN.md。")
+              " `python tools/audit_coverage.py --out COVERAGE.md`，最后同步 PLAN.md 与 README.md。")
         return 1
-    print("文档对账通过：PLAN.md 与 COVERAGE.md 的汇总数字与实测一致。")
+    print("文档对账通过：PLAN.md / README.md / COVERAGE.md 的汇总数字与实测一致"
+          f"（{done_total} 章、{measured_total:,} 字，其中篇级小计已逐篇核过）。")
     return 0
+
+
+# ---------------- 自检（--self-test） ----------------
+# 对账门也要有夹具。这里的每条检查都是「解析文档里的句子 → 与实测比」：句式一变、
+# 解析静默落空，门就变成摆设；而**误报**同样有害（会逼人写假数字过关）。
+# 光验证「不报错」是不够的，所以夹具不是写死的样本，而是从**当前真实的
+# PLAN/README 派生**：找到那句话、把那个数字改错，看它是不是真的会响。
+# 这样书在长、数字在变，夹具也不用跟着改——只有句式变了它才会失效，
+# 而那种情况本来就是它该报的。
+
+def _swap(text: str, span: tuple[int, int], new: str) -> str:
+    return text[:span[0]] + new + text[span[1]:]
+
+
+def _self_test_cases(plan_text: str, readme_text: str) -> list[tuple[str, dict[str, str | None], str]]:
+    cases: list[tuple[str, dict[str, str | None], str]] = [("未改动的原文应保持沉默", {}, "")]
+
+    pm = _PART_SENTENCE.search(plan_text)
+    if pm:
+        cases.append(("PLAN 篇级小计的字数漂了",
+                      {"PLAN.md": _swap(plan_text, pm.span(4), str(_as_int(pm.group(4)) + 1))},
+                      "篇小计"))
+        cases.append(("PLAN 篇级小计的章数漂了",
+                      {"PLAN.md": _swap(plan_text, pm.span(3), str(int(pm.group(3)) + 1))},
+                      "已完成"))
+
+    parts = list(_PART_SENTENCE.finditer(plan_text))
+    if len(parts) >= 2:
+        last = parts[-1]
+        cases.append(("PLAN 漏了已完稿篇的小计",
+                      {"PLAN.md": plan_text[:last.start()] + plan_text[last.end():]},
+                      "漏了已完稿的篇"))
+
+    rm = _README_PROGRESS.search(readme_text)
+    if rm:
+        cases.append(("README 完稿章数漂了",
+                      {"README.md": _swap(readme_text, rm.span(1), str(int(rm.group(1)) + 1))},
+                      "已完稿"))
+        cases.append(("README 总字数漂了",
+                      {"README.md": _swap(readme_text, rm.span(2), str(_as_int(rm.group(2)) + 1))},
+                      "≠ 正文实测"))
+
+    tm = re.search(r"约\s*([\d,]+)\s*字", readme_text)
+    if tm:
+        cases.append(("README 规划总量停在旧方案",
+                      {"README.md": _swap(readme_text, tm.span(1), str(_as_int(tm.group(1)) + 1))},
+                      "规划总量"))
+
+    row = re.search(r"(?m)^\| (\d+) \|[^\n]*\| (\d+) \| (\d+\.\d+)", readme_text)
+    if row:
+        wrong = "0.99" if row.group(3) != "0.99" else "0.98"
+        cases.append(("README 篇级素材比值漂了",
+                      {"README.md": _swap(readme_text, row.span(3), wrong)},
+                      "素材充裕度"))
+        cases.append(("README 篇章数漂了",
+                      {"README.md": _swap(readme_text, row.span(2), str(int(row.group(2)) + 1))},
+                      "章数"))
+
+    if "## 全书结构" in readme_text:
+        cases.append(("README 丢了「全书结构」一节",
+                      {"README.md": readme_text.replace("## 全书结构", "## 全书架构", 1)},
+                      "缺少「## 全书结构」"))
+    cases.append(("README 整个不存在", {"README.md": None}, "找不到 README.md"))
+    return cases
+
+
+def self_test() -> int:
+    texts = {name: (ROOT / name).read_text(encoding="utf-8")
+             for name in ("PLAN.md", "README.md", "COVERAGE.md")}
+    cases = _self_test_cases(texts["PLAN.md"], texts["README.md"])
+    ok = 0
+    for name, mutate, expect in cases:
+        d = Path(tempfile.mkdtemp())
+        for fname, body in texts.items():
+            content = mutate.get(fname, body)
+            if content is None:
+                continue          # 缺失夹具：该文件不落盘
+            (d / fname).write_text(content, encoding="utf-8")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = check_plan(d / "PLAN.md", d / "COVERAGE.md")
+        out = buf.getvalue()
+        good = (rc == 0 and "文档数字与实测不一致" not in out) if not expect \
+            else (rc == 1 and expect in out)
+        ok += good
+        print(("  ✔ " if good else "  ✖ ") + name
+              + ("" if good else f"（期望报出「{expect}」）"))
+    print(f"自检：{ok}/{len(cases)} 通过")
+    return 0 if ok == len(cases) else 1
 
 
 def main() -> int:
@@ -1415,10 +1601,15 @@ def main() -> int:
     ap.add_argument("--pool", action="store_true", help="打印素材池明细")
     ap.add_argument("--out", metavar="FILE", help="把 markdown 报表写入文件（如 COVERAGE.md）")
     ap.add_argument("--check", action="store_true",
-                    help="对账：PLAN.md / COVERAGE.md 的汇总数字是否与实测一致")
+                    help="对账：PLAN.md / README.md / COVERAGE.md 的汇总数字是否与实测一致")
     ap.add_argument("--risk-table", action="store_true",
                     help="打印 PLAN「偏薄及以下」汇总表的应有内容，便于粘回去")
+    ap.add_argument("--self-test", action="store_true",
+                    help="只跑对账门自己的夹具（每类都改错一次，确认它会响）")
     args = ap.parse_args()
+
+    if args.self_test:
+        return self_test()
 
     if args.check:
         return check_plan(Path("PLAN.md"), Path("COVERAGE.md"))

@@ -214,11 +214,12 @@ python tools/install_hooks.py --uninstall  # 卸载
 | 单一事实来源 | [`REFERENCES.md`](REFERENCES.md) 技术结论出处 | 事实过时 / 臆造链接 |
 | 单一事实来源 | [`LEDGER.md`](LEDGER.md) 知识点→章节落点 | **关键信息静静漏掉** |
 | 机械校验 | `tools/lint_book.py` 12 项检查 | 体例 / 引用 / 篇幅 / 跨章重复 / 标题空行 |
-| 数字对账 | `tools/audit_coverage.py --check` | 文档里的汇总数字与实测漂移（曾出现 PLAN 写 1.24 而实测已是 1.25） |
+| 数字对账 | `tools/audit_coverage.py --check` | 文档里的汇总数字与实测漂移——含**篇级小计**与 **README 的总数/规划总量/全书结构表**（曾出现 PLAN 写 1.24 而实测已是 1.25，以及文首写「第 2 篇 92,607 字」而实测已是 117,020） |
 | 改稿前查引用 | `tools/trace_refs.py` | 改了术语/数字/结论却漏改别处（正文是硬换行的，`grep` 看不见接缝） |
 | 逐章审阅 | [`STYLE.md`](STYLE.md) 8.8 四项 | 台账反向回查 / 声称输出必须实跑 / 结论回到官方文档 / 偏差归因 |
 | 篇幅口径 | 有效字数 = 汉字 + 15 × 有效代码行（**围栏行不计入**） | 「代码密集」被误判成偷工减料，或反过来放宽容差遮盖真问题 |
 | 口径自检 | `tools/lint_book.py --self-test` | 算法静默退化：曾把围栏行也算作内容，全书虚增 20,130 字而输出看着正常 |
+| 门槛自检 | `tools/audit_coverage.py --self-test` | 对账靠「解析文档里的句子」，句式一变就落空成摆设；夹具从**当前真实文档**派生错误，书在长也不用改 |
 | 强制流程 | `.githooks/pre-commit`（git 钩子） | 漏跑校验就提交不了 |
 | 最后一道门 | `.github/workflows/book-checks.yml` | 绕过钩子也会在 CI 被拦住 |
 

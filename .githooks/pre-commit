@@ -5,6 +5,7 @@
 #       不可能被漏跑——有错误就拦下提交。
 #
 # 规则：
+#   0. 先跑两个工具的自检夹具（--self-test），工具坏了就没必要往下走。
 #   1. 每次都跑 tools/lint_book.py（纯本地、秒级）。
 #   2. 默认只离线解析链接清单；只有 REFERENCES.md 被改动时才联网全量校验
 #      （避免每次提交都发几十个网络请求）。
@@ -38,13 +39,19 @@ if [ ! -f tools/lint_book.py ]; then
     exit 1
 fi
 
-# 字数口径自检：code_lines_of 是全书所有字数数字的单一输入，而它会**静默退化**
-# （曾把围栏行也算作内容：671 个围栏虚增 20,130 字），所以用夹具把
-# 「裸围栏 / 引用块里的 > ``` / 列表项里的缩进围栏」三态钉住。
-echo "[pre-commit] 1/4 字数口径自检 ..."
+# 工具自检。两个工具都会**静默退化**：
+#   · lint_book.py 的 code_lines_of 曾把围栏行也算作内容（671 个围栏虚增 20,130 字）；
+#   · audit_coverage.py 的对账靠「解析文档里的句子」，句式一变就落空成摆设。
+# 两者都有夹具，而夹具不跑就等于没有，所以放在第一步。
+echo "[pre-commit] 1/4 工具自检（字数口径 / 对账门）..."
 if ! "$PY" tools/lint_book.py --self-test; then
     echo "" >&2
     echo "[pre-commit] ✖ 字数口径退化，提交被拦下：先修 tools/lint_book.py 的 code_lines_of。" >&2
+    exit 1
+fi
+if ! "$PY" tools/audit_coverage.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 对账门的夹具不过，提交被拦下：先修 tools/audit_coverage.py。" >&2
     exit 1
 fi
 

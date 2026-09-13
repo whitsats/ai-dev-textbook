@@ -253,7 +253,7 @@ python tools/lint_book.py --only <章号>
 
 | 层 | 文件 | 作用 |
 | --- | --- | --- |
-| 本机钩子 | `.githooks/pre-commit` | 每次提交依次跑：`lint_book.py --self-test`（字数口径自检）→ `lint_book.py`（正文）→ `audit_coverage.py --check`（文档数字对账）→ 改动到 [`REFERENCES.md`](REFERENCES.md) 时联网校验全部链接 |
+| 本机钩子 | `.githooks/pre-commit` | 每次提交依次跑：两个工具的 `--self-test` 夹具（字数口径 / 对账门）→ `lint_book.py`（正文）→ `audit_coverage.py --check`（文档数字对账，含篇级小计与 README）→ 改动到 [`REFERENCES.md`](REFERENCES.md) 时联网校验全部链接 |
 | CI | `.github/workflows/book-checks.yml` | 推送与 PR 时重跑同一套校验（含钩子自检） |
 | 安装/自测 | `python tools/install_hooks.py` | 安装（本仓库 `core.hooksPath`）、查看状态、`--self-test` 验证真能拦下违规提交 |
 
