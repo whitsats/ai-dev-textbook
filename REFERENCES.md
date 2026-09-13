@@ -287,6 +287,18 @@
 | 用途 | 官方出处 | 链接 |
 | --- | --- | --- |
 | 模型能力边界、上下文长度、定价（3.1 章） | Claude · Models 概览 | https://platform.claude.com/docs/en/about-claude/models/overview |
+| 上下文窗口的构成、上下文腐烂、KV 缓存与前缀缓存的经济账（3.1 章） | Claude · Context windows | https://platform.claude.com/docs/en/build-with-claude/context-windows |
+| `count_tokens` 接口、估算性质、新分词器约 +30% 词元（3.1 章） | Claude · Token counting | https://platform.claude.com/docs/en/build-with-claude/token-counting |
+| 前缀缓存的命中规则、TTL 与读写价格倍数（3.1 章） | Claude · Prompt caching | https://platform.claude.com/docs/en/build-with-claude/prompt-caching |
+| 采样参数在新一代模型上的取舍与 400 错误（3.1 章） | Claude · Using the Messages API | https://platform.claude.com/docs/en/build-with-claude/working-with-messages |
+| `max_tokens`、`cache_control` 与取样参数的第一手定义（3.1 章） | Claude · Create a Message | https://platform.claude.com/docs/en/api/messages/create |
+| 编码器对照、中日英切分差异、单 token 解码的有损性（3.1 章） | OpenAI · 使用 Tiktoken 计数 | https://developers.openai.com/cookbook/examples/how_to_count_tokens_with_tiktoken |
+| 输出的非确定性、固定模型快照与建评测的建议（3.1 章） | OpenAI · Text generation | https://developers.openai.com/api/docs/guides/text |
+| 金律、给动机、示例三要求与 3–5 条、XML 标签、角色、长上下文摆放、输出格式控制、提示链与自我纠错链、过度提示（3.2 章） | Claude · Prompting best practices | https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices |
+| 提示工程的三件前置：成功标准、实测方式、一份初稿（3.2 章） | Claude · Prompt engineering overview | https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview |
+| `output_config.format`、严格工具调用、受约束解码的三条保证、支持清单与 schema 限制（3.2 章） | Claude · Structured outputs | https://platform.claude.com/docs/en/build-with-claude/structured-outputs |
+| 思考块的结构与 `signature`、回传的是摘要而非原始推理链、按输出计费与占用 `max_tokens`、自适应思考与 `effort`（3.2 章） | Claude · Thinking | https://platform.claude.com/docs/en/build-with-claude/thinking |
+| `json_schema` + `strict: true`、`additionalProperties: false`、首次使用 schema 的额外延迟（3.2 章） | OpenAI · Structured model outputs | https://developers.openai.com/api/docs/guides/structured-outputs |
 | 结构化输出与工具调用（3.5 章） | OpenAI · API 文档 | https://developers.openai.com/api/docs |
 | 工具调用协议（3.5 章） | Claude · Tool use | https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview |
 | 提示注入与防护（3.8 章） | OWASP · LLM Top 10 | https://genai.owasp.org/llm-top-10/ |
@@ -384,7 +396,18 @@
 | --- | --- | --- |
 | 大模型架构基础（3.1 章） | Attention Is All You Need (2017) | https://arxiv.org/abs/1706.03762 |
 | 指令微调与对齐（3.1 章） | Training language models to follow instructions (InstructGPT, 2022) | https://arxiv.org/abs/2203.02155 |
+| 训练算力最优配比（3.1 章） | Training Compute-Optimal Large Language Models (Chinchilla, 2022) | https://arxiv.org/abs/2203.15556 |
+| 涌现能力（3.1 章） | Emergent Abilities of Large Language Models (2022) | https://arxiv.org/abs/2206.07682 |
+| 涌现能力的替代解释（3.1 章） | Are Emergent Abilities of Large Language Models a Mirage? (2023) | https://arxiv.org/abs/2304.15004 |
+| 旋转位置编码（3.1 章） | RoFormer: Enhanced Transformer with Rotary Position Embedding (RoPE, 2021) | https://arxiv.org/abs/2104.09864 |
+| KV 缓存管理与服务吞吐（3.1 章） | Efficient Memory Management for LLM Serving with PagedAttention (vLLM, SOSP 2023) | https://arxiv.org/abs/2309.06180 |
 | 思维链（3.2 章） | Chain-of-Thought Prompting Elicits Reasoning in LLMs (2022) | https://arxiv.org/abs/2201.11903 |
+| 零样本思维链（3.2 章） | Large Language Models are Zero-Shot Reasoners (2022) | https://arxiv.org/abs/2205.11916 |
+| 自一致性：采样多条路径后边际化投票（3.2 章） | Self-Consistency Improves Chain of Thought Reasoning in Language Models (2022) | https://arxiv.org/abs/2203.11171 |
+| 思维树：在思想单元上生成、评估与搜索（3.2 章） | Tree of Thoughts: Deliberate Problem Solving with LLMs (2023) | https://arxiv.org/abs/2305.10601 |
+| 无外部信号的自我纠错不可靠（3.2 章） | Large Language Models Cannot Self-Correct Reasoning Yet (2023) | https://arxiv.org/abs/2310.01798 |
+| 思维链解释可能与真实原因不符（3.2 章） | Language Models Don't Always Say What They Think (2023) | https://arxiv.org/abs/2305.04388 |
+| 提示格式敏感度：仅改格式造成 76 个准确率点差距（3.2 章） | Quantifying Language Models' Sensitivity to Spurious Features in Prompt Design (2023) | https://arxiv.org/abs/2310.11324 |
 | ReAct：推理与行动交替（3.4、3.5 章） | ReAct: Synergizing Reasoning and Acting in Language Models (2022) | https://arxiv.org/abs/2210.03629 |
 | 工具学习（3.5 章） | Toolformer (2023) | https://arxiv.org/abs/2302.04761 |
 | 自我反思与迭代（3.4 章） | Reflexion: Language Agents with Verbal Reinforcement Learning (2023) | https://arxiv.org/abs/2303.11366 |
