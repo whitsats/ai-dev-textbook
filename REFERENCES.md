@@ -275,6 +275,13 @@
 | 上表关键数字的官方公告（2.1 章） | Google Cloud · 2025 DORA 报告发布 | https://cloud.google.com/blog/products/ai-machine-learning/announcing-the-2025-dora-report |
 | 风险分类与治理口径（2.1、3.8 章） | OWASP · GenAI LLM Top 10 2026 | https://genai.owasp.org/llm-top-10/ |
 
+| Claude Code 在 GitHub Actions 里的两种模式、App 权限与触发检查（2.6 章） | Claude Code · GitHub Actions | https://code.claude.com/docs/en/github-actions |
+| Codex 的 PR 审查、`## Code Review Rules` 与 Security Review（2.6 章） | OpenAI · Review GitHub pull requests with Codex | https://learn.chatgpt.com/docs/third-party/github |
+| `/review` 的四种范围与行级反馈（2.6 章） | OpenAI · Code review | https://learn.chatgpt.com/docs/code-review |
+| 必需状态检查接受的状态、job 名重名与 strict/loose 口径（2.6 章） | GitHub · About protected branches | https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches |
+| 「跳过但必需」的四种情形与修法（path 过滤 / 条件跳过 / 依赖失败 / merge_group）（2.6 章） | GitHub · Troubleshooting required status checks | https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks |
+| 分支保护规则的开关位置与所需权限（2.6 章） | GitHub · Managing a branch protection rule | https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule |
+
 ### 第 3 篇 · 大模型与 Agent 原理
 
 | 用途 | 官方出处 | 链接 |
