@@ -107,6 +107,35 @@ def han_len(text: str) -> int:
     return len(re.findall(r"[\u4e00-\u9fff]", text))
 
 
+# 围栏行：可带语言标记，也可有前导空白或在引用块里（`> `）。
+# 三种形态都在本书里真实出现过：` ```python `、`> ``` `（1.14）、`   ``` `（2.5 的列表内）。
+_FENCE = re.compile(r"^[\s>]*```[A-Za-z0-9_+.-]*\s*$")
+
+
+def code_lines_of(text: str) -> list[str]:
+    """围栏内的有效代码行：剔空行，也剔两行围栏标记自身。
+
+    口径必须与 CODE_LINE_EQUIV 的注释一致：「有内容、不含空行与围栏」。
+    这里曾经把整块 `splitlines` 全数计入，于是开围栏（` ```python `）与闭围栏
+    各占去 15 个汉字的位置——**全书 671 个围栏，虚增 20,130 有效字**，
+    而它同时是 `PLAN.md` 每章「✅ 字数」、「达成%」与汇总分的输入。
+    2026-09-13 修正；旧口径下的历史快照（各章「事后校准」里的叙述数字）不再改动，
+    由 `PLAN.md` 「字数口径」节的一句变更说明交代。
+
+    注意闭围栏不总是裸 ` ``` `：1.14 有一个代码块整块在引用块里（行首 `> `），
+    2.5 有一个在列表项里（行首缩进）。所以判定围栏要允许前导空白与 `> `。
+    """
+    out: list[str] = []
+    for block in re.findall(r"```.*?```", text, re.S):
+        lines = block.splitlines()
+        if lines and _FENCE.match(lines[0]):
+            lines = lines[1:]
+        if lines and _FENCE.match(lines[-1]):
+            lines = lines[:-1]
+        out += [ln for ln in lines if ln.strip()]
+    return out
+
+
 def load_plan_chapters() -> dict[str, int]:
     """从 PLAN.md 解析 {章号: 计划字数}。"""
     plan: dict[str, int] = {}
@@ -324,8 +353,7 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
     # [篇幅] 与 PLAN 计划偏差：统一换算成「有效字数」再比（口径见 CODE_LINE_EQUIV）。
     planned = plan_ch.get(cid)
     actual = han_len(text)
-    code_lines = [ln for ln in re.findall(r"```.*?```", text, re.S)
-                  for ln in ln.splitlines() if ln.strip()]
+    code_lines = code_lines_of(text)
     effective = actual + CODE_LINE_EQUIV * len(code_lines)
     if planned:
         ratio = effective / planned
@@ -645,11 +673,44 @@ def check_ledger(rep: Report) -> None:
                 rep.err("台账", f"LEDGER 篇级进度 {key}：{sym} 写 {got.group(1)} ≠ 实测 {want}")
 
 
+# ---------------- 自检（--self-test） ----------------
+# code_lines_of 是本书所有字数数字的单一输入，而它的判定要认三种围栏形态
+# （裸行、引用块里的 `> ``` `、列表项里的缩进围栏）。这类口径一旦退化，
+# **输出看上去仍然正常**，只是每章静默少减/多减两行——正是 2026-09-13 那次
+# 虚增 20,130 字的形态。所以用夹具把三态钉住，并附一条应当保持沉默的反例。
+_CODE_LINE_CASES = [
+    ("普通围栏", "```python\nx = 1\ny = 2\n```", 2),
+    ("无语言标记", "```\nls -la\n```", 1),
+    ("引用块内的围栏（1.14 形态）", "> ```bash\n> echo hi\n> ```", 1),
+    ("列表项内缩进的围栏（2.5 形态）", "- 步骤：\n   ```python\n   x = 1\n   ```", 1),
+    ("块内空行不算", "```python\nx = 1\n\ny = 2\n```", 2),
+    ("前后有正文时只数块内", "说明：\n```python\nx = 1\n```\n结束。", 1),
+    ("空围栏：一行内容都没有", "```\n```", 0),
+    ("行内代码不是围栏（应保持沉默）", "用 `` `code` `` 这样写", 0),
+]
+
+
+def self_test() -> int:
+    ok = 0
+    for name, text, want in _CODE_LINE_CASES:
+        got = len(code_lines_of(text))
+        if got == want:
+            ok += 1
+        else:
+            print(f"  ✖ {name}：期望 {want} 行，实得 {got} 行")
+    print(f"自检：{ok}/{len(_CODE_LINE_CASES)} 通过")
+    return 0 if ok == len(_CODE_LINE_CASES) else 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="正文一致性校验")
     ap.add_argument("--only", help="只校验指定章，例如 1.1")
     ap.add_argument("--quiet", action="store_true", help="只打印问题")
+    ap.add_argument("--self-test", action="store_true", help="只跑字数口径的自检")
     args = ap.parse_args()
+
+    if args.self_test:
+        return self_test()
 
     files = chapter_files(args.only)
     if not files:
@@ -672,10 +733,10 @@ def main() -> int:
             chapters[cid] = text
         if not args.quiet:
             n = len(re.findall(r"[\u4e00-\u9fff]", text))
-            # 同时报出代码行占比：PLAN.md 的「✅ N 字」一律取这里的汉字数，
-            # 代码占比用来解释“为什么汉字比计划少并不等于偷工减料”。
-            code = [ln for ln in re.findall(r"```.*?```", text, re.S)
-                    for ln in ln.splitlines() if ln.strip()]
+            # PLAN.md 的「✅ N 字」一律取这里的**有效字数**（不是汉字数）——
+            # 这行注释曾写成「取汉字数」而与实现相反，是又一处「注释与代码各说各话」。
+            # 代码行占比用来解释「为什么汉字比计划少并不等于偷工减料」。
+            code = code_lines_of(text)
             effective = n + CODE_LINE_EQUIV * len(code)
             planned = ctx["plan_chapters"].get(cid)
             tail = f" / 计划 {planned}（达成 {effective / planned:.0%}）" if planned else ""
