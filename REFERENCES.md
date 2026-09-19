@@ -289,23 +289,51 @@
 | 模型能力边界、上下文长度、定价（3.1 章） | Claude · Models 概览 | https://platform.claude.com/docs/en/about-claude/models/overview |
 | 上下文窗口的构成、上下文腐烂、KV 缓存与前缀缓存的经济账（3.1 章） | Claude · Context windows | https://platform.claude.com/docs/en/build-with-claude/context-windows |
 | `count_tokens` 接口、估算性质、新分词器约 +30% 词元（3.1 章） | Claude · Token counting | https://platform.claude.com/docs/en/build-with-claude/token-counting |
-| 前缀缓存的命中规则、TTL 与读写价格倍数（3.1 章） | Claude · Prompt caching | https://platform.claude.com/docs/en/build-with-claude/prompt-caching |
+| 前缀缓存的命中规则、TTL 与读写价格倍数、最小可缓存长度 1,024–4,096 词元（3.1、3.3 章） | Claude · Prompt caching | https://platform.claude.com/docs/en/build-with-claude/prompt-caching |
 | 采样参数在新一代模型上的取舍与 400 错误（3.1 章） | Claude · Using the Messages API | https://platform.claude.com/docs/en/build-with-claude/working-with-messages |
 | `max_tokens`、`cache_control` 与取样参数的第一手定义（3.1 章） | Claude · Create a Message | https://platform.claude.com/docs/en/api/messages/create |
 | 编码器对照、中日英切分差异、单 token 解码的有损性（3.1 章） | OpenAI · 使用 Tiktoken 计数 | https://developers.openai.com/cookbook/examples/how_to_count_tokens_with_tiktoken |
 | 输出的非确定性、固定模型快照与建评测的建议（3.1 章） | OpenAI · Text generation | https://developers.openai.com/api/docs/guides/text |
 | 金律、给动机、示例三要求与 3–5 条、XML 标签、角色、长上下文摆放、输出格式控制、提示链与自我纠错链、过度提示（3.2 章） | Claude · Prompting best practices | https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices |
 | 提示工程的三件前置：成功标准、实测方式、一份初稿（3.2 章） | Claude · Prompt engineering overview | https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview |
-| `output_config.format`、严格工具调用、受约束解码的三条保证、支持清单与 schema 限制（3.2 章） | Claude · Structured outputs | https://platform.claude.com/docs/en/build-with-claude/structured-outputs |
+| `output_config.format`、严格工具调用、受约束解码的三条保证、支持清单与 schema 限制（3.2、3.4、3.5 章） | Claude · Structured outputs | https://platform.claude.com/docs/en/build-with-claude/structured-outputs |
 | 思考块的结构与 `signature`、回传的是摘要而非原始推理链、按输出计费与占用 `max_tokens`、自适应思考与 `effort`（3.2 章） | Claude · Thinking | https://platform.claude.com/docs/en/build-with-claude/thinking |
+| 工作流与 Agent 的分界线、增强型大语言模型、五种工作流（含编排者–工作者与评估者–优化者）、自主 Agent 的适用判据、三条设计原则与 ACI（3.3–3.5 章） | Anthropic · Building effective agents | https://www.anthropic.com/engineering/building-effective-agents |
+| 运行时原语（Agent / 交接 / 护栏 / 会话 / 追踪记录）、内置循环、护栏与人类在环（3.3、3.5 章） | OpenAI · Agents SDK 概览 | https://openai.github.io/openai-agents-python/ |
+| 长期记忆的实现形态：客户端执行的记忆目录、即时检索、路径遍历防护（3.3、3.6 章） | Claude · Memory tool | https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool |
+| 即时检索、上下文预算、长任务的三套手法（上下文压缩 / 结构化笔记 / 子代理）与压缩该保留什么（3.3、3.4、3.6 章） | Anthropic · Effective context engineering for AI agents | https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents |
+| 三套手法的作用域（清理工具结果 / 压缩 / 结构化笔记）、`clear_tool_uses` 的 `keep` 与 `clear_at_least`、压缩的默认阈值与保留清单、上下文腐烂（3.6 章） | Claude · Context engineering: memory, compaction, and tool clearing | https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools |
+| 记忆存储作为托管能力：跨会话的用户偏好、项目约定与历史错误（3.6 章） | Claude · Using agent memory（Memory stores） | https://platform.claude.com/docs/en/managed-agents/memory |
+| 会话的两种保存方式：`previous_response_id` 与服务端存储的边界（3.6 章） | OpenAI · Conversation state | https://developers.openai.com/api/docs/guides/conversation-state |
+| SQLite `ALTER TABLE` 的能力边界（只支持重命名与增删列、加 `NOT NULL` 需默认值）（3.6 章） | SQLite · ALTER TABLE | https://www.sqlite.org/lang_altertable.html |
+| 在 SQLite 上改列约束的推荐做法（批处理模式与 `render_as_batch`）（3.6 章） | Alembic · Batch mode | https://alembic.sqlalchemy.org/en/latest/batch.html |
+| 编排者–工作者结构、投入档位（1 个 / 2–4 个 / >10 个子代理）、交接四件（目标 / 输出格式 / 工具与来源 / 边界）、质量提升 90.2% 与约 4×、约 15× 的词元量级、广度优先 vs 依赖中间结果（3.7 章） | Anthropic · How we built our multi-agent research system | https://www.anthropic.com/engineering/multi-agent-research-system |
+| A2A 规范：Agent Card、Task 生命周期、Message/Part/Artifact、不透明执行（按声明能力协作，不访问对方内部状态、记忆与工具）（3.7 章） | A2A Protocol · Specification（v1.0.0） | https://a2a-protocol.org/latest/specification/ |
+| A2A 与 MCP 的分工：前者管代理之间的协作，后者为代理提供工具与上下文（3.7 章） | Google · Announcing the Agent2Agent Protocol (A2A) | https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/ |
 | `json_schema` + `strict: true`、`additionalProperties: false`、首次使用 schema 的额外延迟（3.2 章） | OpenAI · Structured model outputs | https://developers.openai.com/api/docs/guides/structured-outputs |
 | 结构化输出与工具调用（3.5 章） | OpenAI · API 文档 | https://developers.openai.com/api/docs |
 | 工具调用协议（3.5 章） | Claude · Tool use | https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview |
+| 工具定义的三个字段、`tool_choice` 的三种取值、工具结果如何回填（3.5 章） | Claude · Implementing tool use | https://platform.claude.com/docs/en/agents-and-tools/tool-use/implement-tool-use |
+| 一次响应里的多个调用：默认开启、`disable_parallel_tool_use` 与何时该关掉（3.5 章） | Claude · Parallel tool use | https://platform.claude.com/docs/en/agents-and-tools/tool-use/parallel-tool-use |
+| 工具执行失败的回填（`is_error`）、超长结果与不可重试错误（3.5 章） | Claude · Handling tool calls | https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls |
+| `tools` / `tool_choice` / `parallel_tool_calls` 三个参数与严格模式的字段要求（3.5 章） | OpenAI · Function calling | https://developers.openai.com/api/docs/guides/function-calling |
+| 两类威胁模型（越狱 / 直接注入 = 用户是对手；间接注入 = 用户可信而内容不可信）、不可信内容的四条处理纪律（只进工具结果 / 标注来源 / 系统提示里声明策略 / JSON 编码）、注入检测的三种粒度、以及「红队自己的代理」（3.8 章） | Claude · Mitigate jailbreaks and prompt injections | https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/mitigate-jailbreaks |
+| Agents Rule of Two：三条属性（[A] 处理不可信输入 / [B] 访问敏感系统或私有数据 / [C] 改状态或对外通信）在同一会话里**最多同时具备两条**；三条齐备时不得自主运行，至少要有监督（人类在环），或在干净的上下文里新开会话（3.8 章） | Meta · Agents Rule of Two: A Practical Approach to AI Agent Security | https://ai.meta.com/blog/practical-ai-agent-security/ |
+| 风险分类与治理口径（2.1、3.8 章）；本章点到 LLM01 提示注入 / LLM02 敏感信息泄露 / LLM06 过度代理（Excessive Agency）/ LLM10 不当输出处理（Improper Output Handling）四条 | OWASP · GenAI LLM Top 10 2026 | https://genai.owasp.org/llm-top-10/ |
 | 提示注入与防护（3.8 章） | OWASP · LLM Top 10 | https://genai.owasp.org/llm-top-10/ |
 | 风险治理框架（3.8 章） | NIST · AI Risk Management Framework | https://www.nist.gov/itl/ai-risk-management-framework |
-| 追踪与指标（3.9 章） | OpenTelemetry 官方文档 | https://opentelemetry.io/docs/ |
-| LLM 应用可观测性（3.9 章） | Langfuse 官方文档 | https://langfuse.com/docs |
-| 评估方法与指标（3.9 章） | Ragas 官方文档 | https://docs.ragas.io/en/stable/ |
+| 可观测性的定义与三支柱（指标 / 日志 / 追踪各自回答什么）、与「多打日志」的分界、黑盒与白盒监控、四类黄金信号（延迟 / 流量 / 错误 / 饱和度）（3.9.1–3.9.2） | Google · SRE Book, Chapter 6: Monitoring Distributed Systems | https://sre.google/sre-book/monitoring-distributed-systems/ |
+| GenAI 语义约定总站：`gen_ai.*` 属性、模型调用与工具执行的 span、词元用量的口径（含缓存词元与「按计费口径报」）、采样要用的属性（3.9.2–3.9.5） | OpenTelemetry · Semantic conventions for GenAI | https://opentelemetry.io/docs/specs/semconv/gen-ai/ |
+| span 覆盖「含全部重试」的一次逻辑操作、span 名 `{操作} {模型}`、`invoke_agent` / `execute_tool` 等操作名、内容类属性（输入/输出消息、系统提示、工具定义）逐项 `Opt-In` 且带敏感数据警告、语义约定状态为 Development（3.9.3、3.9.5） | OpenTelemetry · GenAI client spans（语义约定源文件） | https://raw.githubusercontent.com/open-telemetry/semantic-conventions-genai/main/docs/gen-ai/gen-ai-spans.md |
+| Agent 与工具 span 的操作名与层级、工具 span 的属性（3.9.3） | OpenTelemetry · GenAI agent spans | https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-agent-spans.md |
+| 评测的结构（task / trial / grader / transcript / outcome / harness / suite）、三类 grader 的强弱点、判产出不判路径、能力评估与回归评估及毕业机制、pass@k 与 pass^k、起步 20–50 条真实失败题、隔离每次试验、跟踪四类指标（3.9.6–3.9.8） | Anthropic · Demystifying evals for AI agents | https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents |
+| 评测的两阶段（先代码评分、后人工评分）与题面质量的三条要求、0% 通过率先怀疑题、参考解（3.9.6–3.9.7） | Claude · Create strong empirical evaluations | https://platform.claude.com/docs/en/test-and-evaluate/develop-tests |
+| 评测的统计五条建议：报标准误（SEM）与 95% 置信区间、聚类标准误（实测可大到 3 倍以上）、题目内多采样降方差、配对差（相关系数 0.3–0.7）、功效分析（3.9.7） | Anthropic · A statistical approach to model evaluations | https://www.anthropic.com/research/statistical-approach-to-model-evals |
+| 可观测性平台选址与落地（7.4 章；3.9 章不引平台） | Langfuse 官方文档 | https://langfuse.com/docs |
+| 评估方法与指标（3.9 章备查；本章不用） | Ragas 官方文档 | https://docs.ragas.io/en/stable/ |
+| `TestClient` 与端到端验收的官方写法（3.10.4–3.10.5） | FastAPI · Testing | https://fastapi.tiangolo.com/tutorial/testing/ |
+| 依赖覆盖 `app.dependency_overrides`：只换依赖、不换应用（3.10.4） | FastAPI · Testing Dependencies with Overrides | https://fastapi.tiangolo.com/advanced/testing-dependencies/ |
+| 架构图与时序图的语法（3.10.1、`zhizhou-v3/docs/architecture.md`） | Mermaid 官方文档 | https://mermaid.js.org/ |
 
 ### 第 4 篇 · AI 应用开发框架
 
@@ -314,22 +342,118 @@
 | 文档总站（全篇） | LangChain 官方文档 | https://docs.langchain.com/ |
 | LangChain Python 概览（4.1 章） | LangChain · Overview | https://docs.langchain.com/oss/python/langchain/overview |
 | **v1 命名空间变更（必读）** | LangChain v1 新特性 | https://docs.langchain.com/oss/python/releases/langchain-v1 |
+| 消息类型与 `trim_messages`（4.1 章） | LangChain · Messages | https://docs.langchain.com/oss/python/langchain/messages |
+| `init_chat_model` 与模型参数（4.1 章） | LangChain · Models | https://docs.langchain.com/oss/python/langchain/models |
+| 结构化输出的两种策略与错误重试（4.2 章） | LangChain · Structured output | https://docs.langchain.com/oss/python/langchain/structured-output |
+| 提示模板族与 `MessagesPlaceholder`（4.2 章） | LangChain · Reference: prompts 参考 | https://reference.langchain.com/python/langchain-core/prompts |
+| 解析器族的分工与官方定位（4.2 章） | LangChain · Reference: output_parsers 参考 | https://reference.langchain.com/python/langchain-core/output_parsers |
+| `with_structured_output` 与 `include_raw` 的三字段（4.2 章） | LangChain · Reference: with_structured_output | https://reference.langchain.com/python/langchain-core/language_models/chat_models/BaseChatModel/with_structured_output |
+| Agent = Model + Harness、中间件分类（4.3 章） | LangChain · Agents | https://docs.langchain.com/oss/python/langchain/agents |
+| `@tool` 的三种 schema 来源与保留参数名（4.3 章） | LangChain · Tools | https://docs.langchain.com/oss/python/langchain/tools |
+| 四种审批决策与 `when` 谓词的版本要求（4.3 章） | LangChain · Human-in-the-loop | https://docs.langchain.com/oss/python/langchain/human-in-the-loop |
+| 本章四个中间件的签名与默认值（4.3 章） | LangChain · Reference: middleware 参考 | https://reference.langchain.com/python/langchain/middleware |
+| 默认异常处理器的规则（4.3 章） | LangGraph · Reference: agents / ToolNode | https://reference.langchain.com/python/langgraph/agents |
+| 下游兜底超时与重试常量（4.1 章） | OpenAI · Python SDK | https://github.com/openai/openai-python |
 | 集成与模型提供方（4.2 章） | LangChain · Integrations | https://docs.langchain.com/oss/python/integrations/providers/overview |
 | LangGraph 与状态编排（4.4 章） | LangGraph · Overview | https://docs.langchain.com/oss/python/langgraph/overview |
 | 图 API（节点/边/状态）（4.4 章） | LangGraph · Graph API | https://docs.langchain.com/oss/python/langgraph/graph-api |
+| 图 API 用法：reducer、输入/输出 schema、私有通道（4.4 章） | LangGraph · Use the graph API | https://docs.langchain.com/oss/python/langgraph/use-graph-api |
+| 检查点与线程（中断的前提）（4.4 章） | LangGraph · Persistence | https://docs.langchain.com/oss/python/langgraph/persistence |
+| `interrupt` 的两半：它需要什么、恢复时重跑什么（4.4 章） | LangGraph · Interrupts | https://docs.langchain.com/oss/python/langgraph/interrupts |
+| `stream_mode` 四种模式与 `output_keys`（4.4 章） | LangGraph · Streaming | https://docs.langchain.com/oss/python/langgraph/streaming |
+| `StateGraph` 的参数（state / input_schema / output_schema）（4.4 章） | LangGraph · Reference: StateGraph | https://reference.langchain.com/python/langgraph/graph/state/StateGraph |
+| 时间旅行：读历史、从旧快照分支、`as_node` 那条限定（4.5 章） | LangGraph · Use time travel | https://docs.langchain.com/oss/python/langgraph/use-time-travel |
+| 自定义检查点后端：五个方法的签名与负索引约定（4.5 章） | LangGraph · Reference: BaseCheckpointSaver | https://reference.langchain.com/python/langgraph/checkpoint/base/BaseCheckpointSaver |
+| 多智能体：Supervisor 拓扑与子代理（4.5 章） | LangChain · Multi-agent | https://docs.langchain.com/oss/python/langchain/multi-agent |
+| 交接的两种实现：单代理 ＋ 中间件 / 多份子图（4.5 章） | LangChain · Handoffs | https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs |
+| `Command(goto=...)` / `resume` / `update` 三个参数的语义（4.5 章） | LangGraph · Reference: Command | https://reference.langchain.com/python/langgraph/types/Command |
+| 跨线程记忆：为什么长期记忆不放在检查点里（4.5 章） | LangGraph · Persistence › Memory store | https://docs.langchain.com/oss/python/langgraph/persistence#memory-store |
 | API 参考（全篇） | LangChain / LangGraph Reference | https://reference.langchain.com/python/ |
 
 ### 第 5 篇 · RAG 与生产级系统
 
 | 用途 | 官方出处 | 链接 |
 | --- | --- | --- |
+| 检索在框架侧的抽象：retriever / vector store / text splitter 三件套（5.1、5.3 章） | LangChain · Retrieval | https://docs.langchain.com/oss/python/langchain/retrieval |
+| **为什么切分会决定召回上限**：给每一片补上它在原文里的上下文（5.2 章） | Anthropic · Introducing Contextual Retrieval | https://www.anthropic.com/news/contextual-retrieval |
+| 工程视角的流程综述与四阶段的另一种画法（5.1 章，仅作对照） | MongoDB · What is RAG? | https://www.mongodb.com/resources/basics/artificial-intelligence/retrieval-augmented-generation |
 | 向量数据库（5.3、5.7 章） | Milvus 官方文档 | https://milvus.io/docs |
 | Milvus 快速开始 | Milvus · Quickstart | https://milvus.io/docs/quickstart.md |
 | Milvus 多租户与库表设计（5.7 章） | Milvus · Database | https://milvus.io/docs/manage_databases.md |
 | 评估框架与指标（5.6 章） | Ragas 官方文档 | https://docs.ragas.io/en/stable/ |
+| 忠实度的官方算法：回答拆成断言、逐条判断能否从检索上下文推出，且**只量事实一致性、不量完整性**（5.6 章） | Ragas · Faithfulness | https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/faithfulness/ |
+| 回答相关度的官方算法：由回答反推 N 个问题（默认 3）、与原问题算嵌入余弦取平均；文档明说**它不保证落在 0–1**（5.6 章） | Ragas · Answer Relevancy | https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/ |
+| 上下文精度的官方公式，以及那个说明排序敏感性的例子：不相关的片排第 2 位不影响、排第 1 位减半（5.6 章） | Ragas · Context Precision | https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_precision/ |
+| 上下文召回需要参考答案（reference）——本章唯一明确不具备的那个输入（5.6 章） | Ragas · Context Recall | https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_recall/ |
+| 评测集的四条要求，含「样本数要足够得出统计显著的结论」（5.6 章的 `1/n` 是它的可计算形式） | Ragas · Testset Generation | https://docs.ragas.io/en/stable/concepts/test_data_generation/ |
+| 这套指标的原始出处，出发点是「不依赖人工标注」（5.6 章） | Ragas · Automated Evaluation of RAG (2023) | https://arxiv.org/abs/2309.15217 |
 | 评估入门实操 | Ragas · Evaluate a simple LLM app | https://docs.ragas.io/en/latest/getstarted/evals/ |
 | 向量化与嵌入模型 | Hugging Face · Sentence Transformers | https://sbert.net/ |
 | 检索评测基准（5.6 章） | BEIR 基准 | https://github.com/beir-cellar/beir |
+| **片长到底该定多少**：小片适合事实型问答、大片适合宽上下文，且不同嵌入模型敏感度不同（5.2 章） | Rethinking Chunk Size For Long-Document Retrieval (2025) | https://arxiv.org/abs/2505.21700 |
+| 高级切法的对照实验（5.2 章，仅作对照） | Comparative Evaluation of Advanced Chunking for RAG (2025) | https://pmc.ncbi.nlm.nih.gov/articles/PMC12649634/ |
+| 框架侧「加载 → 切分 → 嵌入 → 存储」那条链（5.2 章） | LangChain · Knowledge base | https://docs.langchain.com/oss/python/langchain/knowledge-base |
+| 切分器的概念与「按语义层级级联」（5.2 章） | LangChain · Text splitters | https://python.langchain.com/docs/concepts/text_splitters/ |
+| `RecursiveCharacterTextSplitter` 参数与语言感知分隔符（5.2 章） | LangChain · Recursive text splitter | https://python.langchain.com/docs/how_to/recursive_text_splitter/ |
+| 父子片的官方实现（5.2 章） | LangChain · Parent Document Retriever | https://python.langchain.com/docs/how_to/parent_document_retriever/ |
+| 按嵌入相似度找断点的官方实现（5.2 章） | LangChain · Semantic chunker | https://python.langchain.com/docs/how_to/semantic-chunker/ |
+| 工程侧对「按标题／元素／token」几种切法的分类（5.2 章） | Unstructured · Chunking | https://docs.unstructured.io/open-source/core-functionality/chunking |
+| `get_text()` 的抽取模式与加密件的 `authenticate`（5.2 章） | PyMuPDF 文档 | https://pymupdf.readthedocs.io/en/latest/ |
+| Word 解析与标题样式（5.2 章） | python-docx 文档 | https://python-docx.readthedocs.io/en/latest/ |
+| PPT 解析（5.2 章） | python-pptx 文档 | https://python-pptx.readthedocs.io/en/latest/ |
+| 魔数检测与 libmagic（5.2 章） | file(1) 与 libmagic 源码 | https://github.com/file/file |
+| 编码检测（5.2 章） | chardet 文档 | https://chardet.readthedocs.io/en/latest/ |
+| NFKC 规范化与 Unicode 类别（清洗那一步的依据）（5.2 章） | Python 标准库 · unicodedata | https://docs.python.org/3/library/unicodedata.html |
+| 中文 OCR 引擎（5.2 章） | PaddleOCR 官方文档 | https://www.paddleocr.ai/latest/en/index.html |
+| 备选 OCR 引擎（5.2 章） | Tesseract OCR | https://tesseract-ocr.github.io/ |
+| **归一化后内积 == 余弦**；`metric_type` 的 COSINE／IP／L2 三种取法（5.3 章） | Milvus · Similarity Metrics | https://milvus.io/docs/metric.md |
+| 索引族的选型入口；**`IVF_FLAT` 不做压缩**、索引文件与原始向量大小相当（5.3 章） | Milvus · In-memory Index | https://milvus.io/docs/index.md |
+| 索引的内部结构由近似最近邻算法决定（5.3 章） | Milvus · Index Explained | https://milvus.io/docs/index-explained.md |
+| `nlist` / `nprobe` 的官方定义与适用规模（5.3 章） | Milvus · IVF_FLAT | https://milvus.io/docs/ivf-flat.md |
+| 量化索引族（`IVF_PQ`）的官方说明（5.3 章） | Milvus · IVF_PQ | https://milvus.io/docs/ivf-pq.md |
+| 图索引的 `M` / `efConstruction` / `ef`（5.3 章，**本章未实现**） | Milvus · HNSW | https://milvus.io/docs/hnsw.md |
+| BGE 模型族与 v1.5 的变化（5.3 章） | BGE 官方文档 · BGE v1 & v1.5 | https://bge-model.com/bge/bge_v1_v1.5.html |
+| **bge-large-zh-v1.5 是 1024 维**的权威出处（5.3 章） | Hugging Face · BAAI/bge-large-zh-v1.5 | https://huggingface.co/BAAI/bge-large-zh-v1.5 |
+| 官方用法与批大小／FP16 等运维旋钮（5.3 章） | FlagEmbedding 仓库 | https://github.com/FlagOpen/FlagEmbedding |
+| 中文嵌入模型的能力边界与评测口径（5.3 章） | BGE 技术报告 · C-Pack | https://arxiv.org/abs/2309.07597 |
+| **倒数排名融合的原始论文**，也是 `k=60` 的出处（5.4 章） | Cormack、Clarke、Buettcher · SIGIR 2009 | https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf |
+| 官方把重排分成两档的入口页；加权那一档流程里有**分数归一化**这一步（5.4 章） | Milvus · Reranking | https://milvus.io/docs/reranking.md |
+| 官方对 RRF 的定位：「不给显式权重、把多条路平等地合起来」时用它（5.4 章） | Milvus · RRF Ranker | https://milvus.io/docs/rrf-ranker.md |
+| 加权那一档的取分与归一化流程（5.4 章） | Milvus · Weighted Ranker | https://milvus.io/docs/weighted-ranker.md |
+| 多路检索与重排策略在引擎侧的接线方式（5.4 章） | Milvus · Multi-Vector Hybrid Search | https://milvus.io/docs/multi-vector-search.md |
+| 框架侧的混合检索实现：**带权重的倒数排名融合**，权重默认等权（5.4 章） | LangChain · `EnsembleRetriever` | https://reference.langchain.com/python/langchain-classic/retrievers/ensemble/EnsembleRetriever |
+| 交叉编码器的官方用法（`CrossEncoder.predict([(query, doc)])`）（5.4 章） | Sentence Transformers · Cross-Encoder 用法 | https://www.sbert.net/docs/cross_encoder/usage/usage.html |
+| 可直接取用的重排模型清单（5.4 章） | Sentence Transformers · 预训练交叉编码器 | https://www.sbert.net/docs/cross_encoder/pretrained_models.html |
+| **「交叉编码器被广泛用于对其他模型召回的 top-k 文档重排」**的官方出处（5.4 章） | BAAI · `bge-reranker-large` | https://huggingface.co/BAAI/bge-reranker-large |
+| 生产配置里常点名的那一个重排模型（5.4 章） | BAAI · `bge-reranker-v2-m3` | https://huggingface.co/BAAI/bge-reranker-v2-m3 |
+| 托管重排 API 的产品视角（接口与计费口径）（5.4 章） | Cohere · Rerank | https://docs.cohere.com/docs/rerank-overview |
+| HyDE：先编一段假设答案再检索（5.4 章，**本章未实现**） | Gao 等 · Precise Zero-Shot Dense Retrieval without Relevance Labels (2022) | https://arxiv.org/abs/2212.10496 |
+| 「密集／稀疏／混合三条路各有赢面」的评测依据（5.4 章，仅作口径对照） | BEIR 论文 | https://arxiv.org/abs/2104.08663 |
+| **引用可以是一等能力**：模型输出带结构化出处、可被下游核验（5.5 章） | Anthropic · Citations | https://platform.claude.com/docs/en/build-with-claude/citations |
+| 框架侧的 CRAG 参考实现：评估—分档—三支动作（含「网络搜索」那一支）（5.5 章） | LangGraph · Corrective RAG 教程 | https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_crag/ |
+| 框架内置的中心化判分器接口（把「评估器」做成可替换的一层）（5.5 章，仅作契约对照） | LangChain · Retrieval 里的 document graders | https://docs.langchain.com/oss/python/langchain/retrieval |
+| 「拒答」是 RAG 的一等输出、不是失败（5.5 章） | Anthropic · Reducing hallucinations | https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations |
+| **事件流的四个字段与三条语法细节**：空行结束一帧、冒号开头是注释、`retry` 必须为整数；浏览器端的连接上限与重连默认行为（5.7 章） | MDN · Using server-sent events | https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events |
+| 心跳在主流实现里的落地：`ping` 默认 15 秒、行分隔符默认 `\r\n`、`send_timeout` 与优雅退出的先后（5.7 章，仅作对照；**本树不引这个库**） | sse-starlette | https://github.com/sysid/sse-starlette |
+| **每个键值组合都是一条新的时间序列**：指标名与标签的命名规则、单位写进名字、不允许无界取值的标签（5.7 章的高基数护栏出自这里） | Prometheus · Metric and label naming | https://prometheus.io/docs/practices/naming/ |
+| TTL 会被 `DEL`／`SET`／`GETSET` 这类覆盖键内容的命令清掉；`EXPIRE` 收相对时长而 `PEXPIREAT` 收绝对时刻（5.7 章的写入与设期不可分） | Redis · EXPIRE | https://redis.io/docs/latest/commands/expire/ |
+| 线程池默认上限 `min(32, os.cpu_count() + 4)`（5.7 章报的 20 是它在本机的值） | Python · concurrent.futures | https://docs.python.org/3/library/concurrent.futures.html |
+| 同步阻塞调用要用 `to_thread`（5.7 章 490.0ms 对 60.7ms 那一组的依据） | Python · Coroutines and Tasks（含 `asyncio.to_thread`） | https://docs.python.org/3/library/asyncio-task.html |
+| 一次生成请求的字段形状（已在 3.9 落地，5.7 章只把它接到常驻服务上） | OpenTelemetry · GenAI semantic conventions | https://opentelemetry.io/docs/specs/semconv/gen-ai/ |
+| CSV 的定义方式：按分隔符切、按引号转义的行序列——5.8 章「不能只看有没有逗号」那条判据的依据 | Python · csv | https://docs.python.org/3/library/csv.html |
+| 只用标准库取 HTML 文本（5.8 章 `.html` 那一档不引 BeautifulSoup 的官方依据） | Python · html.parser | https://docs.python.org/3/library/html.parser.html |
+| `.docx`／`.pptx`／`.xlsx` 都是 ZIP 容器，所以只能靠包内路径分（5.8 章的 `_ZIP_KIND`） | Python · zipfile | https://docs.python.org/3/library/zipfile.html |
+| `rglob`／`relative_to`／`suffix` 的语义，以及「发现阶段」的排序与文档名折算（5.8 章） | Python · pathlib | https://docs.python.org/3/library/pathlib.html |
+| 内容戳用的 SHA-256 前 12 位（5.8 章的 `content_stamp` 由它实现，**不是加密用途**） | Python · hashlib | https://docs.python.org/3/library/hashlib.html |
+| **内容寻址**的经典出处：对象名由「内容 ＋ 类型 ＋ 长度」的哈希算，而不是由文件名——5.8 章的「内容哈希即身份」同一条思路 | Git · Git Internals · Git Objects | https://git-scm.com/book/en/v2/Git-Internals-Git-Objects |
+| 按魔数识别文件类型的最小实现规范（5.8 章的 `MAGIC` 表是它的子集：只看开头几个字节）。`magic(5)` 不属于 man-pages 计划，`man7.org` 上没有这一页（实测 404），故登记发行版的官方镜像页 | file(1) · magic(5) | https://manpages.ubuntu.com/manpages/jammy/man5/magic.5.html |
+| 官方媒体类型注册表：「类型是注册的、后缀只是建议的」（5.8 章「格式按内容判」的权威表述） | IANA · Media Types | https://www.iana.org/assignments/media-types/media-types.xhtml |
+| Python 标准编码表里 `gb18030` 的位置（5.8 章的 `parse_text` 先试 UTF-8、失败再按它解码） | Python · codecs · Standard Encodings | https://docs.python.org/3/library/codecs.html#standard-encodings |
+| 架构图的官方语法（`flowchart LR` / `flowchart TD`）；**图是文本**，所以能进版本库、能被 diff（5.9 章的两张图据此写成） | Mermaid · Flowchart | https://mermaid.js.org/syntax/flowchart.html |
+| 时序图的官方语法（5.9 章在线侧用的是流程图而非时序图，理由写在 5.9.2：这里要回答「谁调谁、留下什么产物」） | Mermaid · Sequence diagram | https://mermaid.js.org/syntax/sequenceDiagram.html |
+| **决策记录（ADR）的原始出处**：一条决定记成「背景—决定—后果」，出发点是让后来的人知道当时的处境（5.9 章的六字段由它扩展而来） | Michael Nygard · Documenting Architecture Decisions (2011) | https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions |
+| 决策记录模板的社区索引与「编号 ＋ 状态」这两个约定（5.9 章只借这两个约定，不引其模板） | adr.github.io · Architecture Decision Records | https://adr.github.io/ |
+| 「按读者分层画图」（上下文／容器／组件／代码）的通用提法（5.9 章的「两张图 ＋ 图外表」是它在一次小项目上的落地） | C4 model | https://c4model.com/ |
 
 ### 第 6 篇 · 模型接入与成本工程（新增篇）
 
@@ -337,8 +461,24 @@
 | --- | --- | --- |
 | 多厂商统一调用（6.2、6.3 章） | LiteLLM 官方文档 | https://docs.litellm.ai/ |
 | Claude API 与定价（6.1 章） | Claude · API 概览 | https://platform.claude.com/docs/en/api/overview |
+| **登记表的四个价与两处加成**：缓存写 1.25×（5 分钟）／2×（1 小时）、缓存读 0.1×（Fable 5.1 与 Mythos 5.1 是 0.025× 的例外）、批量 50%、驻留 1.1×、工具使用的系统提示词词元数（6.1 章） | Claude · Pricing | https://platform.claude.com/docs/en/about-claude/pricing |
+| **「短档/长档」两套价的分界与缓存写 1.25×**（6.1 章） | OpenAI · Pricing | https://developers.openai.com/api/docs/pricing |
+| 逐个模型的窗口、最大输出与知识截止（6.1 章） | OpenAI · Models | https://developers.openai.com/api/docs/models |
+| **「>272K 输入按 2× 输入、1.5× 输出，且作用于整单（for the full request）」那句话的出处**（6.1 章） | OpenAI · GPT-5.6 Terra | https://developers.openai.com/api/docs/models/gpt-5.6-terra |
 | OpenAI Responses API（6.2 章） | OpenAI · API 文档 | https://developers.openai.com/api/docs |
+| **Messages 的形状条款**：`system` 顶层字段、`max_tokens` 必填、`tool_use` / `tool_result` 的块形态与 `stop_reason`（6.2 章） | Claude · Messages API | https://platform.claude.com/docs/en/api/messages |
+| **命名事件、`ping`、`input_json_delta` 的参数分片、流里的错误事件**（6.2 章） | Claude · Streaming | https://platform.claude.com/docs/en/build-with-claude/streaming |
+| `input_schema`、`tool_choice` 与「工具结果放在 user 消息里」（6.2 章） | Claude · Tool use | https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview |
+| **Messages 与 Items 的区别**、`instructions`、`text.format`、`store` 默认存（6.2 章） | OpenAI · 迁移到 Responses | https://developers.openai.com/api/docs/guides/migrate-to-responses |
+| **`arguments` 是 JSON 字符串**、`role="tool"` 的结果消息、兼容层与 Responses 的工具能力差别（6.2 章） | OpenAI · 函数调用 | https://developers.openai.com/api/docs/guides/function-calling |
+| `status: incomplete` 与 `incomplete_details.reason` 的两个取值（6.2 章） | OpenAI · 推理模型 | https://developers.openai.com/api/docs/guides/reasoning |
 | 数据留存与隐私（6.4 章） | OpenAI · 数据控制 | https://developers.openai.com/api/docs/guides/your-data |
+| **批量通道的两条口径**：**50% off** 与 **24 小时完成窗口**、`.jsonl` 的提交形状、以及「批量有自己的一份限流配额」（6.4 章） | OpenAI · Batch API | https://developers.openai.com/api/docs/guides/batch |
+| **同一个 50%、同一个 up to 24 hours**：这是本章少数能当断言用的共同点之一（两家在这一点上完全一致），以及批量的结果形状与「结束后取回」（6.4 章） | Claude · Message Batches | https://platform.claude.com/docs/en/build-with-claude/batch-processing |
+| **错误分档表里 Messages 那一列**：11 个状态码、`request_id`、「SDKs automatically retry transient failures with exponential backoff, twice by default, honoring the retry-after header」、以及流式错误不走标准机制（6.3 章） | Claude · Errors | https://platform.claude.com/docs/en/api/errors |
+| **错误分档表里另两家那两列**：`rate_limit_error` / `slow_down` / `server_is_overloaded` 的取值，以及那句最常用的判据「Retrying billing, spend, or quota errors won't restore API access」（6.3 章） | OpenAI · Error codes | https://developers.openai.com/api/docs/guides/error-codes |
+| **降级的三种写法与冷却**：`fallbacks` / `context_window_fallbacks` / `content_policy_fallbacks`、`num_retries` × `request_timeout` × `allowed_fails` / `cooldown_time`、in-order 语义与 `attempted_fallbacks` 这条可观测性字段（6.3 章） | LiteLLM · Fallbacks（Provider Failover） | https://docs.litellm.ai/docs/proxy/reliability |
+| **路由策略与超窗预检**：simple-shuffle / latency-based / lowest-cost，以及「没有 `enable_pre_call_checks`，超窗的请求照样发出去」（6.3 章） | LiteLLM · Router（Load Balancing） | https://docs.litellm.ai/docs/routing |
 | 自建推理服务（6.3 章） | vLLM 官方文档 | https://docs.vllm.ai/ |
 | 本地模型运行（6.3 章） | Ollama 官方 | https://ollama.com/ |
 
@@ -347,6 +487,9 @@
 | 用途 | 官方出处 | 链接 |
 | --- | --- | --- |
 | 评测流水线与回归（7.1 章） | Ragas 官方文档 | https://docs.ragas.io/en/stable/ |
+| **实验的四条原则（含 `Isolate changes`）与四步流程**：Setup → Run → Evaluate → Store；结果按时间戳落盘、命名要带「改了什么＋版本＋日期」、元数据建议（`git_commit` / `environment` / `model_version` / `total_tokens` / `response_time_ms`）、出错保留部分结果（7.1 章） | Ragas · Experimentation | https://docs.ragas.io/en/stable/concepts/experimentation/ |
+| **评测集里的查询类型**（单跳／多跳、具体／抽象）与「样本数要足够得出统计显著的结论」（7.1 章的 `1/n` 是它的可计算形式） | Ragas · Testset Generation for RAG | https://docs.ragas.io/en/stable/concepts/test_data_generation/rag/ |
+| **退出码表**：`0` 全过、`1` 有失败、`2` 被用户中断、`3` 内部错、`4` 用法错、`5` **没有收集到测试**（非零）、`6` 警告超限——「没跑」与「跑了且全过」是两件事（7.1 章） | pytest · Exit codes | https://docs.pytest.org/en/stable/reference/exit-codes.html |
 | 追踪与成本看板（7.2 章） | Langfuse 官方文档 | https://langfuse.com/docs |
 | 追踪标准与埋点（7.2 章） | OpenTelemetry · GenAI 语义约定 | https://opentelemetry.io/docs/specs/semconv/gen-ai/ |
 | 提示注入与不安全的输出处理（7.4 章） | OWASP · LLM Top 10 | https://genai.owasp.org/llm-top-10/ |
@@ -408,15 +551,24 @@
 | 无外部信号的自我纠错不可靠（3.2 章） | Large Language Models Cannot Self-Correct Reasoning Yet (2023) | https://arxiv.org/abs/2310.01798 |
 | 思维链解释可能与真实原因不符（3.2 章） | Language Models Don't Always Say What They Think (2023) | https://arxiv.org/abs/2305.04388 |
 | 提示格式敏感度：仅改格式造成 76 个准确率点差距（3.2 章） | Quantifying Language Models' Sensitivity to Spurious Features in Prompt Design (2023) | https://arxiv.org/abs/2310.11324 |
-| ReAct：推理与行动交替（3.4、3.5 章） | ReAct: Synergizing Reasoning and Acting in Language Models (2022) | https://arxiv.org/abs/2210.03629 |
+| ReAct：推理与行动交替、ALFWorld +34% 与 WebShop +10%（3.3–3.5 章） | ReAct: Synergizing Reasoning and Acting in Language Models (2022) | https://arxiv.org/abs/2210.03629 |
 | 工具学习（3.5 章） | Toolformer (2023) | https://arxiv.org/abs/2302.04761 |
+| 检索增强的 API 调用；幻觉参数是主要失败模式（3.5 章） | Gorilla: Large Language Model Connected with Massive APIs (2023) | https://arxiv.org/abs/2305.15334 |
 | 自我反思与迭代（3.4 章） | Reflexion: Language Agents with Verbal Reinforcement Learning (2023) | https://arxiv.org/abs/2303.11366 |
+| 先制定计划再解题的提示写法（3.4 章） | Plan-and-Solve Prompting: Improving Zero-Shot Chain-of-Thought Reasoning (2023) | https://arxiv.org/abs/2305.04091 |
+| LLM Agent 规划的五个方向：任务分解 / 计划选择 / 外部模块 / 反思 / 记忆（3.4 章） | Understanding the planning of LLM agents: A survey (2024) | https://arxiv.org/abs/2402.02716 |
+| 经典规划任务上 LLM 的规划能力仍差得远；常识任务上难以区分「在规划」与「在检索」（3.4 章） | PlanBench: An Extensible Benchmark for Evaluating LLMs on Planning and Reasoning about Change (NeurIPS 2023) | https://arxiv.org/abs/2206.10498 |
 | RAG 原始论文（5.1 章） | Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (2020) | https://arxiv.org/abs/2005.11401 |
-| 长上下文与位置敏感（2.1、5.2、5.4 章） | Lost in the Middle (2023) | https://arxiv.org/abs/2307.03172 |
+| 长上下文与位置敏感（2.1、3.6、5.2、5.4 章） | Lost in the Middle (2023) | https://arxiv.org/abs/2307.03172 |
+| 上下文分层管理的早期系统化尝试：分页、换入换出（3.6 章） | MemGPT: Towards LLMs as Operating Systems (2023) | https://arxiv.org/abs/2310.08560 |
+| 记忆流 + 重要性打分 + 定期反思的写入侧设计（3.6 章） | Generative Agents: Interactive Simulacra of Human Behavior (2023) | https://arxiv.org/abs/2304.03442 |
+| 大模型多代理系统的结构、协作与评估综述；三类结构分类的另一种口径（3.7 章） | Large Language Model based Multi-Agents: A Survey of Progress and Challenges (2024) | https://arxiv.org/abs/2402.01680 |
+| 间接注入的系统性演示：攻击者不直接对模型说话，而是把指令写进模型**会读到**的内容里（3.8 章） | Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection (2023) | https://arxiv.org/abs/2302.12173 |
 | 包幻觉与仿冒投递（2.1、7.4 章） | We Have a Package for You! A Comprehensive Analysis of Package Hallucinations by Code Generating LLMs (USENIX Security 2025) | https://arxiv.org/abs/2406.10279 |
 | AI 助手与不安全代码（2.1、7.4 章） | Do Users Write More Insecure Code with AI Assistants? (CCS 2023) | https://arxiv.org/abs/2211.03622 |
 | 生成式 AI 与批判性思考（2.1 章） | The Impact of Generative AI on Critical Thinking (CHI 2025) | https://www.microsoft.com/en-us/research/publication/the-impact-of-generative-ai-on-critical-thinking-self-reported-reductions-in-cognitive-effort-and-confidence-effects-from-a-survey-of-knowledge-workers/ |
-| 自反思检索（5.4 章） | Self-RAG (2023) | https://arxiv.org/abs/2310.11511 |
+| **反思令牌**：`Retrieve`／`IsREL`／`IsSUP`／`IsUSE` 四个令牌与它们的取值空间（5.5 章） | Self-RAG: Learning to Retrieve, Generate and Critique through Self-Reflection (2023) | https://arxiv.org/abs/2310.11511 |
+| **评估—分档—动作三步，以及「有一片够高就是 Correct」这条汇总写法**（5.5 章） | Corrective Retrieval Augmented Generation (CRAG, 2024) | https://arxiv.org/abs/2401.15884 |
 | RAG 自动评估（5.6 章） | Ragas: Automated Evaluation of Retrieval Augmented Generation (2023) | https://arxiv.org/abs/2309.15217 |
 | LoRA 低秩微调（9.2 章） | LoRA: Low-Rank Adaptation of Large Language Models (2021) | https://arxiv.org/abs/2106.09685 |
 | 量化微调（9.2 章） | QLoRA: Efficient Finetuning of Quantized LLMs (2023) | https://arxiv.org/abs/2305.14314 |
