@@ -1691,12 +1691,41 @@ def weak_summary(part_max: int = 5) -> list[tuple[str, list[str], int, int]]:
 # 「（正文贴出的行数）」那种备忘行不入合计（它自己的说明里就写着「合计不另加」）；
 # **一行都解析不到要报错**——「没解析到」与「全对」在输出上不能长得一样。
 #
-# 识别不靠那句引导语，靠**表头形状**（`| 项 | 事前估 | 实测 |`）：第一版按“逐节实测”那句找表，
-# 而成书里的 5.1 根本没写那句话——它的表就静静地没被看（与「全对」一样安静）。
-# 表头是这张表自己的契约，用契约找它，就不怕引导语换写法。
+# 识别不靠那句引导语，靠**表头形状**：第一版按“逐节实测”那句找表，而成书里的 5.1 根本没写
+# 那句话——它的表就静静地没被看（与「全对」一样安静）。表头是这张表自己的契约，
+# 用契约找它，就不怕引导语换写法。
+#
+# **第三版（本轮）修的是「这张契约读得太窄」，而它一次漏掉了五张表**：
+#   ① 第一格写的是「段」的——6.1／6.2／6.3／6.4／7.1 五章的表都长这样，而第一版只认「项」，
+#      于是这五张表**一张都没进过门**（5.8 那一章还是靠「对不上」才被发现的）；
+#   ② 列序不固定的——7.1 的表在中间插了一列「事后补算」，于是「第 3 格就是实测」这个假设
+#      会把那一列读成实测（它合计那格写的是「分项之和 12,450；× 0.77 ≈ 9,586」）。
+# 所以现在**按列名取数**：表头第一格是行名（`项` 或 `段`），且表头里必须同时有「事前估」与
+# 「实测」两列，谁在第几格由表头自己说。这两处都不是「表写错了」，是**读数的一头把它读窄了**——
+# 与 `STYLE` 8.5 那条「不出声的检查」同一个形状：五张表没被看，输出里照样写着「通过」。
 _CALIB_SECTION = re.compile(r"^###\s*(\d+\.\d+)\s")
-_CALIB_HEADER = re.compile(r"^\|\s*项\s*\|\s*事前估\s*\|\s*实测\s*\|")
-_CALIB_MARK = "逐节实测"
+_CALIB_FIRST = re.compile(r"^(项|段)$")
+_CALIB_COLS = ("事前估", "实测")
+_CALIB_HEADER = re.compile(r"^\|\s*(?:项|段)\s*\|")     # 只为「定位候选行」（夹具用），不参与取数
+_CALIB_MARK = ("逐节实测", "逐节估实测")   # 5.x 写前者，第 6 篇起写后者：两种写法都算数
+
+
+def _calib_cells(line: str) -> list[str]:
+    return [c.strip().strip("*").strip() for c in line.strip().strip("|").split("|")]
+
+
+def _calib_header(line: str) -> tuple[list[str], int] | None:
+    """把一行读成「表头 ＋ 实测列在第几格」；不是逐节表的表头就返回 None。
+
+    判据是**这张表自己的契约**（第一格是行名 `项`／`段`，且有 `事前估` 与 `实测` 两列），
+    而列序不写死：7.1 那种在中间插一列的表，只有按列名取数才读得对。
+    """
+    cells = _calib_cells(line)
+    if len(cells) < 3 or not _CALIB_FIRST.match(cells[0]):
+        return None
+    if any(c not in cells for c in _CALIB_COLS):
+        return None
+    return cells, cells.index("实测")
 
 
 def calibration_sum_lines(ledger_text: str, measured: dict[str, int]) -> list[str]:
@@ -1709,29 +1738,31 @@ def calibration_sum_lines(ledger_text: str, measured: dict[str, int]) -> list[st
         m = _CALIB_SECTION.match(lines[i])
         if m:
             cid = m.group(1)
-        if _CALIB_HEADER.match(lines[i].strip()) and cid:
+        hdr = _calib_header(lines[i].strip()) if cid else None
+        if hdr:
+            _, mi = hdr
             rows: list[int] = []
             total: int | None = None
             j = i + 1
             while j < len(lines) and lines[j].strip().startswith("|"):
-                cells = [c.strip().strip("*").strip()
-                         for c in lines[j].strip().strip("|").split("|")]
+                cells = _calib_cells(lines[j])
                 j += 1
                 if not cells or set("".join(cells)) <= set("-: "):
                     continue           # 表头下的分隔行
-                if len(cells) < 3:
+                if len(cells) <= mi:
                     continue
-                name, cell = cells[0], cells[2]
+                name, cell = cells[0], cells[mi]
                 num = re.findall(r"[\d,]+", re.split(r"[=＝]", cell)[-1])
                 if not num:
                     continue
                 # 两种表两种算法（形状不同，口径也不同）：
-                # ① 分区表（4.5 / 5.x）：每行是一块正文，相加就是全章；
+                # ① 分区表（4.5 / 5.x / 6.x）：每行是一块正文，相加就是全章；
                 # ② 拆分表（4.1 / 3.9 / 3.10）：行是同一批字的**不同切法**（散文、代码、
                 #    输出块、表格），相加会重复计入——它们自带「合计」行，就只认那一行。
                 if "合计" in name:
                     total = _as_int(num[-1]) or 0
-                elif "代码" in name:   # 备忘行：说明里写着「合计不另加」
+                elif "代码" in name or "围栏" in name:
+                    # 备忘行：说明里写着「合计不另加」（围栏那 68／118 行已经落在各段里）
                     continue
                 else:
                     rows.append(_as_int(num[-1]) or 0)
@@ -1749,13 +1780,13 @@ def calibration_sum_lines(ledger_text: str, measured: dict[str, int]) -> list[st
             continue
         # 反向守：写了「逐节实测」这句、后面却没有那种表（表被删或被改成散文）——
         # 这正是第一版看不见的形状（用引导语找表，表没了检查也静默）。
-        if _CALIB_MARK in lines[i] and cid and cid not in checked:
+        if any(mk in lines[i] for mk in _CALIB_MARK) and cid and cid not in checked:
             j = i + 1
             while j < len(lines) and not lines[j].strip():
                 j += 1
-            if not (j < len(lines) and _CALIB_HEADER.match(lines[j].strip())):
-                out.append(f"LEDGER 第 {cid} 章：写了「{_CALIB_MARK}」但后面没有逐节校准表"
-                           "（表头应为 `| 项 | 事前估 | 实测 | …`）")
+            if not (j < len(lines) and _calib_header(lines[j].strip())):
+                out.append(f"LEDGER 第 {cid} 章：写了「逐节实测」但后面没有逐节校准表"
+                           "（表头第一格为 `项` 或 `段`，且同时有 `事前估` 与 `实测` 两列）")
         i += 1
     return out
 
@@ -2164,6 +2195,21 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
                                           measured_words):
             problems.append(line)
 
+    # 15) LEDGER 每章小节标题里的「正文 N 有效字」也要等于实测（**拦提交**）。
+    #     它是台账里最显眼的一个数（每章标题上都挂着），而它不在任何一道检查的射程里——
+    #     本轮关掉「段 表」那个盲区时，四章的标题就在同一轮里同时漂了 40／21／15／20。
+    #     **一处漂可以同时出现在「表里」与「标题里」，而只有一处被检查过**——
+    #     这正是 `STYLE` 8.5 那条「没有检查覆盖的手写叙述，与核过了在阅读上完全一样」。
+    if ledger_path.exists():
+        ledger_text_now = ledger_path.read_text(encoding="utf-8")
+        for m in re.finditer(r"(?m)^###\s*(\d+\.\d+)\s[^\n]*?正文\s*([\d,]+)\s*有效字",
+                             ledger_text_now):
+            cid, got = m.group(1), _as_int(m.group(2))
+            actual = measured_words.get(cid)
+            if actual is not None and got != actual:
+                problems.append(f"LEDGER 第 {cid} 章标题：写 正文 {got:,} 有效字"
+                                f" ≠ 实测 {actual:,} 字")
+
     # 14) PROJECT.md 里的「正文 N 有效字」也要等于实测（**拦提交**）。
     #     它是交付清单——读者拿它对「这一章交完了没有」，而它与 PLAN 是**两份独立手写的数字**，
     #     门一直只看后者。加这道时一量就报出五处：3.5（23,245 对 23,420）、3.7（13,773 对 13,788）、
@@ -2299,37 +2345,105 @@ def _self_test_cases(plan_text: str, readme_text: str, ledger_text: str, project
                       {"PROJECT.md": bumped}, "PROJECT 第"))
     cases.append(("PROJECT 整个不存在", {"PROJECT.md": None}, "找不到 PROJECT.md"))
 
-    # LEDGER 的逐节校准表：拿**真实的最后一张表**改两下——
-    # 一处让合计多 1（模拟「定稿后正文又长了、表没跟」），一处把表整张删掉
-    # （模拟「解析落空」）。第二种是这张表真正危险的那一面：静默消失。
-    tables = [m.start() for m in re.finditer(_CALIB_MARK, ledger_text)]
-    if tables:
-        tail = ledger_text[tables[-1]:]
-        rows = re.findall(r"(?m)^\|.*\|\s*$", tail)
-        # 取最后一张表的**最后一个数据行**作篡改点（表尾最接近定稿，也最容易被忘）。
-        data = [r for r in rows
-                if "代码" not in r and "实测" not in r and not set(r) <= set("|-: ")]
-        if data:
-            last = data[-1]
-            cells = last.strip().strip("|").split("|")
-            cell = cells[2]
-            num = re.findall(r"[\d,]+", re.split(r"[=＝]", cell)[-1])
-            if num:
-                bumped = cell.replace(num[-1], f"{int(num[-1].replace(',', '')) + 1:,}", 1)
-                cases.append(("LEDGER 逐节校准表与正文漂了",
-                              {"LEDGER.md": ledger_text.replace(last, last.replace(cell, bumped), 1)},
+    # LEDGER 的章标题里也挂着一个「正文 N 有效字」——它最显眼，却一直在射程外。
+    hm = re.search(r"(?m)^###\s*(\d+\.\d+)\s[^\n]*?正文\s*([\d,]+)\s*有效字", ledger_text)
+    if hm:
+        cases.append((f"LEDGER 第 {hm.group(1)} 章标题的字数漂了",
+                      {"LEDGER.md": _swap(ledger_text, hm.span(2),
+                                       f"{_as_int(hm.group(2)) + 1:,}")},
+                      "有效字"))
+
+    # LEDGER 的逐节校准表：**三种形状各钉一条**。分三条不是因为形状多，
+    # 而是因为前两版就是按形状分别漏的——「项」表看得到、「段」表看不到、多一列的表读错列。
+    def _find_table(text: str, want_cid: str):
+        """按同一套契约找某一章的逐节表：返回（表头各列, 实测列号, 行文本）。"""
+        cid = None
+        lines = text.splitlines(keepends=True)
+        for k, ln in enumerate(lines):
+            m = _CALIB_SECTION.match(ln)
+            if m:
+                cid = m.group(1)
+            hdr = _calib_header(ln.strip()) if cid else None
+            if hdr and cid == want_cid:
+                rows, j = [], k + 1
+                while j < len(lines) and lines[j].strip().startswith("|"):
+                    rows.append(lines[j])
+                    j += 1
+                return hdr[0], hdr[1], rows
+        return None
+
+    def _bump(row: str, idx: int) -> str | None:
+        """把一行第 idx 格里的最后一个数加 1（模拟「定稿后正文又长了、表没跟」）。"""
+        cells = _calib_cells(row)
+        if idx >= len(cells):
+            return None
+        cell = cells[idx]
+        num = re.findall(r"[\d,]+", re.split(r"[=＝]", cell)[-1])
+        if not num:
+            return None
+        new = f"{int(num[-1].replace(',', '')) + 1:,}"
+        return row.replace(cell, cell.replace(num[-1], new, 1), 1)
+
+    def _counter_row(rows: list[str], mi: int):
+        """挑一个**真被算进去**的行做篡改点：有合计就用它，没有就取最后一行非备忘行。"""
+        for r in rows:
+            if "合计" in _calib_cells(r)[0]:
+                return r
+        for r in reversed(rows):
+            cells = _calib_cells(r)
+            if mi >= len(cells):
+                continue
+            name = cells[0]
+            if "代码" in name or "围栏" in name or not cells[mi].strip():
+                continue           # 备忘行：本就不入合计
+            return r
+        return None
+
+    # ① 「项」表（第 5 篇那种）与 ② 「段」表（6.1–6.4 那种：第一版只认「项」，四张表从没被加过）。
+    for shape, cid in (("项 表", "5.9"), ("段 表", "6.1")):
+        t = _find_table(ledger_text, cid)
+        if not t:
+            continue
+        _, mi, rows = t
+        target = _counter_row(rows, mi)
+        bumped = _bump(target, mi) if target else None
+        if bumped:
+            cases.append((f"LEDGER {shape}（{cid}）的合计漂了",
+                          {"LEDGER.md": ledger_text.replace(target, bumped, 1)},
+                          "逐节校准表合计"))
+
+    # ③ 多一列的表（7.1 在中间插了「事后补算」）：改**实测**要红，
+    #    改**事后补算**要静音——那一列不是实测，而第一版把第 3 格一律当成实测。
+    t = _find_table(ledger_text, "7.1")
+    if t:
+        names, mi, rows = t
+        target = _counter_row(rows, mi)
+        if target:
+            bumped = _bump(target, mi)
+            if bumped:
+                cases.append(("LEDGER 段 表多一列时，实测那一列仍要核（7.1）",
+                              {"LEDGER.md": ledger_text.replace(target, bumped, 1)},
                               "逐节校准表合计"))
-        mhead = None
-        for m in _CALIB_HEADER.finditer(ledger_text):
-            mhead = m
-        if mhead:
-            body = ledger_text[mhead.start():].splitlines(keepends=True)
-            k = 0
-            while k < len(body) and body[k].strip().startswith("|"):
-                k += 1
-            cases.append(("LEDGER 逐节校准表整张不见了（引导语还在）",
-                          {"LEDGER.md": ledger_text[:mhead.start()] + "".join(body[k:])},
-                          "逐节校准表"))
+            back = names.index("事后补算") if "事后补算" in names \
+                else next((k for k, n in enumerate(names) if n.startswith("事后补算")), None)
+            if back is not None:
+                other = _bump(target, back)
+                if other:
+                    cases.append(("LEDGER 改「事后补算」那一列（不是实测）→ 应保持沉默",
+                                  {"LEDGER.md": ledger_text.replace(target, other, 1)}, ""))
+
+    # 反向守：把表整张删掉、引导语留着——这是这张表真正危险的那一面（静默消失）。
+    mhead = None
+    for m in _CALIB_HEADER.finditer(ledger_text):
+        mhead = m
+    if mhead:
+        body = ledger_text[mhead.start():].splitlines(keepends=True)
+        k = 0
+        while k < len(body) and body[k].strip().startswith("|"):
+            k += 1
+        cases.append(("LEDGER 逐节校准表整张不见了（引导语还在）",
+                      {"LEDGER.md": ledger_text[:mhead.start()] + "".join(body[k:])},
+                      "逐节校准表"))
     return cases
 
 
