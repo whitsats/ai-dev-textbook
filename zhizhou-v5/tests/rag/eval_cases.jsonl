@@ -1,0 +1,24 @@
+{"case": "E01", "kind": "命中-规范", "text": "知舟的发布说明必须包含哪几段？", "want": "回滚方式", "want_doc": "发布规范", "expect_refuse": false, "expect_retrieve": true, "notes": "5.1 的 Q1；答案片是 发布规范#0"}
+{"case": "E02", "kind": "命中-规范", "text": "发布说明正文不少于多少字？", "want": "120 字", "want_doc": "发布规范", "expect_refuse": false, "expect_retrieve": true, "notes": "同文档的另一片（#2），用来测「同一份文档的两片会不会互相挤」"}
+{"case": "E03", "kind": "命中-规范", "text": "发布说明有哪三个状态？哪个可以对外引用？", "want": "已发布", "want_doc": "发布规范", "expect_refuse": false, "expect_retrieve": true, "notes": "同上"}
+{"case": "E04", "kind": "命中-数字", "text": "知舟 2026 年第三季度的月调用预算上限是多少？", "want": "2,400 万", "want_doc": "调用预算", "expect_refuse": false, "expect_retrieve": true, "notes": "5.1 的 Q2；数字必须逐字命中，「引子那一句」不算"}
+{"case": "E05", "kind": "命中-数字", "text": "单次请求的词元上限是多少？", "want": "3.2 万", "want_doc": "调用预算", "expect_refuse": false, "expect_retrieve": true, "notes": "同一个片里的第二个数字：用来区分「这一片被召回」与「数字被用上」"}
+{"case": "E06", "kind": "命中-数字", "text": "用量到预算的多少比例会触发红线告警？", "want": "95%", "want_doc": "调用预算", "expect_refuse": false, "expect_retrieve": true, "notes": "告警线那一片（#1）；与 80% 黄线同片，测「两个数字别串」"}
+{"case": "E07", "kind": "命中-接口", "text": "写接口必须携带哪个请求头？", "want": "Idempotency-Key", "want_doc": "接口约定", "expect_refuse": false, "expect_retrieve": true, "notes": "英文标识符：中文分词器对它最无力，是字面路与向量路的分水岭"}
+{"case": "E08", "kind": "命中-接口", "text": "错误码 6004 是什么意思？", "want": "引用失效", "want_doc": "接口约定", "expect_refuse": false, "expect_retrieve": true, "notes": "错误码表那一片（#1）：表状文本的检索"}
+{"case": "E09", "kind": "命中-值班", "text": "问答接口整体不可用属于哪个级别？多久要恢复？", "want": "2 小时", "want_doc": "值班与响应", "expect_refuse": false, "expect_retrieve": true, "notes": "分级表那一片（#0）：表格里的行也要能被检索到"}
+{"case": "E10", "kind": "多跳-跨片", "text": "检索延迟超过 p95 目标连续两天，按哪个级别处理？", "want": "P1", "want_doc": "值班与响应", "expect_refuse": false, "expect_retrieve": true, "notes": "答案在 #1（延迟目标那一片），而「级别」这个概念在 #0——两片都要看懂"}
+{"case": "E11", "kind": "多跳-跨片", "text": "接入新服务商时，配额能不能和主服务商共用？", "want": "不与主服务商共用额度", "want_doc": "接入清单", "expect_refuse": false, "expect_retrieve": true, "notes": "四步里的第三步；问题里没有「限额」这个词（漂移 + 多跳各占一半）"}
+{"case": "E12", "kind": "多跳-跨片", "text": "灰度放量先放多少流量、观察多久？", "want": "5% 流量", "want_doc": "接入清单", "expect_refuse": false, "expect_retrieve": true, "notes": "四步里的第四步；同一片里还有「两天」，被测的是它有没有被抓全"}
+{"case": "E13", "kind": "措辞-漂移", "text": "我想给写接口加个防重复的标记，该怎么弄？", "want": "Idempotency-Key", "want_doc": "接口约定", "expect_refuse": false, "expect_retrieve": true, "notes": "5.1 的 Q3 同族：与原文零字面重合；这一条要靠改写路才有机会"}
+{"case": "E14", "kind": "措辞-漂移", "text": "发版前要写清楚出事了怎么退回去吗？", "want": "回滚方式", "want_doc": "发布规范", "expect_refuse": false, "expect_retrieve": true, "notes": "同义替换（回滚→退回去、发布说明→发版）"}
+{"case": "E15", "kind": "措辞-漂移", "text": "检索的代码能塞进 utils 里吗？", "want": "不散在", "want_doc": "命名与目录", "expect_refuse": false, "expect_retrieve": true, "notes": "答案是一个否定式约定（「不散在 `utils` 里」），覆盖率对否定句是钝的。**原来写的是「rag 包」，而语料里那一句是「`rag` 包下」——两字之间隔着一个反引号，于是它不是原文子串**；这一处是评测集自己的反向守（`tests/test_metrics.py` 的第 11 组）抓出来的，抓到的当天 E15 被算成「片级没命中」"}
+{"case": "E16", "kind": "措辞-漂移", "text": "问答接口整个挂了两天，多久得有人响应？", "want": "15 分钟", "want_doc": "值班与响应", "expect_refuse": false, "expect_retrieve": true, "notes": "与 E10 同一份文档、不同片；「挂了两天」是干扰项"}
+{"case": "E17", "kind": "拒答-库里没有", "text": "知舟 2027 年的营收目标是多少？", "want": "", "want_doc": "", "expect_refuse": true, "expect_retrieve": true, "notes": "5.1 的 Q4：三条检索路都会给回噪声（最高 6.031），而 5.5 量到它会落 Ambiguous"}
+{"case": "E18", "kind": "拒答-库里没有", "text": "知舟的创始人是谁？", "want": "", "want_doc": "", "expect_refuse": true, "expect_retrieve": true, "notes": "名词型缺口：与数字型缺口（E17）分开，因为噪声分的来源不同"}
+{"case": "E19", "kind": "拒答-库里没有", "text": "知舟在上海办公室有多少人？", "want": "", "want_doc": "", "expect_refuse": true, "expect_retrieve": true, "notes": "同族；语料里有「值班」「目录」这类词，是最难拒的一类"}
+{"case": "E20", "kind": "拒答-库里没有", "text": "知舟的 npm 包名叫什么？", "want": "", "want_doc": "", "expect_refuse": true, "expect_retrieve": true, "notes": "英文缩写型缺口；与 E07 的 Idempotency-Key 是同一类 token，一个在库里一个不在"}
+{"case": "E21", "kind": "不检索-创意", "text": "写一首关于春天的诗", "want": "", "want_doc": "", "expect_refuse": false, "expect_retrieve": false, "notes": "5.5 的控制位：`[Retrieve=No]`；拒答与「不该检索」是两件事"}
+{"case": "E22", "kind": "不检索-创意", "text": "给知舟的检索服务起三个名字", "want": "", "want_doc": "", "expect_refuse": false, "expect_retrieve": false, "notes": "同上；它含「知舟」「检索」两个库内词，容易误判成要检索"}
+{"case": "E23", "kind": "判断-否定式", "text": "发布说明可以省略影响面吗？", "want": "缺一段即为不合格", "want_doc": "发布规范", "expect_refuse": false, "expect_retrieve": true, "notes": "是/否题：问法里含「影响面」，字面路会给高分，而答案是一句否定"}
+{"case": "E24", "kind": "判断-否定式", "text": "能不能用文件名区分版本（比如 _v2）？", "want": "版本由 git 记", "want_doc": "命名与目录", "expect_refuse": false, "expect_retrieve": true, "notes": "同族；`_v2` 直接出现在禁令那一片里，字符级重合很高"}

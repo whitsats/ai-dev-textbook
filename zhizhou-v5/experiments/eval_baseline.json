@@ -1,0 +1,315 @@
+{
+  "flat": {
+    "recall.bm25": 1.0,
+    "recall.vector": 1.0,
+    "recall.hybrid": 1.0,
+    "recall.rewrite": 1.0,
+    "span.bm25": 0.8333,
+    "span.vector": 0.7222,
+    "span.hybrid": 0.8333,
+    "span.rewrite": 0.8333,
+    "answer_hit": 0.9444,
+    "support": 0.8686,
+    "refusal.plain.right_refuse": 3,
+    "refusal.plain.missed": 1,
+    "refusal.plain.over": 0,
+    "refusal.plain.errors": 1,
+    "refusal.rewrite.right_refuse": 3,
+    "refusal.rewrite.missed": 1,
+    "refusal.rewrite.over": 0,
+    "refusal.rewrite.errors": 1,
+    "sweep.best_errors": 1,
+    "sweep.windows_with_zero": 0,
+    "cost.prompt_chars": 6452
+  },
+  "raw": {
+    "cases": 24,
+    "k": 3,
+    "recall": {
+      "bm25": 1.0,
+      "vector": 1.0,
+      "hybrid": 1.0,
+      "rewrite": 1.0
+    },
+    "recall_n": {
+      "bm25": 18,
+      "vector": 18,
+      "hybrid": 18,
+      "rewrite": 18
+    },
+    "span": {
+      "bm25": 0.8333,
+      "vector": 0.7222,
+      "hybrid": 0.8333,
+      "rewrite": 0.8333
+    },
+    "by_kind": {
+      "命中-规范": {
+        "n": 3,
+        "hit": 3,
+        "rate": 1.0
+      },
+      "命中-数字": {
+        "n": 3,
+        "hit": 3,
+        "rate": 1.0
+      },
+      "命中-接口": {
+        "n": 2,
+        "hit": 2,
+        "rate": 1.0
+      },
+      "命中-值班": {
+        "n": 1,
+        "hit": 1,
+        "rate": 1.0
+      },
+      "多跳-跨片": {
+        "n": 3,
+        "hit": 3,
+        "rate": 1.0
+      },
+      "措辞-漂移": {
+        "n": 4,
+        "hit": 4,
+        "rate": 1.0
+      },
+      "判断-否定式": {
+        "n": 2,
+        "hit": 2,
+        "rate": 1.0
+      }
+    },
+    "span_miss": [
+      "E01",
+      "E07",
+      "E13"
+    ],
+    "answer_miss": [
+      "E01"
+    ],
+    "control": {
+      "n": 2,
+      "right": 2,
+      "wrong": []
+    },
+    "refusal_detail": {
+      "plain": {
+        "missed": [
+          "E17"
+        ],
+        "over": []
+      },
+      "rewrite": {
+        "missed": [
+          "E17"
+        ],
+        "over": []
+      }
+    },
+    "answer_hit": 0.9444,
+    "support": 0.8686,
+    "support_counts": {
+      "Fully": 135,
+      "Partially": 1,
+      "No support": 20,
+      "sentences": 156
+    },
+    "refusal": {
+      "plain": {
+        "right_refuse": 3,
+        "missed": 1,
+        "over": 0,
+        "right_answer": 18,
+        "total": 22,
+        "errors": 1
+      },
+      "rewrite": {
+        "right_refuse": 3,
+        "missed": 1,
+        "over": 0,
+        "right_answer": 18,
+        "total": 22,
+        "errors": 1
+      }
+    },
+    "sweep": [
+      {
+        "upper": 0.5,
+        "lower": 0.15,
+        "missed": 3,
+        "over": 0,
+        "errors": 3
+      },
+      {
+        "upper": 0.5,
+        "lower": 0.2,
+        "missed": 3,
+        "over": 0,
+        "errors": 3
+      },
+      {
+        "upper": 0.5,
+        "lower": 0.25,
+        "missed": 1,
+        "over": 0,
+        "errors": 1
+      },
+      {
+        "upper": 0.5,
+        "lower": 0.3,
+        "missed": 1,
+        "over": 0,
+        "errors": 1
+      },
+      {
+        "upper": 0.5,
+        "lower": 0.35,
+        "missed": 0,
+        "over": 2,
+        "errors": 2
+      },
+      {
+        "upper": 0.5,
+        "lower": 0.4,
+        "missed": 0,
+        "over": 2,
+        "errors": 2
+      },
+      {
+        "upper": 0.55,
+        "lower": 0.15,
+        "missed": 3,
+        "over": 0,
+        "errors": 3
+      },
+      {
+        "upper": 0.55,
+        "lower": 0.2,
+        "missed": 3,
+        "over": 0,
+        "errors": 3
+      },
+      {
+        "upper": 0.55,
+        "lower": 0.25,
+        "missed": 1,
+        "over": 0,
+        "errors": 1
+      },
+      {
+        "upper": 0.55,
+        "lower": 0.3,
+        "missed": 1,
+        "over": 0,
+        "errors": 1
+      },
+      {
+        "upper": 0.55,
+        "lower": 0.35,
+        "missed": 0,
+        "over": 2,
+        "errors": 2
+      },
+      {
+        "upper": 0.55,
+        "lower": 0.4,
+        "missed": 0,
+        "over": 2,
+        "errors": 2
+      },
+      {
+        "upper": 0.6,
+        "lower": 0.15,
+        "missed": 3,
+        "over": 0,
+        "errors": 3
+      },
+      {
+        "upper": 0.6,
+        "lower": 0.2,
+        "missed": 3,
+        "over": 0,
+        "errors": 3
+      },
+      {
+        "upper": 0.6,
+        "lower": 0.25,
+        "missed": 1,
+        "over": 0,
+        "errors": 1
+      },
+      {
+        "upper": 0.6,
+        "lower": 0.3,
+        "missed": 1,
+        "over": 0,
+        "errors": 1
+      },
+      {
+        "upper": 0.6,
+        "lower": 0.35,
+        "missed": 0,
+        "over": 2,
+        "errors": 2
+      },
+      {
+        "upper": 0.6,
+        "lower": 0.4,
+        "missed": 0,
+        "over": 2,
+        "errors": 2
+      },
+      {
+        "upper": 0.7,
+        "lower": 0.15,
+        "missed": 3,
+        "over": 0,
+        "errors": 3
+      },
+      {
+        "upper": 0.7,
+        "lower": 0.2,
+        "missed": 3,
+        "over": 0,
+        "errors": 3
+      },
+      {
+        "upper": 0.7,
+        "lower": 0.25,
+        "missed": 1,
+        "over": 0,
+        "errors": 1
+      },
+      {
+        "upper": 0.7,
+        "lower": 0.3,
+        "missed": 1,
+        "over": 0,
+        "errors": 1
+      },
+      {
+        "upper": 0.7,
+        "lower": 0.35,
+        "missed": 0,
+        "over": 2,
+        "errors": 2
+      },
+      {
+        "upper": 0.7,
+        "lower": 0.4,
+        "missed": 0,
+        "over": 2,
+        "errors": 2
+      }
+    ],
+    "cost": {
+      "searches": 48,
+      "prompt_chars": 6452,
+      "calls": 24,
+      "grounded_calls": 24,
+      "rewrite_changed": 1
+    },
+    "resolution": 0.0417
+  }
+}

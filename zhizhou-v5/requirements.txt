@@ -1,0 +1,17 @@
+# 检索版（第 5 篇）的依赖。**按章加，不预装。**
+#
+# 5.1 的新东西全部在标准库里（倒排索引、BM25 打分、切分、引用核对），
+# 所以这一份与 `zhizhou-v4/requirements.txt` 开头一致——本树唯一用框架的地方是真机出口。
+# 后面几章会各自加一行，写在对应的那一章里（这是本书的一贯做法：
+# 依赖出现在正文讲过它之后，而不是提前装好等读者去猜）：
+#   5.2 文档解析与切分：pypdf / python-docx /（可选的）tesseract
+#   5.3 向量化与向量数据库：sentence-transformers 或服务商嵌入接口 ＋ pymilvus
+#   5.4 混合检索与重排：rank-bm25 /（可选的）reranker
+#   5.6 RAG 评估：fiftyone？不——RAGAS
+#
+# 本机实测版本（第 5 篇正文里的 API 名称以它为准）：langchain 1.3.2 ｜ langchain-openai 1.2.2
+langchain>=1.3,<2
+langchain-openai>=1.2,<2
+
+# 只在跑测试时需要（本书的验收不依赖它：python tools/check_runnable.py 会用同一批测试函数自己驱动）
+pytest>=8.0
