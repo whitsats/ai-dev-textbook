@@ -68,7 +68,7 @@ fi
 # 文档数字对账：PLAN.md / COVERAGE.md 里的汇总数字必须与实测一致。
 # 这类数字一旦各写一遍就会漂（曾出现 PLAN 写 1.24 而实测已是 1.25），
 # 漂了不影响写作，但会持续误导篇幅与优先级判断。
-echo "[pre-commit] 3/5 文档数字对账（PLAN / README / COVERAGE / LEDGER 逐节表 / PROJECT 字数 vs 实测）..."
+echo "[pre-commit] 3/5 文档数字对账（PLAN / README / COVERAGE / LEDGER 逐节表与章标题字数 / PROJECT 字数 vs 实测；另报逐节表「事前估」列的欠账）..."
 if ! "$PY" tools/audit_coverage.py --check; then
     echo "[pre-commit] ✖ 文档数字与实测不一致，提交被拦下。" >&2
     echo "            修法：先改 tools/audit_coverage.py 的规划值，" >&2

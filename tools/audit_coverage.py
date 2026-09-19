@@ -1183,11 +1183,18 @@ PLAN = [
     #     就只能把计划值往实测上改，而那种改法会慢慢把「计划」变成「记录」。
     #     计划值取 **11,000** 而不是 11,376：与前几章同一口径（5.6 的 13,000、5.7 的
     #     14,000、5.8 的 12,000、5.9 的 11,000 都是 500 的整数倍，落在实测附近而不等于实测）。
+    #     **本轮补的那一次（2026-09-19）**：事前估补不回来了，能补的是**补记**——
+    #     按 8.7 式子在 LEDGER 那张表里补出「事前估（补记·8.7 式子）」一列
+    #     （前置段 650 ＋ 散文 8 节 × 900 ＝ 7,200 ＋ 接线节 850 ＋ 固定小段 2,400
+    #     ＋ 围栏 90 行 × 15 ＝ 1,350 → 12,450；× 0.77 ≈ 9,586，实测 11,391）。
+    #     可照用的判据：**补记能补出数，补不出「当时怎么想的」**——同一把尺子量本篇三章，
+    #     给出的分项之和是同一个 12,450，而三章实测相差三千多字。
     ("6", "6.3", "模型网关：统一接口、路由、重试与降级", 11000, [], "完全原创"),
     #     计划值 **7,000 → 10,000**（2026-09-19 写 6.4 前）：**这一次估在动笔之前落笔**
     #     （6.3 那一章就是因为没落笔，事后无法区分「估错了」与「写超了」）。
     #     按 8.7 式子事前估：前置段 650 ＋ 散文 8 节 7,200（8 节 × 900）
-    #     ＋ 接线节 850 ＋ 固定小段 2,400（15 条坑 × 42 ＋ 6 条延伸 × 55 ＋ 5 问面试 × 100）
+    #     ＋ 接线节 850 ＋ 固定小段 2,400（15 条坑 × 42 ＋ 6 条延伸 × 55 ＋ 5 问面试 × 100
+    #     ＋ 小结与练习 940——**这四项要加得起来**，第一版只写到 1,460 而总数写的是 2,400）
     #     ＋ 围栏 90 行 × 15 ＝ 1,350 → 分项之和 **12,450**；按三次实测的中位 0.77 折：
     #     12,450 × 0.77 ≈ **9,586** → 计划值取 **10,000**（500 的整数倍，与 5.6–5.9 同口径）。
     #     **口径这一次先定死**：围栏列为**第五个加数**，实测表里也单列一行（不再落在段内）——
@@ -1211,9 +1218,99 @@ PLAN = [
     #        ——这是这条判据的第五次验证（前四次的条目见 `STYLE` 8.7 的 6.1／6.3／6.4）；
     #        而本章多出一条：**围栏可以散着落**（5.6–6.4 都集中在少数几节，本章 68 行散在六节里），
     #        「散文被压到 4,371」与「围栏只有 68 行」是同一件事的两面——围栏越散，压掉的散文越多。
+    #     **本轮补的那一次（2026-09-19）**：LEDGER 那张表里单列的那一列「事后补算」折进
+    #     「事前估（补记·8.7 式子）」——同一个数、同一个声明，而表形回到与其他章一致；
+    #     本章仍留在 `_ESTIMATE_DEBT` 里（**补记 ≠ 事前估**），而这一列从此**有检查在守**
+    #     （见 pre_estimate_lines）。
     ("7", "7.1", "评测流水线：数据集、指标与 CI 回归", 7000, [], "完全原创"),
-    ("7", "7.2", "可观测性：链路追踪、指标与成本看板", 7000, [], "完全原创"),
-    ("7", "7.3", "Prompt 与配置版本化：灰度发布与 A/B 实验", 6000, [], "完全原创"),
+    #     计划值 **7,000 → 12,000**（2026-09-19 写 7.2 之前）：**这一段注释就是本章的事前估**，
+    #     而它是全书第一次**在动笔之前**就写下来的（6.3 与 7.1 两章都是没落笔，事后只能补记）。
+    #     按 8.7 式子的四项各写一行，每一行的依据都取**同类章的实测**：
+    #       前置段 650（6.4 实测 719、7.1 实测 728；这一篇的导读都写两段，650 取在下沿）
+    #       散文 8 节 × **800** ＝ 6,400
+    #       接线节 900（6.3 实测 924、6.4 965、7.1 1,062；本章交两个模块 ＋ 一张契约表）
+    #       固定小段 2,400（6.3 实测 2,384、6.4 2,572、7.1 1,910——取中位）
+    #       围栏 90 行 × 15 ＝ 1,350
+    #     分项之和 **11,700** → 计划值取 **12,000**（500 的整数倍，与 5.6–5.9／6.4 同口径）。
+    #
+    #     **动笔前把那三问逐条答完（8.7 的「三问」第一次在开写前全部落笔）**：
+    #     ① 读数长成什么——六组读数里**三组贴输出块**（span 树、看板块、告警触发那一趟）、
+    #        两组是表（属性与语义约定、指标与分位）、一组是「同一趟的两种采样」的对照。
+    #        所以散文系数不是 900 而是 **800**：7.1 实测「十二个块 → 散文每节 521」、
+    #        6.3 实测「四组块 → 931」，本章估在第 3–4 组块之间——**这是插值，不是拍**；
+    #     ② 围栏散不散——预计散在 4 节里（span 树、采样、看板、告警）共约 90 行；
+    #        7.1 的教训是「围栏越散，压掉的散文越多」，所以 ① 与 ② 必须一起答；
+    #     ③ 这个数里有没有已经含了容错——**有**：四项都取了同类章实测的中位（散文那一项还按形状
+    #        插了一档），所以**不再乘 0.77**（6.4 的双重打折就是这么来的：0.77 本来就是拿去
+    #        吸收「分项估偏大」的）。两个数都记下来备查：**不折 11,700**；若按本篇三章
+    #        实测／分项的中位 **0.92** 折 ≈ **10,700**——实测出来之后按这两个数一起看。
+    #     **分节计划（8 散文节 ＋ 1 接线节，同样在动笔前定）**：动机与三件套 ／ 一条 trace 的形状
+    #        （span 树）／ 属性与语义约定 ／ 关联（`trace_id` 接 6.3 的 `attempts` 与 7.1 的跑记录）／
+    #        指标与分位 ／ 采样（抽多少、抽谁）／ 成本看板（把 6.4 的四栏挂到 trace 上）／
+    #        告警（阈值、窗口、告警疲劳）／ 7.2.9 知舟接线。
+    #     **落笔的地方不止这里**：台账那一侧落在 `PLAN.md` 的「7.2（写作前校正）」行
+    #     （LEDGER 的逐节表要等实测出来才能存在——那一道门本来就拒绝一张没有实测的表）。
+    ("7", "7.2", "可观测性：链路追踪、指标与成本看板", 12000, [], "完全原创"),
+    #     计划值 **6,000 → 10,000**（2026-09-19 写 7.3 之前）：**这一段注释就是本章的事前估**，
+    #     与 7.2 一样落在**动笔之前**，因此它进得了提交门、事后补不上。
+    #     按 8.7 式子的四项各写一行，每一行的依据都取**同类章已经量出来的实测**
+    #     （6.4 719／2,572／965、7.1 728／4,371／1,062／1,910、7.2 379／6,417／1,096／2,779）：
+    #       前置段 **600**（三个实测 379（7.2）／719（6.4）／728（7.1）的均值 609 取下整；
+    #         不取中位 719，因为 7.2 那一章的 −41.7% 就长在这一项上——**最容易高估的一项先压低**）
+    #       散文 7 节 × **750** ＝ 5,250
+    #         依据：本章预计 **3–4 个输出块**（分桶表、放量阶梯、A/B 那一趟、回滚那一趟），
+    #         比 7.2 的七个块少、比 6.3 的四组块也少 → 单节系数插在 7.2 实测单节中位
+    #         **659** 与 6.3 实测每节 **931** 之间靠下沿取 **750**（**插值，不是拍**）；
+    #         7.1 的 521 是十二个块的形状，本章到不了那个密度
+    #       接线节 **900**（7.1 1,062、6.4 965、6.3 924、7.2 1,096——本章只交**一块**模块
+    #         （版本与分桶）＋ 一张契约表，四项的**下沿**）
+    #       固定小段 **2,400**（7.1 1,910、6.3 2,384、6.4 2,572、7.2 2,779；本章的坑按
+    #         7.2 的 20 条**减两条**（分桶与显著性各少一条重复）→ 取 2,400）
+    #       围栏 70 行 × 15 ＝ 1,050
+    #     分项之和 **10,200** → 计划值取 **10,000**（500 的整数倍，与 5.6–5.9／6.4／7.2 同口径）。
+    #
+    #     **动笔前把那三问答完（8.7 的「三问」，第二次在开写前全部落笔）**：
+    #     ① 读数长成什么——六组读数里**约四个块**贴输出（分桶一致性、放量阶梯、A/B 那一趟、
+    #        回滚那一趟），其余两组（内容戳与 diff、版本与配置的注册表）是**表**。
+    #        所以散文系数走插值档 750（7.2 单节中位 659 ／ 6.3 每节 931）——**先插值，再取中位**
+    #        这条判据也是 7.2 那一章唯一准的那一项留下的；
+    #     ② 围栏散不散——预计散在 3 节里（分桶、A/B、接线）共约 70 行。
+    #        7.2 已经推翻了「围栏越散、压掉的散文越多」的一半：它缺一个前提——
+    #        **被压掉的是「该节本来就很长」的那部分机制叙述**，所以本章照常按 70 行报，
+    #        同时把「本章散文有没有被压短」留作实测要回答的问题；
+    #     ③ 这个数里有没有已经含了容错——**有**：前置段与接线节都取了同类章的**下沿**，
+    #        固定小段按 7.2 减两条坑，散文那一项是插值出来的 → **不再乘 0.77**
+    #        （0.77 本来就是拿去吸收「分项估偏大」的，6.4 的双重打折就是这么来的）。
+    #        两个数都记下来备查：**不折 10,200**；若按第 7 篇已定稿两章的合计比值
+    #        （8,071 ＋ 10,671）／（12,450 ＋ 11,700）＝ **0.776** 折 ≈ **7,900**。
+    #        **两个数差 2,300 这件事本身要进台账**：它们的分歧全在散文那一项上，
+    #        而 7.1 的 0.776 里混着一次「系数用错」的偏差（它的 12,450 是事后按「讲机制的章」
+    #        补算的，实测散文只有 4,371）——所以本章照 10,200 报，实测出来先看散文。
+    #     **分节计划（7 散文节 ＋ 1 接线节，同样在动笔前定）**：动机与三件套 ／ 版本戳
+    #        （一个提示词要能被指认：内容戳、不可变、命名）／ diff 与静默漂移（改了而版本没动）／
+    #        分桶（同一用户同一桶、比例 sanity）／ 放量阶梯（两版并存的账与谁能改）／
+    #        A/B（多少样本才敢下结论：分辨率、偷看罚）／ 开关、回滚与实验记录 ／ 7.3.8 知舟接线。
+    #     **落笔的地方不止这里**：台账那一侧落在 `PLAN.md` 的「7.3（写作前校正）」行
+    #     （LEDGER 的逐节表要等实测出来才能存在——那一道门本来就拒绝一张没有实测的表）。
+    #
+    #     【2026-09-19 定稿后的实测：**这是全书第一次「事前估偏低」】**
+    #     实测 **14,075**（汉字 12,680 ＋ 93 行围栏），占计划值 10,000 的 141%
+    #     ——超出 ±40% 的容差，所以计划值改为 **14,000**（500 的整数倍）。
+    #     逐段对账（分项之和 10,200 估低 **27.5%**）：
+    #       前置段 823（估 600，+37.2%）／散文 7 节 8,954（估 5,250，+70.6%）／
+    #       接线节 1,405（估 900，+56.1%）／固定小段 2,893（估 2,400，+20.5%）／
+    #       围栏 93 行（估 70 行，+32.9%）。
+    #     **四项全都偏低，而最大的一笔在散文**：单节有效字 1,099（估 750），
+    #     而用来插值的两个样本分别是 7.2 的单节中位 659 与 6.3 的每节 931
+    #     ——两个样本都是「读数多、散文少」的形状，而这一章的散文主体是
+    #     **十来处「只看一半会怎样」的对照叙述**（每条线／每一栏各一组），
+    #     那是插值样本里没有的形状。可照用的新判据：**估散文系数之前先问
+    #     「这一章有多少处『只看一半就错』的对照」**——这与 7.2 留下的
+    #     「先插值、再取中位」不矛盾，但插值的两个端点必须与本章同形。
+    #     另：固定小段那一项估的时候写的是「按 7.2 的 20 条坑减两条」，
+    #     而实写是 22 条（多两条）——**估的动作与写的动作方向相反**，
+    #     这一类偏差不能用系数解释，只能记在台账里。
+    ("7", "7.3", "提示与配置版本化：灰度发布与 A/B 实验", 14000, [], "完全原创"),
     ("7", "7.4", "安全落地：提示注入、越狱与工具权限治理", 7000, [], "完全原创"),
     ("7", "7.5", "数据合规与脱敏：留存、隐私与审计", 6000, [], "完全原创"),
 
@@ -1708,24 +1805,43 @@ _CALIB_FIRST = re.compile(r"^(项|段)$")
 _CALIB_COLS = ("事前估", "实测")
 _CALIB_HEADER = re.compile(r"^\|\s*(?:项|段)\s*\|")     # 只为「定位候选行」（夹具用），不参与取数
 _CALIB_MARK = ("逐节实测", "逐节估实测")   # 5.x 写前者，第 6 篇起写后者：两种写法都算数
+_CALIB_DEBT = "补记"        # 「事前估」那一列的欠账标记（见下面的 _ESTIMATE_DEBT）
+# 什么叫「这一格估了一个数」：**从数开始**（允许 `≈`／`约`／`~` 这种「大致」前缀）。
+# 只认「里面有数字」不够：实测摸出来的一个口子是「—（15 条坑 × 42 ＋ … 940）」——
+# 那一格里有七个数字，而它其实什么也没估（那个算式是被泼掉的那个）。
+_CALIB_PRE_NUM = re.compile(r"^[≈约~＜<]*\s*[\d,]")
 
 
 def _calib_cells(line: str) -> list[str]:
     return [c.strip().strip("*").strip() for c in line.strip().strip("|").split("|")]
 
 
+def _calib_col(cells: list[str], name: str) -> int | None:
+    """按**前缀**找列：表头那一格允许带注（`事前估（补记·8.7 式子）`）。
+
+    第一版要求那一格与 `事前估` 逐字相等，于是**任何给列名加注的表都会静默退出核对范围**
+    ——「检查读窄了」与「检查不存在」在输出上完全一样（`STYLE` 8.5）。
+    前缀匹配的边界：只认从第一字起的完整前缀，`误事前估` 这种不算。
+    """
+    for k, c in enumerate(cells):
+        if c == name or c.startswith(name):
+            return k
+    return None
+
+
 def _calib_header(line: str) -> tuple[list[str], int] | None:
     """把一行读成「表头 ＋ 实测列在第几格」；不是逐节表的表头就返回 None。
 
     判据是**这张表自己的契约**（第一格是行名 `项`／`段`，且有 `事前估` 与 `实测` 两列），
-    而列序不写死：7.1 那种在中间插一列的表，只有按列名取数才读得对。
+    而列序与列名的注都不写死：7.1 那种在中间插一列的表，只有按列名取数才读得对。
     """
     cells = _calib_cells(line)
     if len(cells) < 3 or not _CALIB_FIRST.match(cells[0]):
         return None
-    if any(c not in cells for c in _CALIB_COLS):
+    mi = _calib_col(cells, "实测")
+    if mi is None or _calib_col(cells, "事前估") is None:
         return None
-    return cells, cells.index("实测")
+    return cells, mi
 
 
 def calibration_sum_lines(ledger_text: str, measured: dict[str, int]) -> list[str]:
@@ -1788,6 +1904,87 @@ def calibration_sum_lines(ledger_text: str, measured: dict[str, int]) -> list[st
                 out.append(f"LEDGER 第 {cid} 章：写了「逐节实测」但后面没有逐节校准表"
                            "（表头第一格为 `项` 或 `段`，且同时有 `事前估` 与 `实测` 两列）")
         i += 1
+    return out
+
+
+# ---------------- 「事前估落笔」的守门人 ----------------
+# `STYLE` 8.7 的第一条纪律是「动笔之前先把事前估落下来」，而它一度是全书**唯一一条
+# 没有任何检查在守的纪律**：6.3 与 7.1 连着两章没落笔，两次都是写完之后靠人读台账
+# 才发现的（`STYLE` 8.4 那条「一段没有检查覆盖的手写叙述」的同一族）。
+# 判据必须落在**可查的字段**上，所以这里量的就是逐节表里「事前估」那一列有没有数。
+#
+# 三件事分开报（前三条红、第四条只是出声）：
+#   ① 那一列一个数都没有 → **红**（**登过记也一样**：登记是承认欠账，补记是把能补的补上，
+#      两件事都要做——只有登记而没有数，等于把「没落笔」变成了一个免检格子）；
+#      「有数」的判据是**这一格从数开始**（`_CALIB_PRE_NUM`），不是「里面有数字」——
+#      后者会把「—（8 节 × 900）」这种**被泼掉的算式**当成估过；
+#   ② 列名带了「补记」标记，却不在登记表里 → **红**：补记是「事后才写的」这句话本身，
+#      它不许帖到真落了笔的章上（帖了就把两者抹平了）；
+#   ③ 登记表里的章，列名（或那张表）却不见了 → **红**：登记表过期（账已还清，或标记被删）；
+#   ④ 登记表里的每一条，**每次运行都打一行** → 不红，但不许静默：
+#      一张登记过的欠条与一切正常，在输出上必须不一样。
+#
+# 登记表是**封存**的：只收 6.3 与 7.1（写之前漏掉的那两次）。新章再漏就报错——
+# 那时只有两个显式动作可做：补上估，或者把它登记进来并写下理由。
+_ESTIMATE_DEBT = {
+    "6.3": ("2026-09-19", "写之前只有「第 6 篇四章平摊的预算」7,000 一个数，没有分项；"
+                          "本轮按 8.7 式子把那一列补出来，并标成补记（补记 ≠ 事前估）"),
+    "7.1": ("2026-09-19", "同上（第二次）。前一章刚把这条纪律写进 `STYLE` 8.7，紧接着又是空的"
+                          "——因为「落笔」这一步没有检查在守"),
+}
+
+
+def estimate_debt_lines() -> list[str]:
+    """欠账登记表要每次运行都出声（不拦提交）。"""
+    return [f"第 {cid} 章的事前估没有落笔——{why}（{date} 登记）"
+            for cid, (date, why) in _ESTIMATE_DEBT.items()]
+
+
+def pre_estimate_lines(ledger_text: str) -> list[str]:
+    """逐节表里的「事前估」那一列必须有数（口径与理由见 `_ESTIMATE_DEBT`）。"""
+    out: list[str] = []
+    cid: str | None = None
+    seen: set[str] = set()
+    lines = ledger_text.splitlines()
+    i = 0
+    while i < len(lines):
+        m = _CALIB_SECTION.match(lines[i])
+        if m:
+            cid = m.group(1)
+        hdr = _calib_header(lines[i].strip()) if cid else None
+        if hdr:
+            cells = hdr[0]
+            pi = _calib_col(cells, "事前估")
+            marked = pi is not None and _CALIB_DEBT in cells[pi]
+            nums = 0
+            j = i + 1
+            while j < len(lines) and lines[j].strip().startswith("|"):
+                c = _calib_cells(lines[j])
+                j += 1
+                if not c or set("".join(c)) <= set("-: "):
+                    continue           # 表头下的分隔行
+                if pi is None or len(c) <= pi:
+                    continue
+                if _CALIB_PRE_NUM.match(c[pi]) is not None:
+                    nums += 1
+            seen.add(cid)
+            debt = _ESTIMATE_DEBT.get(cid)
+            if nums == 0:
+                out.append(f"LEDGER 第 {cid} 章：逐节表的「事前估」那一列一个数都没有"
+                           "（写之前没落笔、事后也没有补记——`STYLE` 8.7 的第一条纪律）")
+            if marked and debt is None:
+                out.append(f"LEDGER 第 {cid} 章：「事前估」那一列标成了补记，但它不在欠账登记表里"
+                           "（补记只给 _ESTIMATE_DEBT 里登记过的那两章；真落了笔的章不许贴）")
+            if debt is not None and not marked:
+                out.append(f"LEDGER 第 {cid} 章：登记为欠账（{debt[0]}），而表里那一列没有「{_CALIB_DEBT}」标记"
+                           "（账已还清，或标记被删——登记表过期）")
+            i = j
+            continue
+        i += 1
+    for cid in _ESTIMATE_DEBT:          # 反向守：登记了却没有那张表
+        if cid not in seen:
+            out.append(f"LEDGER 第 {cid} 章：在欠账登记表里，却没有找到那张逐节表"
+                       "（表被删或表头改了写法——登记表也要跟着改）")
     return out
 
 
@@ -2186,6 +2383,24 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
         else:
             problems.append("README 缺少「## 全书结构」一节")
 
+    # 17) PLAN 自己那几处「现行计划总量」也要等于实测合计（**拦提交**）。
+    #     同一件事在 PLAN 里写了五处（文首、「计划总字数」那一格、两处表合计、
+    #     以及下面那句「现行计划总量为 N 字」），而此前**只有 README 那一处有检查在守**。
+    #     本轮就撞上：「现行计划总量为 **644,500** 字」（第 2／3 篇那次重设后的数）
+    #     而文首已是 **783,500** —— 同一页里两个「现行」，没有任何一道门会去问一句。
+    #     先收那三处**说法唯一的**（表合计那几处形状各异，另行定）。
+    for pat, label in (
+            (r"全书为\s*\*\*(\d+)\s*篇\s*(\d+)\s*章\s*/\s*约\s*([\d,]+)\s*字\*\*", "文首的「全书为 N 篇 N 章"
+                                                                                    " / 约 N 字」"),
+            (r"计划总字数\s*\|\s*\*\*约\s*([\d,]+)\s*字\*\*", "「计划总字数」那一格"),
+            (r"现行计划总量为\s*\*?\*?([\d,]+)\*?\*?\s*字", "那句「现行计划总量为 N 字」")):
+        for m in re.finditer(pat, text):
+            nums = [g for g in m.groups() if g is not None]
+            if len(nums) >= 3 and int(nums[1]) != total_chapters:
+                problems.append(f"PLAN {label}：章数 {nums[1]} ≠ 实测 {total_chapters}")
+            if _as_int(nums[-1]) != total_plan:
+                problems.append(f"PLAN {label}：写 {nums[-1]} 字 ≠ 实测规划合计 {total_plan:,} 字")
+
     # 13) LEDGER 的逐节校准表要自己加得起来（**拦提交**）。口径与理由见 calibration_sum_lines。
     ledger_path = plan_path.parent / "LEDGER.md"
     if not ledger_path.exists():
@@ -2193,6 +2408,13 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
     else:
         for line in calibration_sum_lines(ledger_path.read_text(encoding="utf-8"),
                                           measured_words):
+            problems.append(line)
+
+    # 16) LEDGER 逐节表的「事前估」那一列必须有数（**拦提交**）。
+    #     `STYLE` 8.7 的第一条纪律（动笔之前落笔）此前**没有任何检查在守**，
+    #     6.3 与 7.1 连着两章漏掉。口径、登记表与三条判据见 pre_estimate_lines。
+    if ledger_path.exists():
+        for line in pre_estimate_lines(ledger_path.read_text(encoding="utf-8")):
             problems.append(line)
 
     # 15) LEDGER 每章小节标题里的「正文 N 有效字」也要等于实测（**拦提交**）。
@@ -2246,6 +2468,17 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
             print(f"  · {line}")
         print("  影响：这些章的素材量与判定偏高，篇幅基线不可直接采信。"
               "\n  修法：按章节**实际用到的节**量出拆分比例，再改 tools/audit_coverage.py。")
+
+    # 10) 欠账登记表（提示，不拦提交）：事先估没落笔的那两章**每次都出声**。
+    #     一张登记过的欠条与「一切正常」，在输出上必须不一样——
+    #     否则这张登记表就变成了又一个静默清单（同 8.5 那条）。
+    debts = estimate_debt_lines()
+    if debts:
+        print(f"登记的欠账（不拦提交，但每次都要出声）：{len(debts)} 条")
+        for line in debts:
+            print(f"  · {line}")
+        print("  影响：这两章只能事后补算，无法区分「估偏了」与「写超了」。"
+              "\n  不许新章再进来：新章要么在动笔前落笔，要么把它登记进来并写下理由。")
 
     if problems:
         print("文档数字与实测不一致：")
@@ -2307,6 +2540,22 @@ def _self_test_cases(plan_text: str, readme_text: str, ledger_text: str, project
                       "规划总量"))
 
     row = re.search(r"(?m)^\| (\d+) \|[^\n]*\| (\d+) \| (\d+\.\d+)", readme_text)
+    # PLAN 自己那几处「现行计划总量」：三处说法唯一的各钉一条。
+    for label, pat in (
+            ("文首的「全书为 N 篇 N 章 / 约 N 字」",
+             r"全书为\s*\*\*(\d+)\s*篇\s*(\d+)\s*章\s*/\s*约\s*([\d,]+)\s*字\*\*"),
+            ("「计划总字数」那一格",
+             r"计划总字数\s*\|\s*\*\*约\s*([\d,]+)\s*字\*\*"),
+            ("那句「现行计划总量为 N 字」",
+             r"现行计划总量为\s*\*?\*?([\d,]+)\*?\*?\s*字")):
+        pt = re.search(pat, plan_text)
+        if pt:
+            gi = pt.lastindex
+            cases.append((f"PLAN {label}漂了",
+                          {"PLAN.md": _swap(plan_text, pt.span(gi),
+                                           f"{_as_int(pt.group(gi)) + 1:,}")},
+                          "规划合计"))
+
     if row:
         wrong = "0.99" if row.group(3) != "0.99" else "0.98"
         cases.append(("README 篇级素材比值漂了",
@@ -2412,25 +2661,133 @@ def _self_test_cases(plan_text: str, readme_text: str, ledger_text: str, project
                           {"LEDGER.md": ledger_text.replace(target, bumped, 1)},
                           "逐节校准表合计"))
 
-    # ③ 多一列的表（7.1 在中间插了「事后补算」）：改**实测**要红，
-    #    改**事后补算**要静音——那一列不是实测，而第一版把第 3 格一律当成实测。
-    t = _find_table(ledger_text, "7.1")
-    if t:
-        names, mi, rows = t
-        target = _counter_row(rows, mi)
-        if target:
-            bumped = _bump(target, mi)
-            if bumped:
-                cases.append(("LEDGER 段 表多一列时，实测那一列仍要核（7.1）",
-                              {"LEDGER.md": ledger_text.replace(target, bumped, 1)},
-                              "逐节校准表合计"))
-            back = names.index("事后补算") if "事后补算" in names \
-                else next((k for k, n in enumerate(names) if n.startswith("事后补算")), None)
-            if back is not None:
-                other = _bump(target, back)
-                if other:
-                    cases.append(("LEDGER 改「事后补算」那一列（不是实测）→ 应保持沉默",
-                                  {"LEDGER.md": ledger_text.replace(target, other, 1)}, ""))
+    # 按章节号精确取表、改表：`_find_table` 只认「表头匹配 + 第一张」，
+    # 而 `| 段 | 事前估 | 实测 | … |` 这一行在 6.1–6.4 里**逐字一样**，
+    # 按字符串改会改到别章那张表上——夹具自己跑偏，却照样报绿。
+    def _table_block(text: str, want_cid: str):
+        """取某一章那张逐节表：返回（切好的行, 表头行号, 数据行, 数据行结束处）。"""
+        cid = None
+        lines = text.splitlines(keepends=True)
+        for k, ln in enumerate(lines):
+            m = _CALIB_SECTION.match(ln)
+            if m:
+                cid = m.group(1)
+            if cid == want_cid and _calib_header(ln.strip()):
+                rows, j = [], k + 1
+                while j < len(lines) and lines[j].strip().startswith("|"):
+                    rows.append(lines[j])
+                    j += 1
+                return lines, k, rows, j
+        return None
+
+    def _edit_table(text: str, cid: str, fix):
+        """把某一章那张逐节表交给 fix(表头各列, 数据行各列) 改一改，再拼回原文。"""
+        got = _table_block(text, cid)
+        if not got:
+            return None
+        lines, k, rows, j = got
+        head2, body2 = fix(_calib_cells(lines[k]), [_calib_cells(r) for r in rows])
+        if head2 is None:
+            return None
+        render = lambda cells: "| " + " | ".join(cells) + " |\n"   # noqa: E731
+        return ("".join(lines[:k]) + render(head2)
+                + "".join(render(c) for c in body2) + "".join(lines[j:]))
+
+    def _bump_col(text: str, cid: str, colname: str):
+        """把某列的「合计」行（没有就取最后一行）加 1——模拟「正文又长了、表没跟」。"""
+        def fix(head, rows):
+            ci = _calib_col(head, colname)
+            if ci is None:
+                return None, None
+            target = next((c for c in rows if "合计" in c[0]), None)
+            if target is None:
+                target = next((c for c in reversed(rows)
+                               if c[0].strip() and not set("".join(c)) <= set("-: ")), None)
+            if target is None or ci >= len(target):
+                return None, None
+            num = re.findall(r"[\d,]+", re.split(r"[=＝]", target[ci])[-1])
+            if not num:
+                return None, None
+            target[ci] = target[ci].replace(
+                num[-1], f"{int(num[-1].replace(',', '')) + 1:,}", 1)
+            return head, rows
+        return _edit_table(text, cid, fix)
+
+    # ③ 多一列的表：**自己造出那种形状**，不再依赖书里恰好有那么一张。
+    #    7.1 原来在中间插了一列「事后补算」，而那一列本轮折进了「事前估（补记）」——
+    #    于是这条夹具改成在真表上**插一列**：形状还是那个形状，而它不再随书稿的形状漂。
+    def _insert_col(head, rows):
+        pi = _calib_col(head, "事前估")
+        if pi is None:
+            return None, None
+        head = head[:pi + 1] + ["事后补算（8.7 式子）"] + head[pi + 1:]
+        out = []
+        for c in rows:
+            filler = "---" if set("".join(c)) <= set("-: ") else "1,000"
+            out.append(c[:pi + 1] + [filler] + c[pi + 1:])
+        return head, out
+
+    wide = _edit_table(ledger_text, "6.4", _insert_col)
+    if wide:
+        if (t := _bump_col(wide, "6.4", "实测")):
+            cases.append(("LEDGER 段 表多一列时，实测那一列仍要核",
+                          {"LEDGER.md": t}, "逐节校准表合计"))
+        if (t := _bump_col(wide, "6.4", "事后补算")):
+            cases.append(("LEDGER 改插进来的「事后补算」那一列（不是实测）→ 应保持沉默",
+                          {"LEDGER.md": t}, ""))
+
+    # ④ 「事前估落笔」：三种形态各钉一条（`_ESTIMATE_DEBT` 是封存的登记表）。
+    def _mark_pre(new: str):
+        def fix(head, rows):
+            pi = _calib_col(head, "事前估")
+            if pi is None:
+                return None, None
+            head[pi] = new
+            return head, rows
+        return fix
+
+    if (t := _edit_table(ledger_text, "6.4", _mark_pre("事前估（补记·8.7 式子）"))):
+        cases.append(("LEDGER 真落了笔的章被贴上「补记」（6.4）",
+                      {"LEDGER.md": t}, "不在欠账登记表里"))
+    if (t := _edit_table(ledger_text, "6.3", _mark_pre("事前估"))):
+        cases.append(("LEDGER 登记为欠账的章，「补记」标记被删（6.3）",
+                      {"LEDGER.md": t}, "登记表过期"))
+
+    def _blank_pre(head, rows):
+        pi = _calib_col(head, "事前估")
+        if pi is None:
+            return None, None
+        for c in rows:
+            if len(c) > pi and not set("".join(c)) <= set("-: "):
+                c[pi] = "—"
+        return head, rows
+
+    if (t := _edit_table(ledger_text, "6.4", _blank_pre)):
+        cases.append(("LEDGER 逐节表的「事前估」那一列被清空（6.4）",
+                      {"LEDGER.md": t}, "一个数都没有"))
+
+    def _dash_pre_with_note(head, rows):
+        """把每一格改成「—（后面跟着算式）」：**里面有数字，却什么也没估**。
+
+        这个口子是本轮实测摸出来的：「—（15 条坑 × 42 ＋ … 940）」里有七个数字，
+        而它恰恰是那个被泼掉的算式——判据是「这一格从数开始」，不是「里面有数字」。
+        """
+        pi = _calib_col(head, "事前估")
+        if pi is None:
+            return None, None
+        for c in rows:
+            if len(c) > pi and not set("".join(c)) <= set("-: "):
+                c[pi] = "—（8 节 × 900）"
+        return head, rows
+
+    if (t := _edit_table(ledger_text, "6.4", _dash_pre_with_note)):
+        cases.append(("LEDGER 那一列只剩「—（算式）」的注（有数字、没估数）",
+                      {"LEDGER.md": t}, "一个数都没有"))
+
+    # 这条钉的是**登记不等于免检**：登了记的那一章，那一列也不能空着。
+    if (t := _edit_table(ledger_text, "6.3", _blank_pre)):
+        cases.append(("LEDGER 登记过的章，那一列也清空（6.3）→ 登记不等于免检",
+                      {"LEDGER.md": t}, "一个数都没有"))
 
     # 反向守：把表整张删掉、引导语留着——这是这张表真正危险的那一面（静默消失）。
     mhead = None

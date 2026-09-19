@@ -491,7 +491,25 @@
 | **评测集里的查询类型**（单跳／多跳、具体／抽象）与「样本数要足够得出统计显著的结论」（7.1 章的 `1/n` 是它的可计算形式） | Ragas · Testset Generation for RAG | https://docs.ragas.io/en/stable/concepts/test_data_generation/rag/ |
 | **退出码表**：`0` 全过、`1` 有失败、`2` 被用户中断、`3` 内部错、`4` 用法错、`5` **没有收集到测试**（非零）、`6` 警告超限——「没跑」与「跑了且全过」是两件事（7.1 章） | pytest · Exit codes | https://docs.pytest.org/en/stable/reference/exit-codes.html |
 | 追踪与成本看板（7.2 章） | Langfuse 官方文档 | https://langfuse.com/docs |
+| **数据模型**：观测按 `trace_id` 归组、trace 级属性（`user_id`／`session_id`／`tags`／`metadata`）复制到每一行观测、会话把多条 trace 串起来、内置在 OpenTelemetry 之上、**后台批量导出与短进程退出前必须 `flush()`**（7.2 章） | Langfuse · Observability Data Model | https://langfuse.com/docs/observability/data-model |
+| **一条好 trace 长什么样**：trace 的粒度（一轮对话／一次 agent 运行／一次管线执行）与 session、嵌套（工具调用别挂在根上）、**不要用一根 generation 包住整个循环**、**命名是接口**（动态值不进名字、低基数、不要拿模型名当名字）、算成本要的三件套（模型名 ＋ usage ＋ 可选的 cost 覆盖）、标签在创建时定死而事后判定用 score（7.2 章） | Langfuse · What does a good trace look like? | https://langfuse.com/docs/observability/best-practices |
+| **GenAI client span 的语义约定**：span 名 `{gen_ai.operation.name} {gen_ai.request.model}`、span kind 取 `CLIENT`、属性三档（Required `gen_ai.operation.name`／`gen_ai.provider.name`；Conditionally Required `error.type`／`gen_ai.request.model`；Recommended 包括 `gen_ai.usage.input_tokens`／`output_tokens`／`cache_read.input_tokens`／`cache_write.input_tokens`「适用时才有」）、**被自动重试的请求由一根 span 覆盖含全部重试的逻辑操作**、内容类属性默认不记（7.2 章） | OpenTelemetry · GenAI client spans（语义约定源文件） | https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md |
+| **GenAI 观测的一趟实操**：`invoke_agent` → `chat` / `execute_tool` 的 span 树、两条直方图指标 `gen_ai.client.operation.duration` 与（按 `gen_ai.token.usage` 分输入输出的）`gen_ai.client.token.usage`、**默认不采集提示与工具参数**（敏感数据）（7.2 章） | OpenTelemetry · Inside the LLM Call: GenAI Observability with OpenTelemetry | https://opentelemetry.io/blog/2026/genai-observability/ |
 | 追踪标准与埋点（7.2 章） | OpenTelemetry · GenAI 语义约定 | https://opentelemetry.io/docs/specs/semconv/gen-ai/ |
+| 提示与配置的版本化、灰度与 A/B（7.3 章） | Langfuse · Prompt CI/CD | https://langfuse.com/resources/engineering/prompt-cicd |
+| **把提示词改动当一次发布的六个阶段**：版本 → 验证 → 门 → 放量 → 观测 → 回滚，每一段各自防一种失效（不知道改了什么／修好一处弄坏十处／未检查的改动进生产／离线过了上线炸了／只有真流量才看得出的回归／坏改动留在线上）；**一张「哪些自带、哪些要自己拼」的表**是本章分工的出处——不可变版本与 diff、标签发布、数据集验证、CI 回归门、按版本的生产指标与告警都是自带，而**权重分流（90/10 的百分比住在你的代码里）、「一键选出赢家」、多步审批 要自己拼**；按版本聚合的指标是 median latency ／ median input・output tokens ／ median cost ／ generation count ／ median evaluation score；**SDK 把提示词缓存在进程里、默认 TTL 60 秒并后台重新校验**，所以「挪标签」到「现场真的换了」最坏差一个 TTL（7.3.7 的「回滚是两项之和」） |
+| **一次 prompt 版本化的最小形态**：每次保存产生一个**不可变版本**（带版本号与 diff），部署由**标签**控制、一个标签指向恰好一个版本；标签的三类用法（环境 `staging`／`production`、租户 `tenant-1`、实验 `prod-a`／`prod-b`）；`latest` 自动维护、取提示词时不带标签则默认取 `production`；**回滚 ＝ 把 `production` 挪回旧版本**（不用重新部署）；**受保护标签**：成员与查看者不能改也不能删（管理员与所有者可以），连带着那一版也不能被删；企业版另有**审计日志**（谁改了哪个标签、改前改后）；提示词作用域是项目（7.3.2／7.3.7） |
+| 提示与配置的版本化、灰度与 A/B（7.3 章） | Langfuse · Prompt Version Control | https://langfuse.com/docs/prompt-management/features/prompt-version-control |
+| 分桶与实验分流（7.3 章） | GrowthBook · SDK 规范 | https://docs.growthbook.io/lib/build-your-own |
+| **哈希分桶的逐字规范**：`hash(seed, value, version)` 用 32 位 FNV-1a，**v2** 是 `fnv32a(str(fnv32a(seed + value))) % 10000 / 10000`（10,000 个桶）、**v1** 是 `fnv32a(value + seed) % 1000 / 1000`（1,000 个桶，**官方标明「v1 在并行实验下会有偏差」**——它把 seed 拼在后面）；实现必须逐字节一致，另有一套**400 多条跨语言测试**要求所有 SDK 100% 通过；`inRange` 是**左闭右开**（`n >= start && n < end`）；`getBucketRanges` 把**覆盖度乘进每一段**（`(2, 0.5, [0.4, 0.6]) → [[0, 0.2], [0.4, 0.7]]`）、权重和不为 1 就退回等分；**命名空间**（同一命名空间里两段不重叠即互斥）与**过滤器**（默认 `hashVersion` 2）是两种隔离手段；粘性分桶用 `bucketVersion` 强制重新分桶（7.3.4） |
+| **偷看与序贯检验**：频繁检验（偷看）会把假阳率抬到名义值之上，而序贯检验是它的频派解法——「随便看多少次」仍把假阳率压在α以内；代价写得很清楚：**序贯置信区间一致地比固定样本区间更宽**，而多宽取决于调参 `N*`（默认 5,000，应设成「你通常会做决定时的样本量」，**开跑后不能改**）；实现取 Asymptotic Confidence Sequences（Waudby-Smith 等 2023），α 默认 0.05（7.3.6） |
+| 提示与配置的版本化、灰度与 A/B（7.3 章） | GrowthBook · Sequential Testing | https://docs.growthbook.io/statistics/sequential |
+| 实验的统计与早期决策（7.3 章） | Statsig · 序贯检验 | https://docs.statsig.com/stats-engine/sequential-testing |
+| **mSPRT 做法与它对「早决定」的告诐**：逐次调整 p 值与区间（区间随数据积累变窄），于是「结果页上可以随时读」；两条适用场景是「发现意外回归」与「机会成本高」，并限定「只在少数关键指标上这么做」；最有价值的一句是**「早做的决定往往给出功效不足的提升估计」**——要准确的效应量就等满功效（它还引 Kohavi 等关于事后功效计算不可靠的那一节）（7.3.6） |
+| 配置与代码的边界（7.3 章） | 十二要素应用 · III. Config | https://12factor.net/config |
+| **配置的判据**：配置是「在部署之间会变的一切」，它必须与代码**严格分开**（检验标准：代码库能不能在任何时候开源而不泄露凭据）；不推荐「不入版本控制的配置文件」（容易被误提交、散在各处、与语言绑定）；也不用**按环境分组**——环境名会长成组合爆炸，而要「逐项正交、各自独立」（7.3.1 与提示词三件套的边界） |
+| 内容寻址与不可变（7.3 章） | Git · What is Git? | https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F |
+| **内容戳那条性质的出处**：「Git 里一切都被校验和标记过，所以任何内容的改动 Git 都不会不知道」；它**按内容的哈希存储而不是按文件名存储**；Git 基本只增不删（所以「回到旧内容」是一次新提交）（7.3.2） |
 | 提示注入与不安全的输出处理（7.4 章） | OWASP · LLM Top 10 | https://genai.owasp.org/llm-top-10/ |
 | 工具权限与授权（7.4 章） | MCP · 授权规范 | https://modelcontextprotocol.io/specification/ |
 | 数据合规与留存（7.5 章） | OpenAI · 数据控制 | https://developers.openai.com/api/docs/guides/your-data |
