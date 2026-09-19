@@ -1,8 +1,10 @@
 #!/bin/sh
 # 提交前校验（pre-commit）
 #
-# 目的：让「体例 / 术语 / 交叉引用 / 链接登记 / 素材溯源 / 跨章重复」这些检查
-#       不可能被漏跑——有错误就拦下提交。
+# 目的：让「体例 / 术语 / 术语日志对账 / 交叉引用 / 链接登记 / 素材溯源 / 跨章重复 / 篇幅实测引用」
+#       这些检查不可能被漏跑——有错误就拦下提交。
+#       （最后一项的教训：5.3 的台账指向了 `STYLE` 8.7 里不存在的「第十七个实测」，
+#        而这类引用不产生任何数字，前三关一个都不会响。）
 #
 # 规则：
 #   0. 先跑两个工具的自检夹具（--self-test），工具坏了就没必要往下走。
@@ -43,7 +45,7 @@ fi
 #   · lint_book.py 的 code_lines_of 曾把围栏行也算作内容（671 个围栏虚增 20,130 字）；
 #   · audit_coverage.py 的对账靠「解析文档里的句子」，句式一变就落空成摆设。
 # 两者都有夹具，而夹具不跑就等于没有，所以放在第一步。
-echo "[pre-commit] 1/4 工具自检（字数口径 / 对账门）..."
+echo "[pre-commit] 1/5 工具自检（字数口径 / 对账门）..."
 if ! "$PY" tools/lint_book.py --self-test; then
     echo "" >&2
     echo "[pre-commit] ✖ 字数口径退化，提交被拦下：先修 tools/lint_book.py 的 code_lines_of。" >&2
@@ -55,7 +57,7 @@ if ! "$PY" tools/audit_coverage.py --self-test >/dev/null; then
     exit 1
 fi
 
-echo "[pre-commit] 2/4 正文一致性校验 ..."
+echo "[pre-commit] 2/5 正文一致性校验 ..."
 if ! "$PY" tools/lint_book.py; then
     echo "" >&2
     echo "[pre-commit] ✖ 正文校验有错误，提交被拦下。" >&2
@@ -66,7 +68,7 @@ fi
 # 文档数字对账：PLAN.md / COVERAGE.md 里的汇总数字必须与实测一致。
 # 这类数字一旦各写一遍就会漂（曾出现 PLAN 写 1.24 而实测已是 1.25），
 # 漂了不影响写作，但会持续误导篇幅与优先级判断。
-echo "[pre-commit] 3/4 文档数字对账（PLAN / COVERAGE vs 实测）..."
+echo "[pre-commit] 3/5 文档数字对账（PLAN / README / COVERAGE / LEDGER 逐节表 / PROJECT 字数 vs 实测）..."
 if ! "$PY" tools/audit_coverage.py --check; then
     echo "[pre-commit] ✖ 文档数字与实测不一致，提交被拦下。" >&2
     echo "            修法：先改 tools/audit_coverage.py 的规划值，" >&2
@@ -74,16 +76,28 @@ if ! "$PY" tools/audit_coverage.py --check; then
     exit 1
 fi
 
+# 可运行树：正文里贴的代码必须真的在它声称的那棵树里（v3 手写版 / v4 框架版），
+# 而且那份代码得跑得通。
+# 这一关与前三关同级：它拦的是「正文看起来对、读者照着敲跑不通」这一类错——
+# 这类错前三关一个都拦不住（正文里的代码风格合规、数字对账也对）。
+echo "[pre-commit] 4/5 可运行树一致性（正文代码块 ↔ zhizhou-v3/ · v4/ · v5/）..."
+if ! "$PY" tools/check_runnable.py; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 正文与可运行树不一致（或树自身跑不通），提交被拦下。" >&2
+    echo "            修法：改正文里那段，或改 zhizhou-v3/ 里那个文件——但两边必须一样。" >&2
+    exit 1
+fi
+
 staged=$(git diff --cached --name-only)
 
 if printf '%s\n' "$staged" | grep -q 'REFERENCES\.md'; then
-    echo "[pre-commit] 4/4 REFERENCES.md 有改动 → 联网校验全部链接 ..."
+    echo "[pre-commit] 5/5 REFERENCES.md 有改动 → 联网校验全部链接 ..."
     if ! "$PY" tools/check_refs.py --only-broken; then
         echo "[pre-commit] ✖ 存在失效链接，提交被拦下：先修 REFERENCES.md，再同步受影响章节。" >&2
         exit 1
     fi
 else
-    echo "[pre-commit] 4/4 链接清单自检（离线）..."
+        echo "[pre-commit] 5/5 链接清单自检（离线）..."
     if ! "$PY" tools/check_refs.py --offline >/dev/null; then
         echo "[pre-commit] ✖ 链接清单解析失败，提交被拦下。" >&2
         exit 1

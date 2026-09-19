@@ -26,6 +26,8 @@
     [标点]  中文后紧跟半角标点的抽查（代码区不适用）
     [术语]  避免的写法（代码块、反引号与素材溯源区为逐字引用区，不参与）
     [台账]  LEDGER.md 中待写（⬜）与有意省略（⏭）的数量提示
+    [接线]  第 3 篇每章必须有「知舟接线」小节，且四问小标题逐字齐全（依据 PROJECT.md）
+    [术语]  GLOSSARY.md 的维护记录与术语表逐章对账（有词条的章必须有一行、每行必须三格）
 
 退出码：存在「错误」时为 1，只有「警告」时为 0。
 """
@@ -44,10 +46,24 @@ PLAN = ROOT / "PLAN.md"
 REFS = ROOT / "REFERENCES.md"
 GLOSSARY = ROOT / "GLOSSARY.md"
 LEDGER = ROOT / "LEDGER.md"
+PROJECT = ROOT / "PROJECT.md"
+STYLE = ROOT / "STYLE.md"
 
 # 所有章节都必须有的小节；「前置知识」仅第 1 篇及以后要求
 REQUIRED_ALWAYS = ["本章导读", "## 学习目标", "## 本章小结", "## 延伸阅读"]
 REQUIRED_NON_INTRO = ["## 前置知识", "## 常见坑", "## 面试视角", "## 练习"]
+
+# 第 3 篇专属：每章要有「知舟接线」小节，且四个固定小标题逐字齐全。
+# 起因：STYLE 第五节把「智能问答 ＋ Agent 工具调用」归给第 3、4 篇，
+# 而 3.1–3.4 定稿时正文里「知舟」出现 0 次——学生读完 10 万字手里没有交付物。
+# 契约（文件、端点、验收标准）见 PROJECT.md；其第六节进度表同时是**回填台账**：
+# 标了「待回填」的章只报警告，没标的章缺一节就是错误。
+WIRING_PART = "03"
+# 小节标题形式：`## <章号>.<n> 知舟接线`（与正文其他 H2 一样带章内编号，
+# 这样台账里写落点 3.4.9 能解析到真实小节）。只写 `## 知舟接线` 会被判缺失。
+WIRING_HEAD = re.compile(r"^##\s*\d+\.\d+\.\d+\s*知舟接线", re.M)
+_W_HEAD = "## 3.4.9 知舟接线\n"
+WIRING_SUBS = ["### 加了什么", "### 接口契约", "### 怎么验", "### 不能破坏什么"]
 
 BANNED_WORDS = ["众所周知", "显而易见", "不难发现", "笔者", "同学们", "我们大家", "见上文", "据说"]
 
@@ -109,7 +125,12 @@ def han_len(text: str) -> int:
 
 # 围栏行：可带语言标记，也可有前导空白或在引用块里（`> `）。
 # 三种形态都在本书里真实出现过：` ```python `、`> ``` `（1.14）、`   ``` `（2.5 的列表内）。
-_FENCE = re.compile(r"^[\s>]*```[A-Za-z0-9_+.-]*\s*$")
+# 围栏标记：` ```python `，也允许**语言后面再缀一段标注**——体例里的输出块就是这种：
+# ` ```text $ python scripts/x.py --offline `（`STYLE` 三·6，`check_runnable` 的第八道靠它重跑）。
+# 2026-09-17 之前这里只允许语言本身，于是带上标注的那一行**不被当成开围栏**，
+# 反而被当成一条代码行：5.3–5.9 与 4.5 共 28 个标注块，每块凭空多算 15 有效字（合计 +420），
+# 而 `lint` 与 `audit --check` 只会在章节字数上悄悄漂——**改一处体例，量它的那把尺子要一起改**。
+_FENCE = re.compile(r"^[\s>]*```[A-Za-z0-9_+.-]*(?:\s+\$\s+\S.*)?\s*$")
 
 
 def code_lines_of(text: str) -> list[str]:
@@ -156,6 +177,19 @@ def load_plan_chapters() -> dict[str, int]:
         if words:
             plan[m.group(1)] = words
     return plan
+
+
+def plan_lookup_issue(cid: str, plan: dict[str, int]) -> str:
+    """章号在 PLAN 的章节表里解析不到时要报的那句话。**返回非空就必须报错。**
+
+    为什么把它抽成一个函数：这个判定必须能被自检覆盖。原先是写在 `check_chapter`
+    里的一句 `if planned:`——它读起来完全合理，但「`planned` 是 `None`」那条分支
+    什么都不做，而 `None` 恰好是「PLAN 里那一行不见了」的信号。
+    """
+    if cid not in plan:
+        return (f"PLAN.md 的章节表里没有 {cid} 这一行（计划字数解析不到）——"
+                f"本章因此拿不到篇幅判定，且汇总数字会少掉一章")
+    return ""
 
 
 def load_plan_parts() -> set[int]:
@@ -355,6 +389,14 @@ def check_chapter(path: pathlib.Path, ctx: dict) -> tuple[str, str]:
     actual = han_len(text)
     code_lines = code_lines_of(text)
     effective = actual + CODE_LINE_EQUIV * len(code_lines)
+    # **解析不到计划值必须报错，不能静默跳过。**
+    # 起因是一次真事故：PLAN 的 4.3 那一行被一次替换误删了（旧字符串恰好是新行的**前缀**），
+    # 于是这一章的「篇幅」检查整段消失——输出里只有一行没有「/ 计划 N」的数字，
+    # 与「这一章不参与篇幅校验」长得一模一样。同一族的漏账在本文件里已经出现过三次
+    # （测试清单写死、路径范围漏 `scripts/`、离线入口只写第一个），第四次修在这里。
+    missing = plan_lookup_issue(cid, plan_ch)
+    if missing:
+        rep.err(where, missing)
     if planned:
         ratio = effective / planned
         if abs(1 - ratio) > WORD_TOLERANCE:
@@ -673,6 +715,244 @@ def check_ledger(rep: Report) -> None:
                 rep.err("台账", f"LEDGER 篇级进度 {key}：{sym} 写 {got.group(1)} ≠ 实测 {want}")
 
 
+def wiring_issues(text: str, in_backlog: bool) -> tuple[list[str], list[str]]:
+    """返回 (错误, 警告)。抽成纯函数是为了能用夹具钉住三个分支。"""
+    missing: list[str] = []
+    if not WIRING_HEAD.search(text):
+        missing.append("小节标题（应为 `## <章号>.N 知舟接线`）")
+    missing += [s.removeprefix("### ") for s in WIRING_SUBS if s not in text]
+    if not missing:
+        return [], []
+    msg = "缺「知舟接线」小节：" + "、".join(missing)
+    return ([], [msg]) if in_backlog else ([msg], [])
+
+
+def wiring_backlog() -> set[str]:
+    """PROJECT.md 第六节进度表里标了「待回填」的章号（回填完就从表里消失）。"""
+    if not PROJECT.exists():
+        return set()
+    out: set[str] = set()
+    for ln in PROJECT.read_text(encoding="utf-8").splitlines():
+        if not ln.startswith("|"):
+            continue
+        cells = [c.strip() for c in ln.strip("|").split("|")]
+        if len(cells) < 4 or not re.fullmatch(r"\d+\.\d+", cells[0]):
+            continue
+        # 扫整行而不是某一列：这个记号有时写在「代码实跑」列，有时写在「备注」列，
+        # 只读一列会把「已登记的回填待办」当成「没登记」，于是误报成错误（本轮踩过一次）。
+        if any("待回填" in c for c in cells):
+            out.add(cells[0])
+    return out
+
+
+def check_project_wiring(rep: Report) -> None:
+    if not PROJECT.exists():
+        rep.err("接线", "缺少 PROJECT.md：它是第 3 篇各章写作与验收的依据，不能缺")
+        return
+    backlog = wiring_backlog()
+    for f in sorted(BOOK.glob(f"{WIRING_PART}-*/*.md")):
+        if not re.match(r"\d+\.\d+-", f.name):
+            continue
+        cid = f.name.split("-", 1)[0]
+        errs, warns = wiring_issues(f.read_text(encoding="utf-8"), cid in backlog)
+        for m in errs:
+            rep.err("接线", f"{cid}：{m}（第 3 篇必须按 PROJECT.md 的四问写）")
+        for m in warns:
+            rep.warn("接线", f"{cid}：{m}（PROJECT.md 记为待回填，写好即从台账划掉）")
+
+
+# ---------------- 「第 N 个实测」的引用闭环 ----------------
+# 起因是一次真事故：5.3 的台账写着「两条写进 STYLE 8.7 第十七个实测的修因」，
+# 而 STYLE 8.7 里根本没有第十七个（当时最后一条是第十六个）。5.1／5.2 那一轮
+# 也出现过同一条指向空处的引用，那次是人工核出来的。
+# 这类引用最阴的地方在于**它不产生任何数字**：篇幅对账、台账计数、可运行树三关
+# 都不会响——与 2.3 那次「整块没记账」同族，都是「没有任何数字与它对不上」。
+_ORD = "〇一二三四五六七八九十百"
+_ORD_RE = re.compile(rf"第([{_ORD}]+)个")
+_MEASURE_WINDOW = 45
+
+
+def measurement_refs(text: str) -> set[str]:
+    """文本里引用了哪些「第 X 个实测」。
+
+    只在「实测」二字前面取一小段窗口：正文里正常的「本章实测 13,326 有效字」
+    不会被误收（它前面那一段里没有「第 X 个」）。窗口取 45 字是为了容下
+    「见第十五个与第十六个实测」这种成对引用——两个序数都要收。
+    """
+    out: set[str] = set()
+    for m in re.finditer("实测", text):
+        window = text[max(0, m.start() - _MEASURE_WINDOW):m.start()]
+        out |= set(_ORD_RE.findall(window))
+    return out
+
+
+def measurement_defs(style_text: str) -> set[str]:
+    """STYLE 8.7 里真正写了的那几条实测（定义行形态：`- **第十五个实测（…`）。"""
+    return set(re.findall(rf"(?m)^\s*-\s*\*\*第([{_ORD}]+)个实测", style_text))
+
+
+def measurement_issues(style_text: str, others: dict[str, str]) -> list[str]:
+    defs = measurement_defs(style_text)
+    out: list[str] = []
+    for name, text in [("STYLE.md", style_text), *others.items()]:
+        for ord_ in sorted(measurement_refs(text) - defs):
+            out.append(f"{name} 引用了「第{ord_}个实测」，但 STYLE 8.7 里没有这一条")
+    return out
+
+
+def check_measurement_refs(rep: Report) -> None:
+    if not STYLE.exists():
+        rep.err("篇幅实测", "缺少 STYLE.md：篇幅估算的依据全在那里，不能缺")
+        return
+    others = {p.name: p.read_text(encoding="utf-8")
+              for p in (LEDGER, PLAN, PROJECT, ROOT / "GAPS.md") if p.exists()}
+    for m in measurement_issues(STYLE.read_text(encoding="utf-8"), others):
+        rep.err("篇幅实测", f"{m}（要么补上那一条，要么把引用改到真实存在的那一条）")
+
+
+# ---------------- 术语表 ↔ 维护日志的对账（GLOSSARY.md） ----------------
+# 为什么需要这一关：「三、维护记录」是**手写的第二份清单**（STYLE 8.8 第 7 条），
+# 而它此前没有任何机器核过。2026-09-17 核了一遍，三类问题各有一例：
+#   · 有词条、没有行：日志 32 行覆盖不到 1.12 / 2.1 / 2.6 / 3.1 / 5.6 五章；
+#   · 少一个换行、一行被粘进上一行：3.6（原因格被吞成空）与 5.2（整行丢失）都中过；
+#   · 5.8 那一处是当轮自己造的，同一种形态。
+# 而当时 `--self-test` 20/20、397 条禁词全过、错误 0 警告 0——因为所有检查都不解析
+# 这张表。所以这里补的正是「它到底逐到了几条」那一问（同 8.8 第 5 条的反向守）。
+#
+# 判定规则收紧过一次，为的是**不漏报**（漏报与乱报都真犯过）：
+#   · 不按「整行里出现章号」判——那样 2.1 / 3.1 / 5.6 会被别行的顺带提法掩盖
+#     （5.6 只在 5.1 那行的「一跑就打到 5.6 与 6.x 的正文」里露过面），
+#     而 0.2 又靠一条顺带提法侥幸通过；
+#   · 章号只认**原因格开头那一句**——那是本表既有的声明位置（32 行里 29 行以
+#     「N.N 写…前定口径」开头），顺带提法一律不算；小节号（`3.1.10`）按它所属的章算；
+#   · 篇级声明只认写明了「完稿」的篇（第 0 篇那 20 个词就登在「建立本表」那一行，
+#     它的原因格写的是「第 0 篇完稿」）；「第 1 篇开写前统一口径」不认——
+#     认了会把 1.12 的缺口一并盖住。
+GLOSS_SECTION = "维护记录"
+GLOSS_LOG_COLS = ("日期", "变更", "原因")
+_GLOSS_SEC_RE = re.compile(r"^##\s*[^\n]*" + GLOSS_SECTION + r"\s*$")
+# 「第 P 篇完稿 / 已定稿」才算篇级声明（`第 1 篇开写前统一口径` 不算）
+_GLOSS_PART_DONE = re.compile(r"第\s*(\d+)\s*篇(?:完稿|已定稿)")
+# 小节号 → 章号：`3.1.10` 记的是 **3.1**（台账落点回查用的是同一套近似）
+_SECTION_TO_CHAP = re.compile(r"(?<![\d.])(\d{1,2}\.\d{1,2})\.\d{1,3}(?![\d.])")
+
+
+def glossary_term_chapters(text: str) -> dict[str, list[str]]:
+    """GLOSSARY 术语表里 {首次出现的章号: 该章的词条名}（按表中顺序）。
+
+    括号注解先剥掉：`0.1（展开于 5.4）` 记的是 **0.1**（5.4 有它自己那批行）。
+    与 `load_glossary()` 同一口径：只读 LINT:TERMS 标记之间的表。
+    """
+    out: dict[str, list[str]] = {}
+    m = re.search(r"LINT:TERMS:BEGIN(.*?)LINT:TERMS:END", text, re.S)
+    if not m:
+        return out
+    for line in m.group(1).splitlines():
+        if not line.startswith("|") or "---" in line:
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 4 or cells[0] == "首选写法":
+            continue
+        for cid in CHAP_REF.findall(re.sub(r"（[^）]*）", "", cells[3])):
+            out.setdefault(cid, []).append(cells[0])
+    return out
+
+
+def glossary_log_rows(text: str) -> list[tuple[int, list[str]]]:
+    """「三、维护记录」表的数据行：[(行号, 单元格), ...]（表头与分隔行不算）。
+
+    必须圈定在这张小节内：第二节「固定指代」也是表，但只有两格——不圈范围的话，
+    它会被同一个判定当成两种东西各报一次。
+    """
+    lines = text.splitlines()
+    start = None
+    for i, ln in enumerate(lines):
+        if ln.startswith("##") and _GLOSS_SEC_RE.match(ln.strip()):
+            start = i + 1
+            break
+    if start is None:
+        return []
+    rows: list[tuple[int, list[str]]] = []
+    for i in range(start, len(lines)):
+        ln = lines[i]
+        if ln.startswith("## "):
+            break
+        if not ln.startswith("|"):
+            continue
+        cells = split_cells(ln)
+        if all(set(c) <= set("-: ") for c in cells):
+            continue
+        rows.append((i + 1, cells))
+    return [r for r in rows if [c.strip("*") for c in r[1]] != list(GLOSS_LOG_COLS)]
+
+
+def glossary_log_issues(text: str, written: set[str]) -> list[str]:
+    """术语表与维护日志的对账问题。抽成纯函数是为了能用夹具钉住每个分支。
+
+    三类问题各自对应一次真实事故：
+      ① 有词条的章没有一行在给它登记（1.12 / 2.1 / 2.6 / 3.1 / 5.6 五处）；
+      ② 行被粘坏——格数不为 3，或有一格被吞成空（3.6 / 5.2 / 5.8 三次）；
+      ③ 两个反向守：日志一行都没解析到、术语表一个章号都没解析到。没有它们，
+         解析一旦退化，输出会是「全部通过」——与 `check_runnable` 里
+         「一个代码块都没解析到」是同一类静默失败（STYLE 8.8 第 5 条）。
+
+    `written` 是**已有正文**的章号：只对它们提要求。第 6 篇的 6.1 / 6.3 已按
+    「先登记再写」提前登记、正文还没落地，这一步不要求日志行；正文一写出来，
+    要求自动生效（同 `check_ledger` 只对已有正文的篇要求台账）。
+    """
+    issues: list[str] = []
+    rows = glossary_log_rows(text)
+    term_chaps = glossary_term_chapters(text)
+    if not term_chaps:
+        issues.append("术语表里一个章号都没解析到——LINT:TERMS 标记、表头或「首次出现」列"
+                      "是不是被改坏了？（解析退化时，这一关会静默变成「全部通过」）")
+    if not rows:
+        issues.append("「三、维护记录」里一行数据都没解析到——小节标题、表头或分隔行"
+                      "（`| --- | --- | --- |`）是不是被改坏了？")
+        return issues
+    for lineno, cells in rows:
+        if len(cells) != len(GLOSS_LOG_COLS):
+            issues.append(
+                f"维护记录第 {lineno} 行有 {len(cells)} 格，应为 {len(GLOSS_LOG_COLS)} 格"
+                f"（{'/'.join(GLOSS_LOG_COLS)}）——多半是上一行结尾少了一个换行、"
+                f"这一行被粘了进去（3.6、5.2、5.8 三次都是这个形态）")
+            continue
+        for name, cell in zip(GLOSS_LOG_COLS, cells):
+            if not cell:
+                issues.append(f"维护记录第 {lineno} 行的「{name}」格是空的——粘行时"
+                              f"多半把这一格吞掉了（3.6 那次就是「原因」格被吞成空）")
+    covered: set[str] = set()
+    for _lineno, cells in rows:
+        if len(cells) != len(GLOSS_LOG_COLS):
+            continue  # 格数都不对，它声明了什么不可信（上面已经报过）
+        head = re.split(r"。", cells[2])[0]          # 只读「原因」格的开头一句
+        covered |= set(CHAP_REF.findall(_SECTION_TO_CHAP.sub(r"\1", head)))
+        for part in _GLOSS_PART_DONE.findall(" ".join(cells)):
+            covered |= {c for c in term_chaps if c.split(".")[0] == str(int(part))}
+    for cid in sorted(term_chaps, key=lambda c: tuple(int(x) for x in c.split("."))):
+        if cid not in written or cid in covered:
+            continue
+        names = term_chaps[cid]
+        issues.append(f"术语表里有 {cid} 的 {len(names)} 个词条（如「{names[0]}」），"
+                      f"但「三、维护记录」里没有一行在给它登记（原因格开头没有 {cid}）——"
+                      f"补一行，别指望别处的顺带提法算数")
+    return issues
+
+
+def check_glossary_log(rep: Report) -> None:
+    if not GLOSSARY.exists():
+        rep.err("术语日志", "缺少 GLOSSARY.md：它是全书术语的唯一事实来源，不能缺")
+        return
+    text = GLOSSARY.read_text(encoding="utf-8")
+    written = {f.name.split("-", 1)[0] for f in chapter_files(None)}
+    term_chaps = glossary_term_chapters(text)
+    rows = glossary_log_rows(text)
+    print(f"术语日志 GLOSSARY.md：维护记录 {len(rows)} 行 ｜ 词条覆盖 {len(term_chaps)} 章"
+          f"（其中已有正文 {len(set(term_chaps) & written)} 章）")
+    for m in glossary_log_issues(text, written):
+        rep.err("术语日志", m)
+
+
 # ---------------- 自检（--self-test） ----------------
 # code_lines_of 是本书所有字数数字的单一输入，而它的判定要认三种围栏形态
 # （裸行、引用块里的 `> ``` `、列表项里的缩进围栏）。这类口径一旦退化，
@@ -687,19 +967,144 @@ _CODE_LINE_CASES = [
     ("前后有正文时只数块内", "说明：\n```python\nx = 1\n```\n结束。", 1),
     ("空围栏：一行内容都没有", "```\n```", 0),
     ("行内代码不是围栏（应保持沉默）", "用 `` `code` `` 这样写", 0),
+    ("带命令标注的输出块（`text $ python …`）：标注行不算代码行",
+     "```text $ python scripts/x.py --offline\n一读数\n二读数\n```", 2),
+    ("语言后面的非 `$` 标注不当围栏（宁可不认，也不要多算一行）",
+     "```text 这一段是模型输出\n一\n```", 2),
+]
+
+# [计划行] 夹具：**PLAN 里那一行不见了** vs 在册。
+# 这一条在真事故之后补：4.3 的 PLAN 行被一次替换误删（旧字符串恰好是新行的前缀），
+# 而当时的输出是「没有报错、也没有数字」——与「这一章不参与篇幅校验」无法区分。
+# 反向守的意义与 `check_runnable` 里那条「一个块都没解析到就报错」相同：
+# **所有「逐条校验」的工具，都要有一个用例问「它到底逐到了几条」。**
+_PLAN_CASES = [
+    ("章号不在 PLAN（那一行被误删）", "4.3", {"4.1": 7000, "4.2": 7000}, True),
+    ("章号在册", "4.3", {"4.3": 7000}, False),
+]
+
+
+# [接线] 检查的三个分支：齐了要沉默、缺了要报错、在回填台账里只警告。
+# 前两条是「不响」与「乱响」各一侧，第三条防的是「把待办改成永久豁免」。
+# 夹具用真换行拼接（写成字面 `\n` 时四个子串仍然都在，测试会照旧全绿——
+# 对形状不敏感的夹具等于没有夹具，所以这里必须拼接成真正的多行文本）。
+_WIRING_CASES = [
+    ("标题带编号且四问齐全应沉默", _W_HEAD + "\n".join(WIRING_SUBS), False, (0, 0)),
+    ("标题不带编号：也算缺", "## 知舟接线\n" + "\n".join(WIRING_SUBS), False, (1, 0)),
+    ("缺一节且不在台账：报错", _W_HEAD + "### 加了什么\n### 接口契约", False, (1, 0)),
+    ("缺一节但在回填台账：只警告", _W_HEAD + "### 加了什么\n### 接口契约", True, (0, 1)),
+    ("完全没有小节且不在台账：报错", "## 3.9 别的章", False, (1, 0)),
+]
+
+
+# [实测编号] 夹具：**引用了不存在的那一条** vs 在册。带三个「应沉默」的分支
+# 与一个「必须拦」的分支，另加一条「正文里的实测不带序数」的沉默用例——
+# 报警器一旦会对无关文本响，就会被绕过（同 check_refs 里「超时」那一档的教训）。
+_MEASURE_CASES = [
+    ("引用了不存在的编号：要拦",
+     "- **第六个实测（`3.1`）：…**\n", "见第十七个实测。", 1),
+    ("定义与引用都在册：沉默",
+     "- **第六个实测（`3.1`）：…**\n", "见第六个实测。", 0),
+    ("成对引用：两个都在册：沉默",
+     "- **第十五个实测（`5.1`）：…**\n- **第十六个实测（`5.2`）：…**\n",
+     "见第十五个与第十六个实测。", 0),
+    ("成对引用：后一个不在册：只报那一个",
+     "- **第十五个实测（`5.1`）：…**\n", "见第十五个与第十六个实测。", 1),
+    ("正文里的实测不带序数：沉默",
+     "- **第六个实测（`3.1`）：…**\n", "本章实测 13,326 有效字。", 0),
+]
+
+
+# [术语日志] 夹具：**有词条的章没有登记行** vs 有；**行被粘成 4 格 / 格被吞成空** vs 3 格。
+# 这一组里必须留着「顺带提法不算数」那条——5.6 当年就是靠 5.1 那行的顺带提法混过了人工核对，
+# 报警器要是把「整行里出现过章号」当成登记，那道缺口会再躲一次；也不能少了「第 1 篇开写前
+# 统一口径」那条（认了它，1.12 的缺口同样会被盖住）。
+_GLOSS_DOC = ("<!-- LINT:TERMS:BEGIN -->\n"
+              "| 首选写法 | 英文 | 避免的写法 | 首次出现 |\n"
+              "| --- | --- | --- | --- |\n"
+              "{terms}"
+              "<!-- LINT:TERMS:END -->\n\n"
+              "## 三、维护记录\n\n"
+              "| 日期 | 变更 | 原因 |\n"
+              "| --- | --- | --- |\n"
+              "{log}")
+_T_EVAL = "| 评测集 | Evaluation Set | 测试集 | 5.6 |\n"
+_T_WATER = "| 水位线 | Water mark | 警戒水位、阈线 | 3.1 |\n"
+_T_VECDB = "| 向量数据库 | Vector Database | 矢量数据库 | 1.12 |\n"
+_T_LLM = "| 大语言模型 | Large Language Model, LLM | 大型语言模型 | 0.3 |\n"
+_L_EVAL = "| 2026-09-16 | 补登 1 个术语（评测集） | 5.6 写评估前定口径 |\n"
+_L_ASIDE = ("| 2026-09-16 | 补登 1 个术语（拒答） | 5.1 写 RAG 全景前定口径，**先登记再写**。"
+            "「召回率」一跑就打到 5.6 与 6.x 的正文 |\n")
+_L_OTHER = "| 2026-09-16 | 补登 1 个术语（拒答） | 5.1 写 RAG 全景前定口径，**先登记再写** |\n"
+_L_PART0 = "| 2026-09-11 | 建立本表，登记 20 个术语 | 第 0 篇完稿，第 1 篇开写前统一口径 |\n"
+_T_CORS = "| 跨域资源共享 | Cross-Origin Resource Sharing, CORS | 跨来源资源共享 | 1.8 |\n"
+_L_CORS = ("| 2026-09-11 | 补登 5 个术语（CORS / 限流 / 洋葱模型 / 依赖覆盖 / 主机头） | "
+           "1.11 写中间件前定口径；CORS 早在 1.8 出现却漏登，一并补上 |\n")
+_GLOSS_LOG_CASES = [
+    ("有词条也有登记行：沉默", _T_EVAL, _L_EVAL, {"5.6"}, 0),
+    ("有词条却没有登记行：要拦", _T_EVAL, _L_OTHER, {"5.6"}, 1),
+    ("只在别行的顺带提法里出现：仍要拦", _T_EVAL, _L_ASIDE, {"5.6"}, 1),
+    ("章号在「原因」格开头那一句里：算登记（CORS 行的形态）", _T_CORS, _L_CORS, {"1.8"}, 0),
+    ("小节号声明（3.1.10）算作 3.1 的行：沉默",
+     _T_WATER, "| 2026-09-13 | 补登 1 个术语（水位线） | 3.1.10 的接线小节引入了这个词 |\n",
+     {"3.1"}, 0),
+    ("篇级行「第 0 篇完稿」覆盖该篇各章：沉默", _T_LLM, _L_PART0, {"0.3"}, 0),
+    ("「第 1 篇开写前统一口径」不算登记：要拦", _T_VECDB, _L_PART0, {"1.12"}, 1),
+    ("一行被粘成 4 格：要拦（前一行正常，只报这一行）",
+     _T_EVAL, _L_EVAL + "| 2026-09-16 | 补登 1 个术语（评测集） | 5.6 写评估前定口径 | 2026-09-17 |\n",
+     {"5.6"}, 1),
+    ("一行只剩 2 格：要拦", _T_EVAL, _L_EVAL + "| 2026-09-16 | 补登 1 个术语（评测集） |\n",
+     {"5.6"}, 1),
+    ("「原因」格被吞成空：要拦", _T_EVAL,
+     _L_EVAL + "| 2026-09-16 | 补登 1 个术语（评测集） |  |\n", {"5.6"}, 1),
+    ("格数坏掉的行不拿它当登记：要拦（既报行也报缺登记）",
+     _T_EVAL, "| 2026-09-16 | 补登 1 个术语（评测集） | 5.6 写评估前定口径 | 2026-09-17 |\n",
+     {"5.6"}, 2),
+    ("维护记录一行都没有：要拦（反向守）", _T_EVAL, "", {"5.6"}, 1),
+    ("术语表一个章号都没有：要拦（反向守）", "| 评测集 | Evaluation Set | 测试集 | — |\n",
+     _L_EVAL, {"5.6"}, 1),
+    ("正文还没写出的章不要求登记行：沉默", _T_VECDB, _L_PART0, set(), 0),
 ]
 
 
 def self_test() -> int:
     ok = 0
+    for name, text, backlog, (we, ww) in _WIRING_CASES:
+        errs, warns = wiring_issues(text, backlog)
+        if (len(errs), len(warns)) == (we, ww):
+            ok += 1
+        else:
+            print(f"  ✖ [接线] {name}：期望 错误{we}/警告{ww}，实得 错误{len(errs)}/警告{len(warns)}")
     for name, text, want in _CODE_LINE_CASES:
         got = len(code_lines_of(text))
         if got == want:
             ok += 1
         else:
             print(f"  ✖ {name}：期望 {want} 行，实得 {got} 行")
-    print(f"自检：{ok}/{len(_CODE_LINE_CASES)} 通过")
-    return 0 if ok == len(_CODE_LINE_CASES) else 1
+    for name, cid, plan, want_issue in _PLAN_CASES:
+        got = bool(plan_lookup_issue(cid, plan))
+        if got == want_issue:
+            ok += 1
+        else:
+            print(f"  ✖ [计划行] {name}：期望{'报错' if want_issue else '不报错'}，"
+                  f"实得{'报错' if got else '不报错'}")
+    for name, style_text, refs_text, want in _MEASURE_CASES:
+        got = len(measurement_issues(style_text, {"LEDGER.md": refs_text}))
+        if got == want:
+            ok += 1
+        else:
+            print(f"  ✖ [实测编号] {name}：期望 {want} 条问题，实得 {got} 条")
+    for name, terms, log, written, want in _GLOSS_LOG_CASES:
+        doc = _GLOSS_DOC.format(terms=terms, log=log)
+        got = len(glossary_log_issues(doc, written))
+        if got == want:
+            ok += 1
+        else:
+            print(f"  ✖ [术语日志] {name}：期望 {want} 条问题，实得 {got} 条")
+    total = (len(_WIRING_CASES) + len(_CODE_LINE_CASES) + len(_PLAN_CASES)
+             + len(_MEASURE_CASES) + len(_GLOSS_LOG_CASES))
+    print(f"自检：{ok}/{total} 通过")
+    return 0 if ok == total else 1
 
 
 def main() -> int:
@@ -746,10 +1151,13 @@ def main() -> int:
     check_blank_lines(rep)
     check_cross_refs(chapters, rep)
     check_ledger_landings(rep)
+    check_project_wiring(rep)
+    check_measurement_refs(rep)
 
     print()
     print(f"校验章节 {len(files)} 章 ｜ 引用库 {len(ctx['refs'])} 条链接 ｜ 术语 {len(ctx['glossary'])} 条禁止写法")
     check_ledger(rep)
+    check_glossary_log(rep)
 
     if rep.errors:
         print()

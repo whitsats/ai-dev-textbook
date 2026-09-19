@@ -33,10 +33,33 @@ jobs:
         run: |
           python tools/lint_book.py --self-test
           python tools/audit_coverage.py --self-test
-      - name: 校验正文（体例 / 术语 / 引用 / 篇幅 / 重复）
+      - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
         run: python tools/audit_coverage.py --check
+
+  runnable:
+    name: 可运行树一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # 这一关要真的 import 得动那份代码，所以得装依赖；仍然不需要任何密钥。
+      # **两棵树都要装**：v3 是手写版（httpx / pydantic / fastapi），
+      # v4 是框架版（langchain / langgraph）。只装一棵的话，另一棵的全部模块
+      # 在 CI 里都会报 ModuleNotFoundError——本机因为全局装过，看不出这个问题。
+      - name: 安装参考实现依赖（两棵树）
+        run: |
+          pip install -r zhizhou-v3/requirements.txt
+          pip install -r zhizhou-v4/requirements.txt
+      - name: 正文代码块 ↔ 可运行树 一致性与离线自检（v3 + v4）
+        run: python tools/check_runnable.py
+      - name: 参考实现的测试（pytest，两棵树）
+        run: |
+          cd zhizhou-v3 && python -m pytest -q
+          cd ../zhizhou-v4 && python -m pytest -q
 
   refs:
     name: 官方文档链接校验
