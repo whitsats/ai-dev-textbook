@@ -599,6 +599,10 @@
 | **设计文档的骨架与那句「取舍是最有长期价值的部分」**：高层结构与关键取舍、先给读者一个「所处的环境」；`Goals and non-goals` 里**非目标不是被否定的目标**（它得是「本来可以是目标而故意不当目标」的东西）；`Alternatives considered` 一节「**是全文最重要的一节之一**」（它显式地展示为什么选的这个方案在目标下最好）；以及**系统上下文图**（把系统放回它所在的更大技术环境里）——10.2.5 白板三步与 10.2.3 选主线的出处；另：这份文档本身也被官方列为「设计者技术作品集里的一个汇总物」（10.2.1「一件能被打开的东西」与 10.1 自检第 11 项的同一个根据） | Google · Design Docs at Google | https://www.industrialempathy.com/posts/design-docs-at-google/ |
 | 系统设计与上下文管理（10.3 章） | Claude · 平台文档 | https://platform.claude.com/docs/en/home |
 | 可观测性与成本追问（10.3 章） | OpenTelemetry 官方文档 | https://opentelemetry.io/docs/ |
+| **系统设计面的形态与那句「这场对话由你主导」**（10.3.1 章）：一文里给了四步（把用例与约束说清 → 给高层设计 → 钻进核心组件 → 收尾），并写明**它是开放式对话、不指望你一次说对** | System Design Primer（社区维护的开源索引，「How to approach a system design interview question」一节） | https://github.com/donnemartin/system-design-primer |
+| 招聘链上「设计面」的位置与它在意什么（10.3.1 章）；**该页本轮读不到（证书校验失败），链接按官方入口登记** | Google · Our hiring process（How we hire） | https://www.google.com/about/careers/applications/how-we-hire/ |
+| **延迟的数量级参照**（10.3.4 章的「同一句回答，为什么两家的首字差一倍」）：内存访问、同机房往返、跨洲往返这些数字的量级表 | Latency numbers every programmer should know（原件是一份 gist，本轮同样证书不可读；**同一张表收录在上面那个索引的附录里**，按索引核对） | https://gist.github.com/jboner/2841832 |
+| **语义缓存：把「相似的问题」当成命中**（10.3.4 章）：先查缓存再问模型、命中时**响应快 2–10 倍**，以及它省的是「API 调用与词元」而不是算力 | GPTCache（NLP-OSS 2023，第 212–218 页，作者 Fu Bang） | https://aclanthology.org/2023.nlposs-1.24/ ／ 开源实现 https://github.com/zilliztech/gptcache |
 
 ---
 
