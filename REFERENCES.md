@@ -329,7 +329,7 @@
 | 评测的结构（task / trial / grader / transcript / outcome / harness / suite）、三类 grader 的强弱点、判产出不判路径、能力评估与回归评估及毕业机制、pass@k 与 pass^k、起步 20–50 条真实失败题、隔离每次试验、跟踪四类指标（3.9.6–3.9.8） | Anthropic · Demystifying evals for AI agents | https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents |
 | 评测的两阶段（先代码评分、后人工评分）与题面质量的三条要求、0% 通过率先怀疑题、参考解（3.9.6–3.9.7） | Claude · Create strong empirical evaluations | https://platform.claude.com/docs/en/test-and-evaluate/develop-tests |
 | 评测的统计五条建议：报标准误（SEM）与 95% 置信区间、聚类标准误（实测可大到 3 倍以上）、题目内多采样降方差、配对差（相关系数 0.3–0.7）、功效分析（3.9.7） | Anthropic · A statistical approach to model evaluations | https://www.anthropic.com/research/statistical-approach-to-model-evals |
-| 可观测性平台选址与落地（7.4 章；3.9 章不引平台） | Langfuse 官方文档 | https://langfuse.com/docs |
+| 可观测性平台侧与数据模型（7.2 章；3.9 章不引平台） | Langfuse 官方文档 | https://langfuse.com/docs |
 | 评估方法与指标（3.9 章备查；本章不用） | Ragas 官方文档 | https://docs.ragas.io/en/stable/ |
 | `TestClient` 与端到端验收的官方写法（3.10.4–3.10.5） | FastAPI · Testing | https://fastapi.tiangolo.com/tutorial/testing/ |
 | 依赖覆盖 `app.dependency_overrides`：只换依赖、不换应用（3.10.4） | FastAPI · Testing Dependencies with Overrides | https://fastapi.tiangolo.com/advanced/testing-dependencies/ |
@@ -510,16 +510,30 @@
 | **配置的判据**：配置是「在部署之间会变的一切」，它必须与代码**严格分开**（检验标准：代码库能不能在任何时候开源而不泄露凭据）；不推荐「不入版本控制的配置文件」（容易被误提交、散在各处、与语言绑定）；也不用**按环境分组**——环境名会长成组合爆炸，而要「逐项正交、各自独立」（7.3.1 与提示词三件套的边界） |
 | 内容寻址与不可变（7.3 章） | Git · What is Git? | https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F |
 | **内容戳那条性质的出处**：「Git 里一切都被校验和标记过，所以任何内容的改动 Git 都不会不知道」；它**按内容的哈希存储而不是按文件名存储**；Git 基本只增不删（所以「回到旧内容」是一次新提交）（7.3.2） |
-| 提示注入与不安全的输出处理（7.4 章） | OWASP · LLM Top 10 | https://genai.owasp.org/llm-top-10/ |
-| 工具权限与授权（7.4 章） | MCP · 授权规范 | https://modelcontextprotocol.io/specification/ |
+| 安全落地的风险清单（7.4 章） | OWASP · LLM Top 10（2025） | https://genai.owasp.org/llm-top-10/ |
+| **那十条的名字与编号（本章映射表的原始清单）**：`LLM01` 提示注入、`LLM02` 敏感信息泄露、`LLM03` 供应链、`LLM04` 数据与模型投毒、`LLM05` 不当输出处理、`LLM06` 过度代理、`LLM07` 系统提示泄露、`LLM08` 向量与嵌入弱点、`LLM09` 误信息、`LLM10` 无界消耗——本章逐条落到本项目的某一层，三栏计数 **5 ／ 4 ／ 1**（分母 10），「不适用」那一栏写了理由（本章是 `LLM04`：不训练也不微调）（7.4.1） | OWASP GenAI Security Project · 2025 十大风险与缓解 | https://genai.owasp.org/llm-top-10/ |
+| 工具权限与授权（7.4 章） | MCP · 授权规范 | https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization |
+| **三道关那三样的出处**：服务端作为 **OAuth 2.1 资源服务器**、令牌的受众用 `resource` 参数表达（资源指示）、`401` 与 `403` 的分工（未提供凭证与凭证不足是两件事）、以及**令牌不得出现在查询串里**——本章的三道关（令牌／scope／参数）把这段规范落成一次判定，而 scope 细到资源实例那一条（安全上的考量）来自它的受众约束（7.4.4） | MCP · 授权（`2025-06-18` 版） | https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization |
 | 数据合规与留存（7.5 章） | OpenAI · 数据控制 | https://developers.openai.com/api/docs/guides/your-data |
-| 内部威胁与红队测试（7.4 章） | NIST · AI RMF | https://www.nist.gov/itl/ai-risk-management-framework |
+| **本章从它取的那一条**：API 数据的**留存**与「不用于训练」是两件各自可设置的事（不是一个开关）——本章把这一条落成两列（`privacy.RETENTION` 的 `days` 与 `enforced`），而不是写成一句承诺；这也是「合规章的产物是一张表和一个比例」那条判据的出处之一（7.5.1–7.5.2） | OpenAI · 数据控制与留存 | https://developers.openai.com/api/docs/guides/your-data |
+| 内部威胁与治理框架（7.4 章） | NIST · AI RMF | https://www.nist.gov/itl/ai-risk-management-framework |
+| **四个动作的名字与次序**：`GOVERN` ／ `MAP` ／ `MEASURE` ／ `MANAGE`——本章的三张表（留存、删除范围、审计自查）是**「度量」那一步**的落地，而 7.4 那张 OWASP 映射表是「映射」那一步（7.5.1 与 7.5.7） | NIST · AI 风险治理（AI RMF 1.0） | https://www.nist.gov/itl/ai-risk-management-framework |
+| **四个动作的名字与次序**：`GOVERN` ／ `MAP` ／ `MEASURE` ／ `MANAGE`——本章那张 OWASP 映射表就是**「映射」这一步**的一次落地（把风险清单对到本项目的那一层），而本章的「拦截率与误杀率一起报」是「度量」那一步的最小形态（7.4.1 与本章小结第 1 条） | NIST · AI 风险管理框架（AI RMF 1.0 ＋ 生成式 AI 档案） | https://www.nist.gov/itl/ai-risk-management-framework |
 
 ### 第 8 篇 · 交付与产品化（新增篇）
 
 | 用途 | 官方出处 | 链接 |
 | --- | --- | --- |
 | 容器化与部署（8.1 章） | Docker 官方文档 | https://docs.docker.com/ |
+| **每一层是一组文件系统变化、且一旦创建就不可变**（本章 8.1.1 的层账与浪费账都建在这一句上；层复用为什么省带宽也在这里） | Docker · Understanding the image layers | https://docs.docker.com/get-started/docker-concepts/building-images/understanding-image-layers/ |
+| **构建缓存的总口径**：一旦某层失效，**它之后的所有层都要重跑**（「即使它们本来会打出一样的结果」），所以要把变化频繁的指令往后放（8.1.2 那张表的出处） | Docker · Docker build cache | https://docs.docker.com/build/cache/ |
+| **失效的四条细则**：逐行比对；`COPY`/`ADD` 按**文件元数据**算校验和而 **mtime 不算**；`RUN` 那一层**不会自动失效**（重建一周后还是同一批包）；secret 的内容不参与校验而 `--build-arg` 参与——8.1.2 那五行读数逐条对着它 | Docker · Build cache invalidation | https://docs.docker.com/build/cache/invalidation/ |
+| **多阶段构建**：每个 `FROM` 开一段、`COPY --from` 只带走产物、`AS <NAME>` 命名与 `--target` 停在某一段——8.1.3 第四招的出处 | Docker · Multi-stage builds | https://docs.docker.com/build/building/multi-stage/ |
+| **上下文与 `.dockerignore`**：指定本地目录时**所有子目录都被包含**、`.dockerignore` 在**发送前**把路径移掉、否定匹配的次序——8.1.4 那一组数的出处 | Docker · Build context 与 .dockerignore | https://docs.docker.com/build/concepts/context/ |
+| **构建密钥**：`ENV`/`ARG` 不适合传密钥（「因为它们会留在最终镜像里」）、secret mount 与 SSH mount 的用法、`--mount=type=secret` 的三种挂法——8.1.6 那三档的出处 | Docker · Build secrets | https://docs.docker.com/build/building/secrets/ |
+| **Compose 的起序**：启动时**不等到就绪、只等到在跑**、`condition` 的三种取值（`service_started`／`service_healthy`／`service_completed_successfully`）、`healthcheck` 的四个参数与 `restart: true`——8.1.5 整节的出处 | Docker · Control startup and shutdown order in Compose | https://docs.docker.com/compose/how-tos/startup-order/ |
+| **常见指令与那条最佳实践**：`FROM`／`WORKDIR`／`COPY`／`RUN`／`ENV`／`EXPOSE`／`USER`／`CMD` 各自管什么，以及那句「建一个应用用户，别用 root 跑」——8.1.6 第一件的出处 | Docker · Writing a Dockerfile | https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/ |
+| **只读根文件系统与挂卷**：把容器的根文件系统当「金镜像」、需要写的地方显式挂出来（`--read-only`）——8.1.6 第三、四行的出处 | OWASP · Docker Security Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html |
 | 镜像与编排排错 | Docker · Compose | https://docs.docker.com/compose/ |
 | CI/CD 与发布（8.2 章） | GitHub Actions 文档 | https://docs.github.com/en/actions |
 | 前端流式对话（8.3 章） | Vercel AI SDK 文档 | https://ai-sdk.dev/docs/introduction |

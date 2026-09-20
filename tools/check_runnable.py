@@ -74,6 +74,8 @@ BOOK_V6 = ROOT / "book" / "06-模型接入与成本工程"
 TREE_V6 = ROOT / "zhizhou-v6"
 BOOK_V7 = ROOT / "book" / "07-AI应用工程化"
 TREE_V7 = ROOT / "zhizhou-v7"
+BOOK_V8 = ROOT / "book" / "08-交付与产品化"
+TREE_V8 = ROOT / "zhizhou-v8"
 # 要校验的章节**从盘上长出来**。这里原本是一份写死的文件名元组，于是「写完新章忘了
 # 加进清单」就等于新章的代码块一条都没被检查——三处同类静默漏账里最早的一处：
 # 3.7 写成后 8 个代码块全部无人校验，而输出里只有一个看上去正常的「20 个块」。
@@ -88,6 +90,7 @@ CHAPTERS_V4 = chapters(BOOK_V4)
 CHAPTERS_V5 = chapters(BOOK_V5)
 CHAPTERS_V6 = chapters(BOOK_V6)
 CHAPTERS_V7 = chapters(BOOK_V7)
+CHAPTERS_V8 = chapters(BOOK_V8)
 
 
 @dataclass(frozen=True)
@@ -238,7 +241,9 @@ SPECS: tuple[TreeSpec, ...] = (
              # 这条约定（前四篇分别只有 1／5／9／4 个入口，第 7 篇在 7.1 那天还只有 1 个）。
              offline_cmds=(("scripts/pipeline_reader.py", "--offline"),
                            ("scripts/trace_reader.py", "--offline"),
-                           ("scripts/rollout_reader.py", "--offline")),
+                           ("scripts/rollout_reader.py", "--offline"),
+                           ("scripts/security_reader.py", "--offline"),
+                           ("scripts/privacy_reader.py", "--offline")),
              # 下限**逐个量过再写**（建树当天量的值，7.2 落地时重量了一遍，
              # **7.3 落地时再量了一遍**）：3 章／**7 个 `app/` 模块**（`suite` /
              # `metrics` / `gate` ＋ 7.2 的 `trace` / `board` ＋ 7.3 的
@@ -255,8 +260,48 @@ SPECS: tuple[TreeSpec, ...] = (
              # **一个低于真值的下限不响**（它只在「扫描整个坏掉」时才响），
              # 这就是 `min_modules` 那条注释讲过的同一件事（曾长期写着 13 而 v5 已到 20）。
              # 这一次重量：**7.1 十三块 ＋ 7.2 九块 ＋ 7.3 八块 ＝ 30**，逐个从盘上数出来。
-             min_chapters=3, min_modules=7, min_tests=7,
-             min_line_cells=20, min_claim_cells=18, min_output_blocks=30),
+             # **7.4 落地时重量了一遍六处**（这一次是**全量重数**，不是在前一个数上累加
+             # ——因为上面那条 `min_output_blocks` 的教训就是「累加时用错了一把尺子」）：
+             # 4 章（7.1–7.4）／**9 个 `app/` 模块**（7.4 的 `guard` 与 `policy`）／
+             # **9 个测试模块**（新增 `test_guard` 与 `test_policy`）／正文里 **26 个行数格**
+             # （7.1 八行 ＋ 7.2 六行 ＋ 7.3 六行 ＋ 7.4 六行）／**24 个条数格**
+             # （7.4：53 条夹具印两处 ＋ 18／20 条用例各印两处）／**39 个标了命令的输出块**
+             # （7.1 十三块 ＋ 7.2 九块 ＋ 7.3 八块 ＋ 7.4 九块）——逐个从盘上数出来，
+             # 每一处都与实际相等（「低于真值的下限不响」这一条已经在本篇报过一次）。
+             # **7.5 落地时量了第三遍六处**（同样全量重数）：5 章（7.1–7.5，本篇收口）／
+             # **10 个 `app/` 模块**（7.5 的 `privacy`）／**10 个测试模块**
+             # （新增 `test_privacy`）／正文里 **30 个行数格**
+             # （7.1 八行 ＋ 7.2 六行 ＋ 7.3 六行 ＋ 7.4 六行 ＋ 7.5 四行）／**27 个条数格**
+             # （7.5：60 条夹具印三处 ＋ 42 条用例印两处）／**47 个标了命令的输出块**
+             # （7.1 十三块 ＋ 7.2 九块 ＋ 7.3 八块 ＋ 7.4 九块 ＋ 7.5 八块）。
+             # 另：`app/__init__.py` 在本章从 74 行长到 **84 行**，而它的行数格
+             # 在 7.1–7.4 四张交付物表里**各有一格**——四格当场全红（第三道检查
+             # 报的 4 处不一致），改回真值即绿。这一处已经连续四章扮演同一个角色：
+             # 「行数格存在的理由」每次都由同一行格子自己演示一遍。
+             min_chapters=5, min_modules=10, min_tests=10,
+             min_line_cells=30, min_claim_cells=27, min_output_blocks=47),
+    # 第 8 篇是**第六棵树**（交付版）。它与前五棵最大的不同：前五棵的每一层都能
+    # 在**你机器上**被验（循环、检索、账单、门），而这一棵问的是「**把它运到
+    # 另一台机器上，它会是什么样**」——镜像有多重、改一行要重打多久、
+    # `compose up` 之后应用第一次请求会不会失败、这个容器跑起来能做什么。
+    # 它同样不装 Docker、不联网：镜像的大小与层数是**文件系统剧本**算出来的，
+    # 构建耗时是**脚本化的每层秒数**，编排的时钟是**写死的秒数**。
+    # 建树当天写进这张表——4.1 那次的教训（新树建起来而表里没它，所有检查静默全绿）。
+    TreeSpec(book=BOOK_V8, tree=TREE_V8, label="（第 8 篇）", marker="离线自检通过",
+             # 这一篇的离线入口同样是**一章一个**（8.1 的 `deploy_reader.py`），
+             # 所以它也是元组——每写一章补一行。
+             offline_cmds=(("scripts/deploy_reader.py", "--offline"),),
+             # 下限**逐个量过再写**（建树当天的真实规模，不是估一个安全的小数——
+             # 第 6 篇因为「估一个安全的小数」当场报过两次，那两个数当时都偏小）：
+             # 1 章／**4 个 `app/` 模块**（`image` / `cache` / `compose` / `runtime`；
+             # `__init__` 与前五棵树一样不计）／4 个测试模块／正文里 **10 个行数格**
+             # （交付物清单十行）与 **7 个条数格**（`scripts/deploy_reader.py` 的 96 条夹具
+             # 印两处 ＋ 四个测试文件的 26／15／20／16 条用例）／
+             # **10 个标了命令的输出块**（六组读数分九块 ＋ 夹具那一行）／
+             # **1 处「全树 77 条」**（围栏里的实跑条数：四个测试模块共 77 条）。
+             min_chapters=1, min_modules=4, min_tests=4,
+             min_line_cells=10, min_claim_cells=7, min_output_blocks=10,
+             min_pytest_cells=1),
     # 5.6 的入口是 `experiments/eval_run.py`——它**不在这张元组里**，
     # 而是被第四道检查（回归门）每次跑两遍：一遍 `--self-test`、一遍 `--offline --check`。
     # 所以“每写一章补一行”这条规则这里不用重复登记；反过来说，
