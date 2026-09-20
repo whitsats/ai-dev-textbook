@@ -598,6 +598,10 @@
 | **八条面试官自己给的建议**（10.2 全章的形状都建在它上面）：**练习是有用的**（「自己对着镜子练、用手机录下来看自己是什么样子」，以及「找一个信得过的人给坦率的反馈」）；**自我批评并展示你怎么从失误里学**（官方原句：「我们看重团队成员能承认事情没按计划走、能批判性地评估成功与失败、并从失误里学习」）；**展示你的价值**，而且要「**不要忘了用一个结果收尾**」（这一条与 10.1.3 的量化同源）；**不要怕提问**（「最好的一场面试更像一次与好奇朋友的对话」）；以及那句关于边界的——**面试中途出了真的意外，说出来**（官方那个例子里的候选人当场遇上地震）——10.2.4 的三种处置与 10.2.6 的自检第 12 项出处 | Amazon · Job interview tips from Bar Raisers | https://www.aboutamazon.com/news/workplace/amazon-job-interview-questions-tips-bar-raisers |
 | **设计文档的骨架与那句「取舍是最有长期价值的部分」**：高层结构与关键取舍、先给读者一个「所处的环境」；`Goals and non-goals` 里**非目标不是被否定的目标**（它得是「本来可以是目标而故意不当目标」的东西）；`Alternatives considered` 一节「**是全文最重要的一节之一**」（它显式地展示为什么选的这个方案在目标下最好）；以及**系统上下文图**（把系统放回它所在的更大技术环境里）——10.2.5 白板三步与 10.2.3 选主线的出处；另：这份文档本身也被官方列为「设计者技术作品集里的一个汇总物」（10.2.1「一件能被打开的东西」与 10.1 自检第 11 项的同一个根据） | Google · Design Docs at Google | https://www.industrialempathy.com/posts/design-docs-at-google/ |
 | 系统设计与上下文管理（10.3 章） | Claude · 平台文档 | https://platform.claude.com/docs/en/home |
+| **工具调用与函数编排的官方形状**（10.4.4 章）：工具即函数描述、参数由模型填、结果回注给模型——题库里那一百多道题考的就是这份形状的边界 | OpenAI · Function calling | https://developers.openai.com/api/docs/guides/function-calling |
+| **会话与记忆的官方入口**（10.4.6 章）：会话状态与「上下文要自己管」的分工 | OpenAI · Conversation state | https://developers.openai.com/api/docs/guides/conversation-state |
+| **多 Agent 协作与交接**（10.4.5 章）：多 Agent 的两种形态与 handoff | LangChain · Multi-agent | https://docs.langchain.com/oss/python/langchain/multi-agent |
+| **链式推理与反思的原始论文**（10.4.3 章的「反思」一节）：ReAct 把推理与行动交错起来的那篇 | ReAct（arXiv 2210.03629） | https://arxiv.org/abs/2210.03629 |
 | 可观测性与成本追问（10.3 章） | OpenTelemetry 官方文档 | https://opentelemetry.io/docs/ |
 | **系统设计面的形态与那句「这场对话由你主导」**（10.3.1 章）：一文里给了四步（把用例与约束说清 → 给高层设计 → 钻进核心组件 → 收尾），并写明**它是开放式对话、不指望你一次说对** | System Design Primer（社区维护的开源索引，「How to approach a system design interview question」一节） | https://github.com/donnemartin/system-design-primer |
 | 招聘链上「设计面」的位置与它在意什么（10.3.1 章）；**该页本轮读不到（证书校验失败），链接按官方入口登记** | Google · Our hiring process（How we hire） | https://www.google.com/about/careers/applications/how-we-hire/ |

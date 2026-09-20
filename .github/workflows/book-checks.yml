@@ -29,11 +29,12 @@ jobs:
       # 脚本只用标准库，无需 pip install
       - name: 语法自检（工具脚本）
         run: python -m compileall -q tools
-      - name: 工具自检（字数口径 / 对账门 / 汇总数字夹具）
+      - name: 工具自检（字数口径 / 对账门 / 汇总数字夹具 / 题库索引夹具）
         run: |
           python tools/lint_book.py --self-test
           python tools/audit_coverage.py --self-test
           python tools/totals.py --self-test
+          python tools/bank_index.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
@@ -43,6 +44,10 @@ jobs:
       # 自己跑不过门（见 STYLE 8.11）。
       - name: 汇总数字对账（单一来源 vs 文档）
         run: python tools/totals.py --check
+      # 第 10 篇没有可运行树，这一关是它的「可运行」那一层：
+      # 考点索引由脚本从题库算出来，而正文那两张表必须逐行等于算出来的值。
+      - name: 题库索引对账（第 10 篇：专题／题数／考点数／归属）
+        run: python tools/bank_index.py --check
 
   runnable:
     name: 可运行树一致性

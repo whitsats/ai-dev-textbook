@@ -61,6 +61,11 @@ if ! "$PY" tools/totals.py --self-test >/dev/null; then
     echo "[pre-commit] ✖ 汇总数字生成器的夹具不过，提交被拦下：先修 tools/totals.py。" >&2
     exit 1
 fi
+if ! "$PY" tools/bank_index.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 题库索引的夹具不过，提交被拦下：先修 tools/bank_index.py。" >&2
+    exit 1
+fi
 
 echo "[pre-commit] 2/5 正文一致性校验 ..."
 if ! "$PY" tools/lint_book.py; then
@@ -99,6 +104,19 @@ if ! "$PY" tools/check_runnable.py; then
     echo "" >&2
     echo "[pre-commit] ✖ 正文与可运行树不一致（或树自身跑不通），提交被拦下。" >&2
     echo "            修法：改正文里那段，或改 zhizhou-v3/ 里那个文件——但两边必须一样。" >&2
+    exit 1
+fi
+
+# 题库索引（第 10 篇的交付物）：10.4–10.6 的考点索引由脚本从题库里算出来，
+# 而正文那两张表必须逐行等于算出来的值。
+# 这一关拦的是「手抄的索引」——题数抄错一个、专题漏一个、归属写成别的章，
+# 前面四关一个都不会响（正文风格合规、字数对账也对）。
+# 第 10 篇没有可运行树，这一关就是它的「可运行」那一层：**索引能跑、且与正文相等**。
+echo "[pre-commit] 4b/5 题库索引对账（第 10 篇：专题／题数／考点数／归属）..."
+if ! "$PY" tools/bank_index.py --check; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 正文 10.4 的索引表与题库不一致，提交被拦下。" >&2
+    echo "            修法：python tools/bank_index.py --offline 取真值，再改正文那张表。" >&2
     exit 1
 fi
 
