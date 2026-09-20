@@ -45,7 +45,7 @@ fi
 #   · lint_book.py 的 code_lines_of 曾把围栏行也算作内容（671 个围栏虚增 20,130 字）；
 #   · audit_coverage.py 的对账靠「解析文档里的句子」，句式一变就落空成摆设。
 # 两者都有夹具，而夹具不跑就等于没有，所以放在第一步。
-echo "[pre-commit] 1/5 工具自检（字数口径 / 对账门）..."
+echo "[pre-commit] 1/5 工具自检（字数口径 / 对账门 / 汇总数字）..."
 if ! "$PY" tools/lint_book.py --self-test; then
     echo "" >&2
     echo "[pre-commit] ✖ 字数口径退化，提交被拦下：先修 tools/lint_book.py 的 code_lines_of。" >&2
@@ -54,6 +54,11 @@ fi
 if ! "$PY" tools/audit_coverage.py --self-test >/dev/null; then
     echo "" >&2
     echo "[pre-commit] ✖ 对账门的夹具不过，提交被拦下：先修 tools/audit_coverage.py。" >&2
+    exit 1
+fi
+if ! "$PY" tools/totals.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 汇总数字生成器的夹具不过，提交被拦下：先修 tools/totals.py。" >&2
     exit 1
 fi
 
@@ -73,6 +78,15 @@ if ! "$PY" tools/audit_coverage.py --check; then
     echo "[pre-commit] ✖ 文档数字与实测不一致，提交被拦下。" >&2
     echo "            修法：先改 tools/audit_coverage.py 的规划值，" >&2
     echo "            再跑 python tools/audit_coverage.py --out COVERAGE.md，最后同步 PLAN.md" >&2
+    exit 1
+fi
+# 全书汇总数字（篇级进度 / 看板与文首 / README / COVERAGE）：它们**不该由人改**——
+# 交章那一笔应当已经跑过 --sync。这一关拦的是「手改了一个格子」与「忘了跑」两种情况，
+# 而它们正是「一章一笔自己跑不过门」的成因（详情见 STYLE 8.11）。
+echo "[pre-commit] 3b/5 汇总数字对账（台账篇级进度 / PLAN 看板与文首 / README / COVERAGE）..."
+if ! "$PY" tools/totals.py --check; then
+    echo "[pre-commit] ✖ 汇总数字与单一来源不一致，提交被拦下。" >&2
+    echo "            修法：python tools/totals.py --sync（它算出来写回去，不手抄）" >&2
     exit 1
 fi
 

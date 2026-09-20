@@ -631,18 +631,20 @@ def split_cells(row: str) -> list[str]:
     return cells
 
 
-def check_ledger(rep: Report) -> None:
-    if not LEDGER.exists():
-        rep.warn("台账", "未找到 LEDGER.md")
-        return
-    # 只统计「知识点行」。
-    # 注意不能简单地「首格以反引号开头就当成图例行」——很多知识点本身就以代码写法开头
-    # （如 `*args` / `**kwargs`、「`global` 的使用」），那样会被误删、导致台账少算
-    # 而“看上去存量变少了”。图例行只有一种：首格恰好是一个状态符号。
+def ledger_symbol_counts(ledger_text: str) -> dict[str, list[int]]:
+    """按「## …第 N 篇…」小节数四个状态符号，返回 {「第 N 篇」: [✅, 🔀, ⏭, ⬜]}。
+
+    抽成独立函数是为了**口径只有一份实现**：`tools/totals.py` 要把这四个数写进
+    「篇级进度」那张表，而这里要把表里的数与它比——两边若各数一遍，漂的就是口径本身。
+
+    只统计「知识点行」。注意不能简单地「首格以反引号开头就当成图例行」——很多知识点
+    本身就以代码写法开头（如 `*args` / `**kwargs`、「`global` 的使用」），那样会被误删、
+    导致台账少算而“看上去存量变少了”。图例行只有一种：首格恰好是一个状态符号。
+    """
     legend = re.compile(r"^`(?:✅|🔀|⏭|⬜)`$")
     part = None
     per_part: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0, 0])  # ✅ 🔀 ⏭ ⬜
-    for ln in LEDGER.read_text(encoding="utf-8").splitlines():
+    for ln in ledger_text.splitlines():
         if ln.startswith("## ") and "篇级进度" in ln:
             part = None  # 汇总表自身不参与统计，否则会把合计数字重复计入最后一篇
         m = re.match(r"##\s*[一-鿿]*、第\s*(\d+)\s*篇", ln)
@@ -661,6 +663,14 @@ def check_ledger(rep: Report) -> None:
         m2 = re.match(r"([✅🔀⏭⬜])", cells[-1]) if cells else None
         if m2:
             per_part[part][("✅", "🔀", "⏭", "⬜").index(m2.group(1))] += 1
+    return per_part
+
+
+def check_ledger(rep: Report) -> None:
+    if not LEDGER.exists():
+        rep.warn("台账", "未找到 LEDGER.md")
+        return
+    per_part = ledger_symbol_counts(LEDGER.read_text(encoding="utf-8"))
     done, merge, skip, todo = (sum(v[i] for v in per_part.values()) for i in range(4))
     print(f"台账 LEDGER.md：已落点 {done} 条 ｜ 合并 {merge} 条 ｜ 有意省略 {skip} 条 ｜ 待写 {todo} 条")
     for p, (d, mg, sk, td) in per_part.items():
@@ -771,7 +781,7 @@ _ORD = "〇一二三四五六七八九十百"
 _ORD_RE = re.compile(rf"第([{_ORD}]+)个")
 _MEASURE_WINDOW = 45
 # 窗口只解决「多远算同一句话」，管不了「这个序数算不算在说实测」。8.1 的实测里
-# 有一句「备查的第二个数按第 7 篇五章合计比值 0.912 折出 ≈ 9,700，而实测 10,434」
+# 有一句「备查的第二个数按第 7 篇五章合计比值 0.912 折出 ≈ 9,700，而实测 10,453」
 # ——「第二个」离「实测」只有十几个字，窗口法把它当成了一条引用，而 STYLE 8.7 里
 # 并没有第二条实测。所以序数与「实测」之间**只允许出现连接词与另一个序数**：
 # 「第十五个与第十六个实测」的前一个要收，「第二个数…实测」的那个不能收。
@@ -1029,7 +1039,7 @@ _MEASURE_CASES = [
     # 报警器一旦对这类文本响，八章之外就会有人开始「改正文来消警告」。
     ("「第二个数」不是一条实测引用：沉默",
      "- **第六个实测（`3.1`）：…**\n",
-     "备查的第二个数按第 7 篇五章合计比值 0.912 折出 ≈ 9,700，而实测 10,434。", 0),
+     "备查的第二个数按第 7 篇五章合计比值 0.912 折出 ≈ 9,700，而实测 10,453。", 0),
     ("夹了字的序数仍要报：拦",
      "- **第六个实测（`3.1`）：…**\n", "见第十七个「成对引用」实测。", 1),
 ]

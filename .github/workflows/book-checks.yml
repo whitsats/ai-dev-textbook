@@ -29,14 +29,20 @@ jobs:
       # 脚本只用标准库，无需 pip install
       - name: 语法自检（工具脚本）
         run: python -m compileall -q tools
-      - name: 工具自检（字数口径 / 对账门夹具）
+      - name: 工具自检（字数口径 / 对账门 / 汇总数字夹具）
         run: |
           python tools/lint_book.py --self-test
           python tools/audit_coverage.py --self-test
+          python tools/totals.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
         run: python tools/audit_coverage.py --check
+      # 汇总数字（台账篇级进度 / 看板与文首 / README / COVERAGE）由 tools/totals.py 生成，
+      # 这一关拦的是「忘了跑 --sync」与「手改了一个格子」——两者都会让某一笔提交
+      # 自己跑不过门（见 STYLE 8.11）。
+      - name: 汇总数字对账（单一来源 vs 文档）
+        run: python tools/totals.py --check
 
   runnable:
     name: 可运行树一致性
