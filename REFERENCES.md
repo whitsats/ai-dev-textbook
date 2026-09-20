@@ -589,9 +589,14 @@
 | 用途 | 官方出处 | 链接 |
 | --- | --- | --- |
 | 岗位能力要求与 JD 对照（10.1 章） | 各公司招聘页与 JD（引用时逐个标注） | https://www.anthropic.com/careers |
+| **申请那一步的三条判据**：「亚马逊的申请系统用了成套的筛选工具，所以把 JD 里的关键词带进去很关键」，而同一段紧跟着一句「**但要避免过度堆词**」（内容要自然、要讲成一个故事）；简历要「用强动词、并通过招聘者嘴里的 **『so what?』测试**」——不要只列做过什么，要展示影响（官方给的例子：把「管理了团队的云迁移项目」写成「**带 15 人在计划前两个月完成云迁移，每年省下 120 万美元**」）；以及 STAR 的官方定义（situation／task／action／result）与「讲协作时用『我』而不是『我们』」（官方例：「我上线了一套新的反馈系统，六个月内把满意度提了 40%」）——10.1.1／10.1.2／10.1.3 三节的出处 | Amazon · Interview process: A step-by-step guide | https://www.aboutamazon.com/news/workplace/amazon-interview-guide |
 | **同一套工作法的官方入口**（页面里 Leadership Principles → Behavioral-based questions → The STAR method 四个相邻小节；另：技术岗约一半时间在技术评估、另一半在行为面） | Amazon · Interview Loop | https://amazon.jobs/content/en/how-we-hire/interview-loop |
 | **「六秒」与「七点四秒」的来处**：一份眼动研究——招聘者平均只在一份简历上停 **7.4 秒**，而「赢得注意力的那几份有一个共同点：简单版面」（2018 年那次跟踪的结论，2012 那一版给的是 **6 秒**）；注：**原文与转载页在当前网络下 403**，本章那句时长经这份被波士顿大学托管的报告 PDF 核对 | TheLadders · Eye-Tracking Study | https://www.bu.edu/com/files/2018/10/TheLadders-EyeTracking-StudyC2.pdf |
+| **技术简历的版面规矩（可执行的那几条）**：学生与早期职业**一页**；字体 10–12pt；页边距**不小于 0.5 英寸**；**技术技能单独一节**；经历倒序或按相关性分组；强动词 ＋ 可量化结果；以及那句判据——「让一次**10–20 秒**的快扫就能看出你满足、并且超过最低要求」（10.1.4 那张版面预算表与「快扫」判据的出处） | University of Florida · Technical Resume Guide | https://careerhub.ufl.edu/resources/technical-resume-guide/ |
+| **应聘者跟踪系统友好的六条格式标准**：逐岗定制关键词；**不用模板与简历生成器、不放文本框／图片／二维码／颜色与底纹、避开分栏**；用 Word 或 Google 文档写、**交 PDF**；一般**一页为上限**；名字 14–18pt、正文 11–12pt、页边距 0.5–1 英寸；同义词（写了 Attorney 也写 Lawyer）；**每条成就以动词开头、不用「我／我的」**——10.1.1 那张表里「它没读懂」的一行、10.1.4 的排版规矩与 10.1.6 那十二项自检的出处 | UT Dallas · Building a Resume | https://career.utdallas.edu/career-resource-library/building-a-resume/ |
 | 项目演示与开源仓库规范（10.2 章） | GitHub 文档 | https://docs.github.com/ |
+| **八条面试官自己给的建议**（10.2 全章的形状都建在它上面）：**练习是有用的**（「自己对着镜子练、用手机录下来看自己是什么样子」，以及「找一个信得过的人给坦率的反馈」）；**自我批评并展示你怎么从失误里学**（官方原句：「我们看重团队成员能承认事情没按计划走、能批判性地评估成功与失败、并从失误里学习」）；**展示你的价值**，而且要「**不要忘了用一个结果收尾**」（这一条与 10.1.3 的量化同源）；**不要怕提问**（「最好的一场面试更像一次与好奇朋友的对话」）；以及那句关于边界的——**面试中途出了真的意外，说出来**（官方那个例子里的候选人当场遇上地震）——10.2.4 的三种处置与 10.2.6 的自检第 12 项出处 | Amazon · Job interview tips from Bar Raisers | https://www.aboutamazon.com/news/workplace/amazon-job-interview-questions-tips-bar-raisers |
+| **设计文档的骨架与那句「取舍是最有长期价值的部分」**：高层结构与关键取舍、先给读者一个「所处的环境」；`Goals and non-goals` 里**非目标不是被否定的目标**（它得是「本来可以是目标而故意不当目标」的东西）；`Alternatives considered` 一节「**是全文最重要的一节之一**」（它显式地展示为什么选的这个方案在目标下最好）；以及**系统上下文图**（把系统放回它所在的更大技术环境里）——10.2.5 白板三步与 10.2.3 选主线的出处；另：这份文档本身也被官方列为「设计者技术作品集里的一个汇总物」（10.2.1「一件能被打开的东西」与 10.1 自检第 11 项的同一个根据） | Google · Design Docs at Google | https://www.industrialempathy.com/posts/design-docs-at-google/ |
 | 系统设计与上下文管理（10.3 章） | Claude · 平台文档 | https://platform.claude.com/docs/en/home |
 | 可观测性与成本追问（10.3 章） | OpenTelemetry 官方文档 | https://opentelemetry.io/docs/ |
 
