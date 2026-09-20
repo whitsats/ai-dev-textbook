@@ -35,6 +35,7 @@ jobs:
           python tools/audit_coverage.py --self-test
           python tools/totals.py --self-test
           python tools/bank_index.py --self-test
+          python tools/backend_index.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
@@ -48,6 +49,9 @@ jobs:
       # 考点索引由脚本从题库算出来，而正文那两张表必须逐行等于算出来的值。
       - name: 题库索引对账（第 10 篇：专题／题数／考点数／归属）
         run: python tools/bank_index.py --check
+      # 10.5 换了一份题库（Java 体系），而这一关多一条：每个板块的处置也要对上。
+      - name: 后端题库的岗位视角索引（第 10 篇：板块／处置／难度／题面关键词）
+        run: python tools/backend_index.py --check
 
   runnable:
     name: 可运行树一致性

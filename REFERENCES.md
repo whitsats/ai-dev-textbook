@@ -602,6 +602,10 @@
 | **会话与记忆的官方入口**（10.4.6 章）：会话状态与「上下文要自己管」的分工 | OpenAI · Conversation state | https://developers.openai.com/api/docs/guides/conversation-state |
 | **多 Agent 协作与交接**（10.4.5 章）：多 Agent 的两种形态与 handoff | LangChain · Multi-agent | https://docs.langchain.com/oss/python/langchain/multi-agent |
 | **链式推理与反思的原始论文**（10.4.3 章的「反思」一节）：ReAct 把推理与行动交错起来的那篇 | ReAct（arXiv 2210.03629） | https://arxiv.org/abs/2210.03629 |
+| **投递语义与幂等生产者**（10.5.6 章那三道关的第一关）：至少一次／至多一次／恰好一次的口径、幂等生产者与顺序保证 | Apache Kafka · Documentation | https://kafka.apache.org/documentation/ |
+| **四种调用类型与 deadline**（10.5.6 章的 RPC 对照表）：一元、服务端流、客户端流、双向流，以及超时与元数据 | gRPC · Core concepts | https://grpc.io/docs/what-is-grpc/core-concepts/ |
+| **数据库索引的官方口径**（10.5.5 章）：索引类型、部分索引与「什么情况下不该建」的判据 | PostgreSQL · Indexes | https://www.postgresql.org/docs/current/indexes.html |
+| 线程池与进程池的分工（10.5.3 章的 Python 对应物之一） | Python 3 · concurrent.futures | https://docs.python.org/3/library/concurrent.futures.html |
 | 可观测性与成本追问（10.3 章） | OpenTelemetry 官方文档 | https://opentelemetry.io/docs/ |
 | **系统设计面的形态与那句「这场对话由你主导」**（10.3.1 章）：一文里给了四步（把用例与约束说清 → 给高层设计 → 钻进核心组件 → 收尾），并写明**它是开放式对话、不指望你一次说对** | System Design Primer（社区维护的开源索引，「How to approach a system design interview question」一节） | https://github.com/donnemartin/system-design-primer |
 | 招聘链上「设计面」的位置与它在意什么（10.3.1 章）；**该页本轮读不到（证书校验失败），链接按官方入口登记** | Google · Our hiring process（How we hire） | https://www.google.com/about/careers/applications/how-we-hire/ |
