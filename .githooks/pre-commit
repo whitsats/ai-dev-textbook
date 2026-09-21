@@ -71,6 +71,11 @@ if ! "$PY" tools/backend_index.py --self-test >/dev/null; then
     echo "[pre-commit] ✖ 后端题库索引的夹具不过，提交被拦下：先修 tools/backend_index.py。" >&2
     exit 1
 fi
+if ! "$PY" tools/mobile_index.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 移动端两份题库索引的夹具不过，提交被拦下：先修 tools/mobile_index.py。" >&2
+    exit 1
+fi
 
 echo "[pre-commit] 2/5 正文一致性校验 ..."
 if ! "$PY" tools/lint_book.py; then
@@ -129,6 +134,15 @@ if ! "$PY" tools/backend_index.py --check; then
     echo "" >&2
     echo "[pre-commit] ✖ 正文 10.5 的板块表与题库不一致，提交被拦下。" >&2
     echo "            修法：python tools/backend_index.py --offline 取真值，再改正文那两张表。" >&2
+    exit 1
+fi
+# 10.6 第一次同时面对**两份**题库，所以这一关多两组读数：**素材可用性**
+# （模板答案／OCR／水印——别人的题库能不能用，先数一遍）与**两列反向索引**。
+echo "[pre-commit] 4d/5 移动端两份题库的索引（第 10 篇：地形图／处置／素材可用性／两列反向索引）..."
+if ! "$PY" tools/mobile_index.py --check; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 正文 10.6 的表与两份题库不一致，提交被拦下。" >&2
+    echo "            修法：python tools/mobile_index.py --offline 取真值，再改正文那两张地形图表。" >&2
     exit 1
 fi
 

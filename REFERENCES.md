@@ -611,6 +611,13 @@
 | 招聘链上「设计面」的位置与它在意什么（10.3.1 章）；**该页本轮读不到（证书校验失败），链接按官方入口登记** | Google · Our hiring process（How we hire） | https://www.google.com/about/careers/applications/how-we-hire/ |
 | **延迟的数量级参照**（10.3.4 章的「同一句回答，为什么两家的首字差一倍」）：内存访问、同机房往返、跨洲往返这些数字的量级表 | Latency numbers every programmer should know（原件是一份 gist，本轮同样证书不可读；**同一张表收录在上面那个索引的附录里**，按索引核对） | https://gist.github.com/jboner/2841832 |
 | **语义缓存：把「相似的问题」当成命中**（10.3.4 章）：先查缓存再问模型、命中时**响应快 2–10 倍**，以及它省的是「API 调用与词元」而不是算力 | GPTCache（NLP-OSS 2023，第 212–218 页，作者 Fu Bang） | https://aclanthology.org/2023.nlposs-1.24/ ／ 开源实现 https://github.com/zilliztech/gptcache |
+| **协程不是「另一个线程」**（10.6.4 章那一组三派并发的第一派）：官方定义是「可挂起的计算」——它能**把线程让出来**而不是把线程堵住，所以同一个线程上可以交替跑多个协程；「挂起函数只能在挂起函数里调」这条语法约束就是它把「哪里可以停」变成编译期问题的方式 | Kotlin · Coroutines basics（官方） | https://kotlinlang.org/docs/coroutines-basics.html |
+| **主线程不许阻塞**（10.6.4 章的 Android 侧）：后台任务与协程的官方入口，以及「**挂起点是唯一可以切线程的地方**」这条口径的来源 | Android · Kotlin coroutines（官方开发者文档；本轮取页超时，按官方入口登记） | https://developer.android.com/kotlin/coroutines |
+| **Dart 的并发模型**（10.6.4 章 Flutter 侧那一派）：**单线程事件循环 ＋ isolate**——异步在同一个 isolate 里靠事件循环交错，真正要并行得另开 isolate 并靠消息传递（没有共享内存），所以「Flutter 里没有锁」这句话的根据在这里（本轮取页超时，按官方入口登记） | Dart · Concurrency（官方语言指南） | https://dart.dev/language/concurrency |
+| **Flutter 侧的显式优化项**（10.6.5 章）：官方那份清单里可直接执行的三条——**`build()` 里不做重复且昂贵的活**、**能用 `const` 构造就用**（它能让重建走捷径）、**`setState()` 要就近调用**（它会让整棵子树重建），以及「**先量再优化**」这条总口径 | Flutter · Performance best practices（官方） | https://docs.flutter.dev/perf/best-practices |
+| **内存与泄漏的官方口径**（10.6.5 章 Android 侧）：内存类别、泄漏的常见形态与查法（堆快照对比）、以及「**先看内存占用属于哪一类**再谈优化」的判据（本轮取页超时，按官方入口登记） | Android · Memory and app performance（官方开发者文档） | https://developer.android.com/topic/performance/memory |
+| **状态管理的三种归属**（10.6.6 章）：官方把状态分成「属于一个 Widget 的临时状态」与「要跨页面共享的应用状态」两类，并把可选方案列成一张可选的清单——「先判它属于哪一类，再选方案」这句判据的出处 | Flutter · State management（官方） | https://docs.flutter.dev/data-and-backend/state-mgmt/intro |
+| **平台通道：端侧能力怎么进到 Dart 里**（10.6.7 章）：消息在 UI 侧（Dart）与宿主侧（Kotlin／Swift／C++）之间**异步传递**、方法调用**必须在平台的主线程上发起**、类型由 `MethodChannel` 的编解码器负责，以及用 **Pigeon 生成类型安全的桥**这条升级路径 | Flutter · Writing custom platform-specific code（官方） | https://docs.flutter.dev/platform-integration/platform-channels |
 
 ---
 

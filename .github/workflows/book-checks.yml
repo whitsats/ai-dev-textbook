@@ -36,6 +36,7 @@ jobs:
           python tools/totals.py --self-test
           python tools/bank_index.py --self-test
           python tools/backend_index.py --self-test
+          python tools/mobile_index.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
@@ -52,6 +53,9 @@ jobs:
       # 10.5 换了一份题库（Java 体系），而这一关多一条：每个板块的处置也要对上。
       - name: 后端题库的岗位视角索引（第 10 篇：板块／处置／难度／题面关键词）
         run: python tools/backend_index.py --check
+      # 10.6 第一次同时面对两份题库，多两组读数：素材可用性与两列反向索引。
+      - name: 移动端两份题库的索引（第 10 篇：地形图／处置／素材可用性／反向索引）
+        run: python tools/mobile_index.py --check
 
   runnable:
     name: 可运行树一致性
