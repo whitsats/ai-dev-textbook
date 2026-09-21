@@ -37,6 +37,7 @@ jobs:
           python tools/bank_index.py --self-test
           python tools/backend_index.py --self-test
           python tools/mobile_index.py --self-test
+          python tools/mock_round.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
@@ -56,6 +57,9 @@ jobs:
       # 10.6 第一次同时面对两份题库，多两组读数：素材可用性与两列反向索引。
       - name: 移动端两份题库的索引（第 10 篇：地形图／处置／素材可用性／反向索引）
         run: python tools/mobile_index.py --check
+      # 10.7 没有外部题源：这一关守的是「这一章自己定的口径（时间、评分、失败模式）与正文相等」。
+      - name: 模拟面试与复盘（第 10 篇：时间账／追问穿透／评分／失败模式）
+        run: python tools/mock_round.py --check
 
   runnable:
     name: 可运行树一致性

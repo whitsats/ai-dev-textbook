@@ -76,6 +76,11 @@ if ! "$PY" tools/mobile_index.py --self-test >/dev/null; then
     echo "[pre-commit] ✖ 移动端两份题库索引的夹具不过，提交被拦下：先修 tools/mobile_index.py。" >&2
     exit 1
 fi
+if ! "$PY" tools/mock_round.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 模拟面试那四组读数的夹具不过，提交被拦下：先修 tools/mock_round.py。" >&2
+    exit 1
+fi
 
 echo "[pre-commit] 2/5 正文一致性校验 ..."
 if ! "$PY" tools/lint_book.py; then
@@ -143,6 +148,15 @@ if ! "$PY" tools/mobile_index.py --check; then
     echo "" >&2
     echo "[pre-commit] ✖ 正文 10.6 的表与两份题库不一致，提交被拦下。" >&2
     echo "            修法：python tools/mobile_index.py --offline 取真值，再改正文那两张地形图表。" >&2
+    exit 1
+fi
+# 10.7 的读数没有外部来源（它的剧本就写在脚本里），所以这一关守的是另一件事：
+# **这一章自己定的口径（时间预算、评分维度、失败模式）与正文逐处相等**。
+echo "[pre-commit] 4e/5 模拟面试与复盘（第 10 篇：时间账／追问穿透／评分／失败模式）..."
+if ! "$PY" tools/mock_round.py --check; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 正文 10.7 的四张表与剧本不一致，提交被拦下。" >&2
+    echo "            修法：python tools/mock_round.py --offline 取真值，再改正文那四张表。" >&2
     exit 1
 fi
 
