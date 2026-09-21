@@ -2900,10 +2900,17 @@ def check_plan(plan_path: Path, coverage_path: Path) -> int:
     #    1.8 那一行的「素材比值」列恰好是 1.10，于是把 1.8 的状态当成 1.10 的状态，
     #    报出「第 1.10 章：✅ 6,237 字 ≠ 11,807 字」这种看起来很像真问题、其实是
     #    误报的错误。校验器的误报会被当成噪声而整体忽略，所以这类锚定必须写死。
+    #
+    #    状态格是**人写的一格**，而人最自然的写法是**把数字加粗**：
+    #    `✅ **6,308 字**` 或 `✅ **6,308** 字`。第一版正则只认 `✅\s*N 字`，
+    #    于是 10.7 定稿那天（正文确实写完了）这一格被读成 ⬜——注意它的错法：
+    #    **不是误报成通过，是误报成失败**，而误报的代价与漏报一样高
+    #    （「这条报错不用管」会把它永久跳过）。所以强调标记与空格一并容忍，
+    #    并在自检里留三条夹具（抹成 ⬜ 要响、加粗要静、加粗且数字错要响）。
     for cid, actual in _chapter_effective_words().items():
         for m in re.finditer(rf"^\|\s*{re.escape(cid)}\s*\|([^\n]*)", text, re.M):
             row = m.group(1)
-            sm = re.search(r"✅\s*([\d,]+)\s*字", row)
+            sm = re.search(r"✅[\s*_]{0,6}([\d,]+)[\s*_]{0,6}字", row)
             if not sm:
                 problems.append(
                     f"PLAN 第 {cid} 章：正文已存在，但章节表状态仍是 ⬜——"
@@ -3318,6 +3325,32 @@ def _self_test_cases(plan_text: str, readme_text: str, ledger_text: str, project
                                        "0.99" if ch.group(4) != "0.99" else "0.98")},
                       "章表"))
 
+    # 章表状态格（`✅ N 字`）：它也是**人写的一格**，而加粗是那个最自然的写法。
+    # 三种形态各钉一条：抹成 ⬜ 要响、加粗要静、加粗且数字漂了要响。
+    # （第二条是回归夹具：10.7 定稿那天正是因为加粗被读成 ⬜，而那句报错
+    #   看起来像噪声——见 check_plan 里那段注释。）
+    st = re.search(r"(?m)^\| (\d+\.\d+) \|[^\n]*?✅\s*\*{0,2}([\d,]+)\*{0,2}\s*字",
+                   plan_text)
+    if st:
+        status_id, status_num = st.group(1), st.group(2)
+        lo = plan_text.rfind("\n", 0, st.start()) + 1
+        hi = plan_text.find("\n", st.end())
+        status_row = plan_text[lo:hi]
+
+        def _status(new: str) -> str:
+            body = re.sub(r"✅\s*\*{0,2}[\d,]+\*{0,2}\s*字", new, status_row, count=1)
+            return plan_text[:lo] + body + plan_text[hi:]
+
+        cases.append((f"PLAN 章表 {status_id} 的状态格被抹成 ⬜",
+                      {"PLAN.md": _status("⬜ 未开始")},
+                      "章节表状态仍是 ⬜"))
+        cases.append((f"PLAN 章表 {status_id} 的状态格写成加粗（自然写法）→ 应保持沉默",
+                      {"PLAN.md": _status(f"✅ **{status_num}** 字")},
+                      ""))
+        cases.append((f"PLAN 章表 {status_id} 的状态格加粗且字数漂了",
+                      {"PLAN.md": _status(f"✅ **{_as_int(status_num) + 1:,}** 字")},
+                      "≠ 正文实测"))
+
     if "## 全书结构" in readme_text:
         cases.append(("README 丢了「全书结构」一节",
                       {"README.md": readme_text.replace("## 全书结构", "## 全书架构", 1)},
@@ -3618,6 +3651,75 @@ def _self_test_pool() -> int:
     return ok if ok == len(cases) else 0
 
 
+#: 自检夹具的**条数下限**。夹具只增不减：它们守的是「句式变了没人发现」，
+#: 而从真实文本派生的夹具会**静默掉队**——当书稿进入新状态（例如全书收口、
+#: 再没有「进行中」的篇）时，那几条分支就没有源材料了，输出仍是「全过」而
+#: 覆盖已经变窄。10.7 收口那天就这样掉了 1 条（33 → 32）。
+#: 所以条数本身也进检查：**加夹具时把这条线一起加上去**（它不是上限，是地板）。
+_SELF_TEST_FLOOR = 38
+
+
+def _self_test_chronicle() -> tuple[int, int]:
+    """台账**篇标题**那两条分支的夹具：不再依赖「书里恰好有未收口的篇」。
+
+    这两条原来是从真实台账里找「进行中」的篇派生的，而 10.7 收口之后全书
+    再没有进行中的篇——它们就**静默消失**了（自检从 33 条掉到 32 条），
+    而它们守的正是「篇收口那一刻，标题改没改」这一步。
+
+    夹具跟着书稿的进度长或掉，等于把门建在会移动的沙上：夹具体数**只能增**，
+    不该因为「书走到哪一章」而变。所以这里改成**喂合成状态**——
+    `chronicle_status_lines` 本来就收 `measured`，自造一份「某个篇只定稿一半」
+    的实测表即可，与书的进度无关（与 `_self_test_pool` 同一种做法）。
+    """
+    ledger = (ROOT / "LEDGER.md").read_text(encoding="utf-8")
+    measured = _chapter_effective_words()
+
+    by_part: dict[int, list[str]] = {}
+    for cid in measured:
+        head = cid.split(".")[0]
+        if head.isdigit():
+            by_part.setdefault(int(head), []).append(cid)
+    if not by_part:
+        return 0, 0
+    part = max(by_part, key=lambda p: len(by_part[p]))
+    cids = sorted(by_part[part],
+                  key=lambda c: (int(c.split(".")[0]), int(c.split(".")[1])))
+    # 至少要四章：第三条要用「倒数第三章」当一个**不在标题里**的已完成章。
+    if len(cids) < 4:
+        return 0, 0
+    first, prev_last, last = cids[0], cids[-2], cids[-1]
+
+    m = re.search(rf"(?m)^##[^\n]*?第\s*{part}\s*篇[^\n]*", ledger)
+    if not m:
+        return 0, 0
+
+    def head_of(status: str, upto: str) -> str:
+        """把那一篇的标题换成合成的（保留 `## … 第 N 篇 …` 这个形状）。"""
+        return (ledger[:m.start()]
+                + f"## 第 {part} 篇 · 合成标题（{status}——{first}–{upto} 已定稿）"
+                + ledger[m.end():])
+
+    half = {k: v for k, v in measured.items() if k != last}
+    less = {k: v for k, v in half.items() if k != prev_last}
+
+    cases = [
+        (f"台账第 {part} 篇只定稿一半、标题却写着「已完成」",
+         ledger, half, "没回填「进行中」"),
+        (f"台账第 {part} 篇标题写着「进行中」并跟到最新章节 → 应保持沉默",
+         head_of("进行中", prev_last), half, ""),
+        (f"台账第 {part} 篇标题没跟到最新章节",
+         head_of("进行中", last), less, "没跟到最新章节"),
+    ]
+    ok = 0
+    for name, text, meas, expect in cases:
+        got = " ｜ ".join(chronicle_status_lines(text, meas))
+        good = (expect in got) if expect else (got == "")
+        ok += good
+        print(("  ✔ " if good else "  ✖ ") + name
+              + ("" if good else f"（期望「{expect}」／实得「{got[:60]}」）"))
+    return ok, len(cases)
+
+
 def self_test() -> int:
     texts = {name: (ROOT / name).read_text(encoding="utf-8")
              for name in ("PLAN.md", "README.md", "COVERAGE.md", "LEDGER.md", "PROJECT.md")}
@@ -3640,9 +3742,16 @@ def self_test() -> int:
         ok += good
         print(("  ✔ " if good else "  ✖ ") + name
               + ("" if good else f"（期望报出「{expect}」）"))
+    chron_ok, chron_n = _self_test_chronicle()
     pool_ok = _self_test_pool()
-    print(f"自检：{ok}/{len(cases)} ＋ 素材池 {pool_ok}/4 通过")
-    return 0 if ok == len(cases) and pool_ok else 1
+    total = len(cases) + chron_n
+    print(f"自检：{ok + chron_ok}/{total} ＋ 素材池 {pool_ok}/4 通过")
+    thin = total < _SELF_TEST_FLOOR
+    if thin:
+        print(f"  ✖ 夹具条数掉到 {total}，低于下限 {_SELF_TEST_FLOOR}"
+              "（从书稿现状派生的夹具会随书稿的进度掉队——"
+              "见 `_SELF_TEST_FLOOR` 的注释：它只增不减）")
+    return 0 if ok == len(cases) and pool_ok and chron_ok == chron_n and not thin else 1
 
 
 def main() -> int:
