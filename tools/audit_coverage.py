@@ -3398,23 +3398,11 @@ def _self_test_cases(plan_text: str, readme_text: str, ledger_text: str, project
                                            pm.group(0).replace("已完成", "进行中"))},
                           "还写着别的状态"))
             break
-    for pm in _CHRON_PART.finditer(ledger_text):
-        if "进行中" in pm.group(0):
-            cases.append((f"LEDGER 第 {pm.group(1)} 篇标题提前写成「已完成」",
-                          {"LEDGER.md": _swap(ledger_text, (pm.start(), pm.end()),
-                                           pm.group(0).replace("进行中", "已完成"))},
-                          "没回填「进行中」"))
-            break
-    for pm in _CHRON_PART.finditer(ledger_text):
-        if "进行中" in pm.group(0):
-            # 把最后那个章号换成更早的一个：状态对、量对不上（这一篇确实还在写）。
-            ids = re.findall(r"\d+\.\d+", pm.group(0))
-            if len(ids) >= 2:
-                cases.append((f"LEDGER 第 {pm.group(1)} 篇标题没跟到最新章节",
-                              {"LEDGER.md": _swap(ledger_text, (pm.start(), pm.end()),
-                                               pm.group(0).replace(ids[-1], ids[0], 1))},
-                              "没跟到最新章节"))
-            break
+    # 「篇标题写着『进行中』」那两支（提前写成「已完成」、没跟到最新章节）**曾经在这里**，
+    # 源材料是「台账里恰好有一个还在写的篇」——10.7 收口后这样的篇不存在了，
+    # 它们两个连同「进行中」那一支一起静默掉了 1 条（当时的账：33 → 32，输出仍是「全过」）。
+    # 现在它们搬进了 `_self_test_chronicle`：**喂合成状态**（自造一份「某篇只定稿一半」的
+    # `measured`），与书的进度无关。这里不再留第二份——留着就是一段看起来像覆盖的死代码。
 
     # LEDGER 的逐节校准表：**三种形状各钉一条**。分三条不是因为形状多，
     # 而是因为前两版就是按形状分别漏的——「项」表看得到、「段」表看不到、多一列的表读错列。
@@ -3651,15 +3639,130 @@ def _self_test_pool() -> int:
     return ok if ok == len(cases) else 0
 
 
-#: 自检夹具的**条数下限**。夹具只增不减：它们守的是「句式变了没人发现」，
-#: 而从真实文本派生的夹具会**静默掉队**——当书稿进入新状态（例如全书收口、
-#: 再没有「进行中」的篇）时，那几条分支就没有源材料了，输出仍是「全过」而
-#: 覆盖已经变窄。10.7 收口那天就这样掉了 1 条（33 → 32）。
-#: 所以条数本身也进检查：**加夹具时把这条线一起加上去**（它不是上限，是地板）。
-_SELF_TEST_FLOOR = 38
+# ---------------- 夹具的源材料：逐条问「书走到哪一步它就没有了」 ----------------
+# 这一门夹具分两类。混在一起看，很容易把「N 条全过」当成「覆盖没变」：
+#
+# ① **合成的**（与书稿无关，永远不掉队）：素材池 4 条、`_self_test_chronicle`
+#   的 3 条（篇标题「进行中」那一支的三种错法）、`_self_test_manifest` 的 3 条。
+# ② **从书稿现状派生的**（源材料在书里，书稿一进入新状态就可能没有它）：
+#   · 恒定的**约定**：格式句（PLAN 的篇级小计句、README 的进度句与总量句、
+#     章表的「计划/素材/比值」列、台账的逐节校准表与它的引导语、章标题上的
+#     「正文 N 有效字」、章表状态格的「✅ N 字」）——它们不随进度变，
+#     但会随「改写体例」变。
+#   · 一时的**状态**：某篇还在写（篇标题写着「进行中」）、某章还没写完（叠着 ⏳）。
+#     这一类会随书稿前进而**用完**——全书收口后「进行中」的篇就不存在了。
+#
+# 处置分两档：
+#   · 一时状态 → **改成喂合成状态**（自造 `measured`，与书的进度无关）。
+#     已经做了：篇标题那三支（原来书里得有「进行中」的篇）。
+#     10.7 收口那天掉的正是它们（当时的账：33 → 32，而输出仍旧「全过」）。
+#   · 恒定约定 → **不改成合成**：它们验的就是「真的在读书里那几句话」，
+#     换成合成文本就测不到「句式改了没人发现」了。改用 `_SELF_TEST_NAMES`
+#     名字清单守着：少一条报出**名字**，多一条要求登记。
+#
+# 由此得一句可携带的追问：**凡是从书稿现状派生的夹具，都要问一句
+# 「书走到哪一步它就没有了」**——答不上来的是①，答得上来的要么改成合成，
+# 要么进名字清单（定稿时它掉队会被点名）。
+
+#: 自检夹具的**条数下限**。夹具只增不减：**加夹具时把这条线一起加上去**
+#: （它不是上限，是地板）。条数只告诉你「少了」，具体少哪一条由
+#: `_SELF_TEST_NAMES` 回答——两份一起用。
+_SELF_TEST_FLOOR = 41
+
+#: 夹具的**名字清单**（只增不减）。为什么不是只守条数：条数会因「掉一条、
+#: 又加一条」而看起来没变，而名字不会——少一条就报出它的名字。
+#: 加夹具：把新名字登记进来（`--self-test` 在清单为空/有变动时会直接打印）。
+_SELF_TEST_NAMES: tuple[str, ...] = (
+    "未改动的原文应保持沉默",
+    "PLAN 篇级小计的字数漂了",
+    "PLAN 篇级小计的章数漂了",
+    "PLAN 漏了已完稿篇的小计",
+    "README 完稿章数漂了",
+    "README 总字数漂了",
+    "README 规划总量停在旧方案",
+    "PLAN 文首的「全书为 N 篇 N 章 / 约 N 字」漂了",
+    "PLAN 「计划总字数」那一格漂了",
+    "PLAN 那句「现行计划总量为 N 字」漂了",
+    "README 篇级素材比值漂了",
+    "README 篇章数漂了",
+    "PLAN 章表 1.1 的素材量漂了",
+    "PLAN 章表 1.1 的比值漂了",
+    "PLAN 章表 0.1 的状态格被抹成 ⬜",
+    "PLAN 章表 0.1 的状态格写成加粗（自然写法）→ 应保持沉默",
+    "PLAN 章表 0.1 的状态格加粗且字数漂了",
+    "README 丢了「全书结构」一节",
+    "README 整个不存在",
+    "PROJECT 第 3.5 章的字数漂了",
+    "PROJECT 整个不存在",
+    "LEDGER 第 1.1 章标题的字数漂了",
+    "LEDGER 第 1.1 章标题漏了状态",
+    "LEDGER 第 1.1 章标题停在「⏳ 正文待写」",
+    "LEDGER 第 1.1 章标题有 ✅ 却没写实测值",
+    "LEDGER 第 1 篇标题的状态停在「进行中」",
+    "LEDGER 项 表（5.9）的合计漂了",
+    "LEDGER 段 表（6.1）的合计漂了",
+    "LEDGER 段 表多一列时，实测那一列仍要核",
+    "LEDGER 改插进来的「事后补算」那一列（不是实测）→ 应保持沉默",
+    "LEDGER 真落了笔的章被贴上「补记」（6.4）",
+    "LEDGER 登记为欠账的章，「补记」标记被删（6.3）",
+    "LEDGER 逐节表的「事前估」那一列被清空（6.4）",
+    "LEDGER 那一列只剩「—（算式）」的注（有数字、没估数）",
+    "LEDGER 登记过的章，那一列也清空（6.3）→ 登记不等于免检",
+    "台账第 1 篇只定稿一半、标题却写着「已完成」",
+    "台账第 1 篇标题写着「进行中」并跟到最新章节 → 应保持沉默",
+    "台账第 1 篇标题没跟到最新章节",
+    "清单里少了一条 → 报出那一条",
+    "多出一条没登记的 → 要求登记",
+    "两边一致 → 应保持沉默",
+)
 
 
-def _self_test_chronicle() -> tuple[int, int]:
+def _manifest_problems(names: list[str],
+                       manifest: tuple[str, ...] | None = None) -> list[str]:
+    """夹具名字清单的对账。**抽成纯函数是为了能用夹具钉住它**（见 `_self_test_manifest`）。
+
+    两个方向都报：「掉队」（清单里有、这次没建出来）与「未登记」
+    （这次建出来了、清单里没有）——第二个方向防的是「加夹具时忘了登记」。
+    """
+    mf = _SELF_TEST_NAMES if manifest is None else manifest
+    if not mf:
+        return []
+    out: list[str] = []
+    missing = [n for n in mf if n not in names]
+    extra = [n for n in names if n not in mf]
+    if missing:
+        out.append("夹具掉队（书稿里那形状没了）：" + "；".join(missing))
+    if extra:
+        out.append("夹具没登记进 `_SELF_TEST_NAMES`：" + "；".join(extra))
+    return out
+
+
+def _self_test_manifest() -> tuple[int, list[str]]:
+    """清单自身的夹具：两个方向各要响，一致时要静。
+
+    同族教训：一个只会沉默的检查与「一切正常」在输出上完全一样，
+    所以「清单能说话」这件事也得有反例钉着（用三个假名字，不碰真清单）。
+    """
+    base = ("甲", "乙", "丙")
+    cases = [
+        ("清单里少了一条 → 报出那一条",
+         ["甲", "丙"], base, "掉队", "乙"),
+        ("多出一条没登记的 → 要求登记",
+         ["甲", "乙", "丙", "丁"], base, "没登记", "丁"),
+        ("两边一致 → 应保持沉默",
+         ["甲", "乙", "丙"], base, "", ""),
+    ]
+    ok = 0
+    for name, names, mf, kind, who in cases:
+        got = " ｜ ".join(_manifest_problems(names, mf))
+        good = (not got) if not kind else (kind in got and who in got)
+        ok += good
+        print(("  ✔ " if good else "  ✖ ") + name
+              + ("" if good else f"（期望「{kind}」与「{who}」／实得「{got[:60]}」）"))
+    return ok, [c[0] for c in cases]
+
+
+def _self_test_chronicle() -> tuple[int, list[str]]:
     """台账**篇标题**那两条分支的夹具：不再依赖「书里恰好有未收口的篇」。
 
     这两条原来是从真实台账里找「进行中」的篇派生的，而 10.7 收口之后全书
@@ -3717,7 +3820,7 @@ def _self_test_chronicle() -> tuple[int, int]:
         ok += good
         print(("  ✔ " if good else "  ✖ ") + name
               + ("" if good else f"（期望「{expect}」／实得「{got[:60]}」）"))
-    return ok, len(cases)
+    return ok, [c[0] for c in cases]
 
 
 def self_test() -> int:
@@ -3742,16 +3845,29 @@ def self_test() -> int:
         ok += good
         print(("  ✔ " if good else "  ✖ ") + name
               + ("" if good else f"（期望报出「{expect}」）"))
-    chron_ok, chron_n = _self_test_chronicle()
+    chron_ok, chron_names = _self_test_chronicle()
+    man_ok, man_names = _self_test_manifest()
     pool_ok = _self_test_pool()
-    total = len(cases) + chron_n
-    print(f"自检：{ok + chron_ok}/{total} ＋ 素材池 {pool_ok}/4 通过")
+    names = [n for n, _, _ in cases] + chron_names + man_names
+    total = len(names)
+
+    # 名字清单：从书稿现状派生的夹具「掉队」时要**报出名字**，不能只报条数。
+    problems = _manifest_problems(names)
+    if not _SELF_TEST_NAMES:
+        print("自检夹具清单尚未登记：把下面这些名字贴进 `_SELF_TEST_NAMES`")
+        for n in names:
+            print(f'    "{n}",')
+    for p in problems:
+        print("  ✖ " + p)
+
+    print(f"自检：{ok + chron_ok + man_ok}/{total} ＋ 素材池 {pool_ok}/4 通过")
     thin = total < _SELF_TEST_FLOOR
     if thin:
         print(f"  ✖ 夹具条数掉到 {total}，低于下限 {_SELF_TEST_FLOOR}"
               "（从书稿现状派生的夹具会随书稿的进度掉队——"
-              "见 `_SELF_TEST_FLOOR` 的注释：它只增不减）")
-    return 0 if ok == len(cases) and pool_ok and chron_ok == chron_n and not thin else 1
+              "见 `_SELF_TEST_FLOOR` 与 `_SELF_TEST_NAMES` 的注释：只增不减）")
+    return 0 if (ok == len(cases) and pool_ok and chron_ok == len(chron_names)
+                 and man_ok == len(man_names) and not thin and not problems) else 1
 
 
 def main() -> int:
