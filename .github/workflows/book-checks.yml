@@ -42,6 +42,7 @@ jobs:
           python tools/check_runnable.py --self-test
           python tools/revisit.py --self-test
           python tools/appendix.py --self-test
+          python tools/learning_path.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
@@ -77,6 +78,11 @@ jobs:
       # 它比 index_book 多守一件事：**新增一支工具或一个入口脚本而附录没重生**。
       - name: 附录（六棵树速查 / 门脚本速查 / 总量与复算入口）
         run: python tools/appendix.py --check
+      # 分层学习计划：四层起点、每层的章集合与派生读数全是生成物。
+      # 它多守一件事：**前置闭合**——某章点到的前置既要不在本层、又不在「假定已具备」里，
+      # 那就是把读者扔在半路，而四张表各自看着都是完整的（与 index_book 同一个形状）。
+      - name: 分层学习计划（四层起点 / 前置闭合 / 并集 ＝ 全书）
+        run: python tools/learning_path.py --check
 
   runnable:
     name: 可运行树一致性

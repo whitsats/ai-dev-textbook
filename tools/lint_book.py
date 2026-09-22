@@ -1129,6 +1129,20 @@ def check_style_claims_wired(rep: Report) -> int:
     return len(loose)
 
 
+def check_style_inventory(rep: Report) -> int:
+    """`README`／`PLAN`／`STYLE` 里那几句「按盘上清点」的数：目录体积、文件数、唯一链接数。
+
+    它们与「`N` 条夹具」同族（作者是盘、抄写员是文档），但以前**一处都没接**：
+    加一份素材、给 `REFERENCES.md` 添一条链接，那几个数一个字都不会变难看。
+    口径（体积按字节数之和、判据 ±10%；计数逐字比；只认带路径上下文的句子）
+    写在 `style_claims` 里——那里是它唯一的实现。
+    """
+    issues, checked = sc.inventory_doc_issues()
+    for msg in issues:
+        rep.err("书侧库存声明", msg)
+    return checked
+
+
 def check_cross_refs(chapters: dict[str, str], rep: Report) -> dict[str, dict[str, int]]:
     """章内交叉引用必须真实存在；同时把三个数交给调用方去汇总实报。
 
@@ -1806,6 +1820,29 @@ _GLOSS_NUMBER_CASES = [
      "账记在 `GLOSSARY` 的维护日志里（一行三格）。\n", 0),
 ]
 
+# [书侧库存声明] `README`／`PLAN` 里那几句「按盘上清点」的数。事实是**喂进去的**，
+# 所以夹具与盘上无关（否则「今天恰好相等」会让它们看不出退化）。
+_T_INVENTORY = {"sources_files": 216, "sources_mb": 5.5, "raw_mb": 293.5,
+                "raw_big_pdf_mb": 128.9, "raw_pdfs": 12, "ref_links": 483}
+_INVENTORY_CASES = [
+    ("计数与体积都写对：沉默", "├── sources/  ← 纯文本素材库（已纳入 git，216 个文件 / 5.5MB）\n", 2, 0),
+    ("计数写错：要拦", "├── sources/  ← 纯文本素材库（已纳入 git，217 个文件 / 5.5MB）\n", 2, 1),
+    ("体积写在 ±10% 带内：沉默（`du` 按块对齐，两种数不必逐字相等）",
+     "├── raw/  ← 原始资料归档（295MB，未纳入 git）\n", 1, 0),
+    ("体积差得远：要拦", "├── raw/  ← 原始资料归档（120MB，未纳入 git）\n", 1, 1),
+    ("「含 N MB 单文件」按最大文件判（带内的差不报）",
+     "`raw/` 当前经 `.gitignore` 排除（295MB，含 125MB 单文件 PDF）。\n", 2, 0),
+    ("单文件体积差得远：要拦",
+     "`raw/` 当前经 `.gitignore` 排除（295MB，含 60MB 单文件 PDF）。\n", 2, 1),
+    ("原件数与唯一链接数各自逐字比",
+     "│   ├── pdf/  ← 12 个原始 PDF\n`REFERENCES.md`（483 个唯一链接）\n", 2, 0),
+    ("同一句里两个体积：只取路径后最近的那个（否则会把「最大单文件」当成目录体积）",
+     "`raw/` 当前被排除（295MB，含 125MB 单文件 PDF）。\n", 2, 0),
+    ("没有路径上下文的数字不碰（「共 999 个文件」不知道指哪儿）",
+     "仓库里共 999 个文件。\n", 0, 0),
+    ("汉字写的数不是断言（沿用 5.9 那轮的约定）", "sources/ 里共二百一十六个文件。\n", 0, 0),
+]
+
 # [书侧数字] 漂移链：事后校准注里记的「A → B」（正文里同样的箭头不算）。
 _CHAIN_CASES = [
     ("注里的三段链被收进来，且起点走得到终点",
@@ -1924,7 +1961,7 @@ def self_test_total() -> int:
             + len(_LEDGER_TALLY_CASES) + len(_TALLY_HINT_CASES)
             + len(_GLOSS_NUMBER_CASES) + len(_CHAIN_CASES)
             + len(_STYLE_MEASURE_CASES) + len(_DOC_TALLY_CASES)
-            + len(_SHAPE_CASES))
+            + len(_SHAPE_CASES) + len(_INVENTORY_CASES))
 
 
 def self_test() -> int:
@@ -2007,6 +2044,14 @@ def self_test() -> int:
         else:
             print(f"  ✖ [8.7 实测条目] {name}：期望 {want} 条问题，实得 {len(issues)} 条"
                   + ("" if not issues else f"——{issues[0]}"))
+    for name, text, want_checked, want in _INVENTORY_CASES:
+        issues, n = sc.inventory_issues(text, "夹具", _T_INVENTORY)
+        if (n, len(issues)) == (want_checked, want):
+            ok += 1
+        else:
+            print(f"  ✖ [书侧库存声明] {name}：期望比过 {want_checked} 处/问题 {want} 条，"
+                  f"实得比过 {n} 处/问题 {len(issues)} 条"
+                  + ("" if not issues else f"——{issues[0]}"))
     for name, text, want in _SHAPE_CASES:
         got = len(chapter_shape_issues(text))
         if got == want:
@@ -2083,9 +2128,11 @@ def main() -> int:
     # 书侧那两份文档（`STYLE`／`README`）里抄了一遍的实跑值：逐处与盘上比。
     # `--only` 时实跑值不完整（只有指定的章），比出来的差是假的——同样跳过。
     style_checked = 0
+    inventory_checked = 0
     if args.only is None:
         style_checked = check_style_numbers(rep, stats, ctx["plan_chapters"])
         check_style_claims_wired(rep)
+        inventory_checked = check_style_inventory(rep)
 
     ref_by_part = cross_ref_totals(ref_counts)
     ref_total = dict.fromkeys(REF_TALLY_KEYS, 0)
@@ -2131,6 +2178,10 @@ def main() -> int:
     if args.only is None:
         print(f"书侧复述（`STYLE`／`README` 里「实跑值的复述」）：本次比过 {style_checked} 处"
               + ("，逐处相符" if not any('书侧' in e for e in rep.errors)
+                 else "，其中有不符（见上）"))
+        print(f"书侧库存声明（`STYLE`／`README`／`PLAN` 里「目录体积／文件数／唯一链接数」）："
+              f"本次比过 {inventory_checked} 处"
+              + ("，逐处相符" if not any('库存声明' in e for e in rep.errors)
                  else "，其中有不符（见上）"))
     print()
     print(f"汇总：错误 {len(rep.errors)} ｜ 警告 {len(rep.warnings)}")

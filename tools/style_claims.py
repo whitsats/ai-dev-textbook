@@ -46,7 +46,8 @@ _CLAIM = re.compile(r"([\d,]+)[\s*_]{0,4}条夹具")
 
 #: 已接线的工具：它们在自检末尾调 `report()`（名单跟作实跑值一起变）。
 #: 文档里引用了「N 条夹具」而名字不在这里的工具，由 `unwired_tools()` 报出来。
-WIRED: tuple[str, ...] = ("lint_book", "index_book", "totals", "check_runnable", "appendix")
+WIRED: tuple[str, ...] = ("lint_book", "index_book", "totals", "check_runnable", "appendix",
+                         "learning_path")
 
 
 def clauses(line: str) -> list[str]:
@@ -136,6 +137,122 @@ def report(tool: str, total: int) -> int:
         print(f"  · 书侧写了「{tool}.py … N 条夹具」{checked} 处，"
               + ("有问题 " + str(len(issues)) + " 条" if issues else "逐处相符"))
     return 1 if issues else 0
+
+
+# ---------------------------------------------------------------- 库存声明
+# 第三类手抄的数：**按盘上清点的那几句**（目录体积、文件数、PDF 数、唯一链接数）。
+# 它们与「夹具条数」同族——作者是盘，抄写员是 `README`／`PLAN`——但以前**一处都没接**：
+# 加一份素材、给 `REFERENCES.md` 添一条链接，那几个数一个字都不会变难看。
+# 本轮就是靠这份清单发现 `README` 里 `sources/` 的体积停在 **6.1MB**（盘上 5.5MB）。
+#
+# 两条口径写在这里，免得下次又各说各话：
+#   ① **体积**＝文件字节数之和 ÷ 2²⁰，保留一位小数（`du -sh` 按块对齐统计，两种数
+#      不必相等——所以判据是 **±10% 的带**，而不是逐字相等）；
+#   ② **计数**逐字比（个、份、条都算整数），且**必须带路径上下文**：
+#      光看「999 个文件」不知道它指哪儿，拄下来只会是假阳性。
+#   汉字写的数不是断言（沿用 5.9 那一轮的约定），所以正则只认阿拉伯数字。
+_VOLUME_BAND = 0.10
+
+#: 扫哪几份文档。`PLAN` 比夹具那一家族多进来一步：它的汇总表归 `audit_coverage`，
+#: 但「raw/ 295MB」「sources/ 216 个文件」这几句它照样手抄。
+INVENTORY_DOCS: tuple[str, ...] = ("STYLE.md", "README.md", "PLAN.md")
+
+#: (键, 句式, 这个数是什么)。句式必须自带路径上下文。
+_CLAIMS: tuple[tuple[str, re.Pattern[str], str], ...] = (
+    ("sources_files", re.compile(r"sources/[^\n]{0,80}?([\d,]+)\s*个文件"),
+     "`sources/` 下的文件数"),
+    ("sources_mb", re.compile(r"sources/[^\n]{0,80}?([\d.]+)\s*MB"),
+     "`sources/` 的体积"),
+    ("raw_big_pdf_mb", re.compile(r"含\s*([\d.]+)\s*MB\s*单文件"),
+     "`raw/` 里最大的单文件体积"),
+    ("raw_mb", re.compile(r"raw/[^\n]{0,80}?([\d.]+)\s*MB"),
+     "`raw/` 的体积"),
+    ("raw_pdfs", re.compile(r"([\d,]+)\s*个原始 PDF"),
+     "`raw/pdf/` 下的原件数"),
+    ("ref_links", re.compile(r"([\d,]+)\s*个唯一链接"),
+     "`REFERENCES.md` 里的唯一链接数"),
+)
+
+
+def _tree_size(path: pathlib.Path) -> tuple[int, int]:
+    """（文件数, 字节数之和）。目录不存在时返回 (0, 0)——由调用方自己判断要不要出声。"""
+    if not path.exists():
+        return 0, 0
+    files = [p for p in path.rglob("*") if p.is_file()]
+    return len(files), sum(p.stat().st_size for p in files)
+
+
+def inventory_facts() -> dict[str, float]:
+    """盘上现读的那几份库存。某一项读不到就不放进字典（那一句因此静默）。"""
+    out: dict[str, float] = {}
+    n, size = _tree_size(ROOT / "sources")
+    if n:
+        out["sources_files"] = float(n)
+        out["sources_mb"] = size / 2**20
+    n, size = _tree_size(ROOT / "raw")
+    if n:
+        out["raw_mb"] = size / 2**20
+        biggest = max((p for p in (ROOT / "raw").rglob("*") if p.is_file()),
+                      key=lambda p: p.stat().st_size, default=None)
+        if biggest is not None:
+            out["raw_big_pdf_mb"] = biggest.stat().st_size / 2**20
+    pdfs = ROOT / "raw" / "pdf"
+    if pdfs.exists():
+        out["raw_pdfs"] = float(len([p for p in pdfs.glob("*") if p.is_file()]))
+    refs = ROOT / "REFERENCES.md"
+    if refs.exists():
+        text = refs.read_text(encoding="utf-8")
+        urls = {u.rstrip("/").rstrip(".,;:)") for u in re.findall(r"https?://[^\s|)\]，。]+", text)}
+        out["ref_links"] = float(len(urls))
+    return out
+
+
+#: 一条边界写在这里：这是六句里**只取“路径后最近的那个数”**的句式，而不是
+#: 「同一小句里最后一个」。原因是这一族的句子没有「从 A 变成 B」那种固定形状——
+#: `raw/（295MB，含 125MB 单文件 PDF）` 里两个数都属于同一个路径，
+#: 取“最后一个”会把「最大单文件」当成目录体积（假阳性）。
+#: 所以想在正文里引用旧值，沿用 5.9 那一轮的约定：**写成汉字**。
+
+
+def inventory_issues(text: str, where: str = "文档",
+                     facts: dict[str, float] | None = None) -> tuple[list[str], int]:
+    """文档里那几句库存声明与盘上现读的比。返回（问题列表, 比过的断言个数）。"""
+    f = inventory_facts() if facts is None else facts
+    issues: list[str] = []
+    checked = 0
+    for key, pattern, what in _CLAIMS:
+        fact = f.get(key)
+        if fact is None:
+            continue
+        for mo in pattern.finditer(text):
+            value = mo.group(1).replace(",", "")
+            try:
+                claimed = float(value)
+            except ValueError:                      # 夹具里喂了非数字——当作没写
+                continue
+            checked += 1
+            if key.endswith("_mb"):
+                if abs(claimed - fact) > _VOLUME_BAND * fact:
+                    issues.append(f"{where}：{what}写的是 {claimed:g}MB，盘上是 {fact:.1f}MB"
+                                  f"（体积按字节数之和、判据 ±{_VOLUME_BAND:.0%}，"
+                                  f"因为 `du` 按块对齐统计）")
+            elif int(claimed) != int(fact):
+                issues.append(f"{where}：{what}写的是 {int(claimed)}，盘上是 {int(fact)}")
+    return issues, checked
+
+
+def inventory_doc_issues() -> tuple[list[str], int]:
+    """把该扫的几份文档一起过一遍（由 `lint_book.py` 调）。"""
+    issues: list[str] = []
+    checked = 0
+    for name in INVENTORY_DOCS:
+        path = ROOT / name
+        if not path.exists():
+            continue
+        got, n = inventory_issues(path.read_text(encoding="utf-8"), name)
+        issues += got
+        checked += n
+    return issues, checked
 
 
 def unwired_tools() -> list[str]:

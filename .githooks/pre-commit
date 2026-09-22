@@ -7,8 +7,8 @@
 #        而这类引用不产生任何数字，前三关一个都不会响。）
 #
 # 规则：
-#   0. 先跑**十个工具**的自检夹具（--self-test），工具坏了就没必要往下走。
-#      （第九个是 `check_runnable.py`：它有 127 条夹具，而以前**没有任何一道门跑它**——
+#   0. 先跑**十二个工具**的自检夹具（--self-test），工具坏了就没必要往下走。
+#      （其中一个是 `check_runnable.py`：它有 127 条夹具，而以前**没有任何一道门跑它**——
 #       夹具写了却不跑，与没写一样。）
 #   1. 每次都跑 tools/lint_book.py（纯本地、秒级）。
 #   2. 默认只离线解析链接清单；只有 REFERENCES.md 被改动时才联网全量校验
@@ -103,6 +103,11 @@ fi
 if ! "$PY" tools/appendix.py --self-test >/dev/null; then
     echo "" >&2
     echo "[pre-commit] ✖ 附录生成器的夹具不过，提交被拦下：先修 tools/appendix.py。" >&2
+    exit 1
+fi
+if ! "$PY" tools/learning_path.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 分层学习计划的夹具不过，提交被拦下：先修 tools/learning_path.py。" >&2
     exit 1
 fi
 
@@ -214,9 +219,22 @@ if ! "$PY" tools/appendix.py --check; then
     exit 1
 fi
 
+# 分层学习计划（`LEARNING.md`）：四层起点、每层的章集合与派生读数、前置闭合。
+# 这一关比前两关多守一件事：**层与层之间的缺口**——某章的「前置知识」点到的章
+# 若既不在本层、也不在本层的「假定已具备」里，就是把读者扔在半路，
+# 而这件事在四张表上都看不出来（它们各自都是完整的）。
+echo "[pre-commit] 4i/5 分层学习计划（四层起点 / 前置闭合 / 并集 ＝ 全书）..."
+if ! "$PY" tools/learning_path.py --check; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 学习计划与盘上不一致（或四层漏了章、前置没闭合），提交被拦下。" >&2
+    echo "            修法：python tools/learning_path.py --check 看是哪一条，" >&2
+    echo "            再改 tools/learning_path.py 里的四层定义（改完 --sync 重生成）。" >&2
+    exit 1
+fi
+
 # 下面两关跟 REFERENCES.md 有关，所以它们才需要「暂存区里有没有它」这个判断。
-# **4g／4h 不属于这里**：它们与临时改动什么无关，必须每次都跑。
-# （它们曾被写在这个 `if` 里面——于是只有改动 REFERENCES.md 的那几笔提交会跑通读普查，
+# **4g／4h／4i 不属于这里**：它们与临时改动什么无关，必须每次都跑。
+# （4g／4h 曾被写在这个 `if` 里面——于是只有改动 REFERENCES.md 的那几笔提交会跑通读普查，
 #  其余提交里那一关从来不跑，而输出里一个字都不会少：又一例「没跑与跑过长得一样」。）
 staged=$(git diff --cached --name-only)
 

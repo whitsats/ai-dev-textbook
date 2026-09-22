@@ -116,6 +116,7 @@
 | `extract_sources.py` | 把 raw/ 中的原始资料转换为 sources/ 下的纯文本素材库。 | `--report` | 素材：`--report` 把 `raw/` 转成 `sources/`，与书稿无关 |
 | `index_book.py` | 全书索引（index_book.py） | `--sync`／`--check`／`--self-test` | 1/5；4f/5 |
 | `install_hooks.py` | 安装提交前校验钩子（install_hooks.py） | `--uninstall`／`--status`／`--self-test` | 装机：`python tools/install_hooks.py` 装一次提交钩子 |
+| `learning_path.py` | 分层学习计划（`LEARNING.md`）的生成器：**不同起点的人，各从哪一章进、到哪一章出。** | （无开关） | 1/5；4i/5 |
 | `lint_book.py` | 正文一致性校验（lint_book.py） | `--only`／`--quiet`／`--self-test` | 1/5；2/5 |
 | `mobile_index.py` | 10.6 的交付物：**两份移动端题库，拼成一份可核对的索引。** | `--offline`／`--check`／`--self-test` | 1/5；4d/5 |
 | `mock_round.py` | 10.7 的交付物：**把一场 45 分钟的模拟面试，变成四组能复算的数。** | `--offline`／`--check`／`--self-test` | 1/5；4e/5 |
@@ -138,6 +139,7 @@
 | 4f/5 | 全书索引（术语 → 章节 / 树与门脚本 → 章节 / 小节目录） |
 | 4g/5 | 通读普查（体例形状 / 常见坑条数，与 REVISIT.md 逐行比） |
 | 4h/5 | 附录（六棵树速查 / 门脚本速查 / 总量与复算入口） |
+| 4i/5 | 分层学习计划（四层起点 / 前置闭合 / 并集 ＝ 全书） |
 | 5/5 | REFERENCES.md 有改动 → 联网校验全部链接／链接清单自检（离线） |
 
 ## 附录 C　全书的总量，与它们的复算入口
@@ -153,4 +155,4 @@
 | 练习 | 301 条（基础 113／进阶 105／挑战 83） | `python tools/appendix.py --check`（本附录自己算的，口径见 `STYLE`） |
 | 常见坑 | 968 条（其中 2 章用表格） | 同上 |
 | 素材站点 | 20 类、100 处 | `python tools/totals.py --check`（同一行） |
-| 门脚本 | 15 支（其中 12 支跑在提交门里；另 1 支是零入口的库） | `python tools/appendix.py --check`（附录 B 就是那份表） |
+| 门脚本 | 16 支（其中 13 支跑在提交门里；另 1 支是零入口的库） | `python tools/appendix.py --check`（附录 B 就是那份表） |
