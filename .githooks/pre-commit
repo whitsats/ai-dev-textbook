@@ -7,7 +7,9 @@
 #        而这类引用不产生任何数字，前三关一个都不会响。）
 #
 # 规则：
-#   0. 先跑两个工具的自检夹具（--self-test），工具坏了就没必要往下走。
+#   0. 先跑**十个工具**的自检夹具（--self-test），工具坏了就没必要往下走。
+#      （第九个是 `check_runnable.py`：它有 127 条夹具，而以前**没有任何一道门跑它**——
+#       夹具写了却不跑，与没写一样。）
 #   1. 每次都跑 tools/lint_book.py（纯本地、秒级）。
 #   2. 默认只离线解析链接清单；只有 REFERENCES.md 被改动时才联网全量校验
 #      （避免每次提交都发几十个网络请求）。
@@ -46,6 +48,8 @@ fi
 #   · audit_coverage.py 的对账靠「解析文档里的句子」，句式一变就落空成摆设。
 # 两者都有夹具，而夹具不跑就等于没有，所以放在第一步。
 echo "[pre-commit] 1/5 工具自检（字数口径 / 对账门 / 汇总数字）..."
+# 第 1 关跑**每一支**夹具，第 4 那些关跑对账。附录生成器也在这一关：它的夹具里
+# 有一条专门盯「少扫一段会变成一句错话」（阶段切分漏行 → 把 `check_refs.py` 写到 4f/5）。
 if ! "$PY" tools/lint_book.py --self-test; then
     echo "" >&2
     echo "[pre-commit] ✖ 字数口径退化，提交被拦下：先修 tools/lint_book.py 的 code_lines_of。" >&2
@@ -79,6 +83,26 @@ fi
 if ! "$PY" tools/mock_round.py --self-test >/dev/null; then
     echo "" >&2
     echo "[pre-commit] ✖ 模拟面试那四组读数的夹具不过，提交被拦下：先修 tools/mock_round.py。" >&2
+    exit 1
+fi
+if ! "$PY" tools/index_book.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 全书索引的夹具不过，提交被拦下：先修 tools/index_book.py。" >&2
+    exit 1
+fi
+if ! "$PY" tools/check_runnable.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 正文代码块 ↔ 树的夹具不过，提交被拦下：先修 tools/check_runnable.py。" >&2
+    exit 1
+fi
+if ! "$PY" tools/revisit.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 通读普查的夹具不过，提交被拦下：先修 tools/revisit.py。" >&2
+    exit 1
+fi
+if ! "$PY" tools/appendix.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 附录生成器的夹具不过，提交被拦下：先修 tools/appendix.py。" >&2
     exit 1
 fi
 
@@ -159,7 +183,41 @@ if ! "$PY" tools/mock_round.py --check; then
     echo "            修法：python tools/mock_round.py --offline 取真值，再改正文那四张表。" >&2
     exit 1
 fi
+# 全书索引：它是一份**生成物**（术语 → 章节、树与脚本 → 章节、小节目录），
+# 所以这一关抢的是两件事：① 书稿或术语表改了而索引没重生；
+# ② 术语表里登记了、而书里一次都没用到的词条（术语表的**另一个方向**）。
+echo "[pre-commit] 4f/5 全书索引（术语 → 章节 / 树与门脚本 → 章节 / 小节目录）..."
+if ! "$PY" tools/index_book.py --check; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 索引与书稿不一致（或出现了新的「登记了却没用到」的词条），提交被拦下。" >&2
+    echo "            修法：python tools/index_book.py --sync 。" >&2
+    exit 1
+fi
 
+echo "[pre-commit] 4g/5 通读普查（体例形状 / 常见坑条数，与 REVISIT.md 逐行比）..."
+if ! "$PY" tools/revisit.py --check >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 体例形状普查与 REVISIT.md 里记的那一份不一致，提交被拦下。" >&2
+    echo "            修法：python tools/revisit.py --check 看是哪一行，再据实改 REVISIT.md" >&2
+    echo "            （改了某一章的导读/常见坑/练习/延伸阅读的形状，那一份记录就得跟）。" >&2
+    exit 1
+fi
+
+# 附录（`APPENDIX.md`）：三张表（六棵树速查 / 门脚本速查 / 总量与复算入口）全是生成物。
+# 这一关与 `index_book` 同一个形状，但它多守一件事：**新增了一支工具或一个入口脚本，
+# 而附录没重生**——那种时候表看上去仍然完整，少的正是那一行。
+echo "[pre-commit] 4h/5 附录（六棵树速查 / 门脚本速查 / 总量与复算入口）..."
+if ! "$PY" tools/appendix.py --check; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 附录与盘上不一致（或新增了入口脚本/工具而没重生），提交被拦下。" >&2
+    echo "            修法：python tools/appendix.py --sync 。" >&2
+    exit 1
+fi
+
+# 下面两关跟 REFERENCES.md 有关，所以它们才需要「暂存区里有没有它」这个判断。
+# **4g／4h 不属于这里**：它们与临时改动什么无关，必须每次都跑。
+# （它们曾被写在这个 `if` 里面——于是只有改动 REFERENCES.md 的那几笔提交会跑通读普查，
+#  其余提交里那一关从来不跑，而输出里一个字都不会少：又一例「没跑与跑过长得一样」。）
 staged=$(git diff --cached --name-only)
 
 if printf '%s\n' "$staged" | grep -q 'REFERENCES\.md'; then

@@ -29,7 +29,7 @@ jobs:
       # 脚本只用标准库，无需 pip install
       - name: 语法自检（工具脚本）
         run: python -m compileall -q tools
-      - name: 工具自检（字数口径 / 对账门 / 汇总数字夹具 / 题库索引夹具）
+      - name: 工具自检（字数口径 / 对账门 / 汇总数字夹具 / 题库索引夹具 / 正文↔树）
         run: |
           python tools/lint_book.py --self-test
           python tools/audit_coverage.py --self-test
@@ -38,6 +38,10 @@ jobs:
           python tools/backend_index.py --self-test
           python tools/mobile_index.py --self-test
           python tools/mock_round.py --self-test
+          python tools/index_book.py --self-test
+          python tools/check_runnable.py --self-test
+          python tools/revisit.py --self-test
+          python tools/appendix.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
@@ -60,6 +64,19 @@ jobs:
       # 10.7 没有外部题源：这一关守的是「这一章自己定的口径（时间、评分、失败模式）与正文相等」。
       - name: 模拟面试与复盘（第 10 篇：时间账／追问穿透／评分／失败模式）
         run: python tools/mock_round.py --check
+      # 全书索引是**生成物**：这一关抢「书稿改了而索引没重生」，
+      # 以及「术语表登记了、而书里一次都没用到」的词条。
+      - name: 全书索引（术语 → 章节 / 树与门脚本 → 章节 / 小节目录）
+        run: python tools/index_book.py --check
+      # 通读普查：十段式里「标题固定」的元素实际被写成了几种形状、坑条数怎么分布。
+      # 这一关抢的是「改了某一章的形状而 REVISIT.md 没跟」——形状的取舍由人定，
+      # 但**记录的现状与实际不一致**是不允许的（与 index_book 同一个形状）。
+      - name: 通读普查（体例形状 / 常见坑条数，与 REVISIT.md 逐行比）
+        run: python tools/revisit.py --check
+      # 附录是三张表（六棵树速查 / 门脚本速查 / 总量与复算入口），全是生成物。
+      # 它比 index_book 多守一件事：**新增一支工具或一个入口脚本而附录没重生**。
+      - name: 附录（六棵树速查 / 门脚本速查 / 总量与复算入口）
+        run: python tools/appendix.py --check
 
   runnable:
     name: 可运行树一致性

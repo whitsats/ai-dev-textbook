@@ -60,6 +60,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import audit_coverage as ac          # noqa: E402  规划值与素材口径的唯一实现
 import lint_book as lb               # noqa: E402  字数口径与台账计数的唯一实现
+import style_claims as sc            # noqa: E402  书侧「本工具的夹具条数」的对账
 
 PLAN_MD = "PLAN.md"
 README_MD = "README.md"
@@ -630,7 +631,10 @@ def self_test() -> int:
     case("看板里删掉一整行会报「缺这些篇的行」", any("缺这些篇的行" in x for x in st))
 
     print(f"自检：{ok}/{total} 通过")
-    return 0 if ok == total else 1
+    # 书侧（`STYLE`／`README`）写到的「`totals.py` 的夹具条数」必须等于这个 total——
+    # 本工具的条数**是算出来的**（每一类站点一条），而它曾经在文档里停在 25（实跑 26），
+    # 中间隔着一次加站点：同一个数由两处各说各话。
+    return (0 if ok == total else 1) | sc.report("totals", total)
 
 
 # ----------------------------------------------------------------- 入口

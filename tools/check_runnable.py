@@ -61,6 +61,9 @@ from pathlib import Path
 from typing import Callable
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import style_claims as sc            # noqa: E402 —— 书侧「本工具的夹具条数」的对账
+
 # 两棵树并存：v3 是手写版（第 3 篇），v4 是框架版（第 4 篇）。
 # 这一关从一个作用域变成两个之后，**两边的清单都不能写死**——所以下面每个函数
 # 都把「哪一章的目录、哪一棵树」当参数，默认值仍是 v3（历史调用不受影响）。
@@ -1487,7 +1490,9 @@ def self_test() -> int:
     print(f"  自检 {total - bad}/{total} 通过（块节选 {len(cases)} ＋ 行数格 {len(cell_cases)}"
           f" ＋ 条数格 {len(claim_cases)} ＋ 用例引用 {len(py_cases)} ＋ 输出块 {len(out_cases)}"
           f" ＋ 自检读数 {len(counts)} ＋ 每棵树的清单/标注守与离线入口 {rest} 处）")
-    return 1 if bad else 0
+    # 书侧（`STYLE`）写到的「`check_runnable.py` 的 N 条夹具」必须等于这个 total。
+    # 这 127 条夹具一度**既不在钩子也不在 CI**——一份从不发声的夹具与没写一样。
+    return (1 if bad else 0) | sc.report("check_runnable", total)
 
 
 def main() -> int:
