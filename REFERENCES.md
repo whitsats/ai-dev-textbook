@@ -393,10 +393,11 @@
 | **片长到底该定多少**：小片适合事实型问答、大片适合宽上下文，且不同嵌入模型敏感度不同（5.2 章） | Rethinking Chunk Size For Long-Document Retrieval (2025) | https://arxiv.org/abs/2505.21700 |
 | 高级切法的对照实验（5.2 章，仅作对照） | Comparative Evaluation of Advanced Chunking for RAG (2025) | https://pmc.ncbi.nlm.nih.gov/articles/PMC12649634/ |
 | 框架侧「加载 → 切分 → 嵌入 → 存储」那条链（5.2 章） | LangChain · Knowledge base | https://docs.langchain.com/oss/python/langchain/knowledge-base |
-| 切分器的概念与「按语义层级级联」（5.2 章） | LangChain · Text splitters | https://python.langchain.com/docs/concepts/text_splitters/ |
-| `RecursiveCharacterTextSplitter` 参数与语言感知分隔符（5.2 章） | LangChain · Recursive text splitter | https://python.langchain.com/docs/how_to/recursive_text_splitter/ |
-| 父子片的官方实现（5.2 章） | LangChain · Parent Document Retriever | https://python.langchain.com/docs/how_to/parent_document_retriever/ |
-| 按嵌入相似度找断点的官方实现（5.2 章） | LangChain · Semantic chunker | https://python.langchain.com/docs/how_to/semantic-chunker/ |
+| 切分器的概念与「按语义层级级联」（5.2 章） | LangChain · Text splitters | https://docs.langchain.com/oss/python/integrations/splitters |
+| `RecursiveCharacterTextSplitter` 参数与默认分隔符表（5.2 章） | LangChain · Recursive text splitter | https://docs.langchain.com/oss/python/integrations/splitters/recursive_text_splitter |
+| 语言感知分隔符 `get_separators_for_language`（5.2 章，与上一行同一处引用） | LangChain · Code splitter | https://docs.langchain.com/oss/python/integrations/splitters/code_splitter |
+| 父子片的官方实现（5.2 章；**how-to 页已撤，改引官方源码**） | LangChain · Parent Document Retriever | https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain_classic/retrievers/parent_document_retriever.py |
+| 按嵌入相似度找断点的官方实现（5.2 章；**how-to 页已撤，改引官方源码**） | LangChain · Semantic chunker | https://github.com/langchain-ai/langchain-experimental/blob/main/libs/experimental/langchain_experimental/text_splitter.py |
 | 工程侧对「按标题／元素／token」几种切法的分类（5.2 章） | Unstructured · Chunking | https://docs.unstructured.io/open-source/core-functionality/chunking |
 | `get_text()` 的抽取模式与加密件的 `authenticate`（5.2 章） | PyMuPDF 文档 | https://pymupdf.readthedocs.io/en/latest/ |
 | Word 解析与标题样式（5.2 章） | python-docx 文档 | https://python-docx.readthedocs.io/en/latest/ |
@@ -559,7 +560,7 @@
 | **向量库的四级隔离与它们各自的天花板**：数据组织是 **Database → Collection → Partition/Partition Key** 三层；库级隔离最好而**不活跃的租户白占资源**；集合级两种做法（全租户一集合＋按字段过滤，租户一多就撞性能；一租户一集合，受集合上限）；分区级两种（一租户一分区，受**分区数上限**；partition key，最可扩展**但不支持批量写入**）——8.4.2 那张「同一件事在向量库里的等价物」的出处 | Zilliz · Designing Multi-Tenancy RAG with Milvus | https://zilliz.com/blog/build-multi-tenancy-rag-with-milvus-best-practices-part-one |
 | **429 与 `Retry-After`**：这个状态码的意思是「客户端在给定时间里发了太多请求」；`Retry-After` 用的单位是秒（例子里 `Retry-After: 3600`）；限流可以是**全站**的也可以是**按资源**的，而「通常按 IP，但认证过之后可以按用户或按已授权的应用」——8.4.4 里「超限的三种回答」那张表的出处（RFC 6585 §4） | MDN · 429 Too Many Requests | https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/429 |
 | **限流器与负载卸载是两件事**：限流器按**用户**决策（「如果你能接受用户改变请求节奏，限流器就合适」），负载卸载按**系统整体状态**决策（事故中保住核心请求）；Stripe 生产在跑四种：请求速率限制器（最要紧的那个）、**并发请求限制器**（「同一时刻最多 20 条在进行中」——它管的是 CPU 密集型端点的资源争抢，且「调紧一点、拒得比速率限制器更频繁是完全合理的」）、fleet 预留卸载器（给关键方法留 20%，超过的部分回 503）、worker 利用率卸载器（四级优先级、**来回放量要慢，否则会 flapping**）；另一句要点：**测试模式与生产模式用同一条限流** | Stripe · Scaling your API with rate limiters | https://stripe.com/blog/rate-limiters |
-| **「缺上限」本身就是一类 API 风险**：资源消费不受限被列为 API 风险的第四位，判据是**缺任一条上限即脆弱**——执行超时、可分配内存、文件描述符数、进程数、上传体积、单请求里的操作数（如批处理）、单页返回条数、**第三方服务商的预算上限**；两个场景直接可用：SMS 那条 0.05 美元一次的调用被脚本刷到「几分钟损失几千美元」、GraphQL 批处理**绕过按请求数的限流**（一次 HTTP 请求装 999 个 mutation）——8.4.3 「按请求数是最容易被绕开的一种」那两行的出处 | OWASP · API4:2023 Unrestricted Resource Consumption | https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/ |
+| **「缺上限」本身就是一类 API 风险**：资源消费不受限被列为 API 风险的第四位，判据是**缺任一条上限即脆弱**——执行超时、可分配内存、文件描述符数、进程数、上传体积、单请求里的操作数（如批处理）、单页返回条数、**第三方服务商的预算上限**；两个场景直接可用：SMS 那条 0.05 美元一次的调用被脚本刷到「几分钟损失几千美元」、GraphQL 批处理**绕过按请求数的限流**（一次 HTTP 请求装 999 个 mutation）——8.4.3 「按请求数是最容易被绕开的一种」那两行的出处 | OWASP · API4:2023 Unrestricted Resource Consumption | https://api-security.owasp.org/editions/2023/en/0xa4-unrestricted-resource-consumption/ |
 | **计费侧的三个现成名词**：按用量计费靠**上报用量**（meter events）累计、**额度**（credits）用于预付与促销、以及**用量阈值告警**（「客户超过某个用量线时告警」）——8.4.5 的预扣／额度、8.4.6 的余额线与对账，出处都在这一页的三条入口上 | Stripe · Basic usage-based billing | https://docs.stripe.com/billing/subscriptions/usage-based |
 | 可观测性与告警（8.5 章） | OpenTelemetry 官方文档 | https://opentelemetry.io/docs/ |
 | **SLI 与 SLO 的定义**：SLI 是「对服务行为的度量」，而「**好的 SLI 从用户的视角量你的服务**」；SLO 是把一个或多个 SLI 接上业务价值来沟通可靠性；以及那句判据句——「一个系统可以 100% 可用，而用户点「加入购物车」时那双黑色的鞋没被加进去，那它仍然不可靠」（8.5.1 那张表与「四层叠起来才是『用户没事』」的出处） | OpenTelemetry · Observability primer | https://opentelemetry.io/docs/concepts/observability-primer/ |
