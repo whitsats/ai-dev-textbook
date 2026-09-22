@@ -446,7 +446,7 @@
 | `rglob`／`relative_to`／`suffix` 的语义，以及「发现阶段」的排序与文档名折算（5.8 章） | Python · pathlib | https://docs.python.org/3/library/pathlib.html |
 | 内容戳用的 SHA-256 前 12 位（5.8 章的 `content_stamp` 由它实现，**不是加密用途**） | Python · hashlib | https://docs.python.org/3/library/hashlib.html |
 | **内容寻址**的经典出处：对象名由「内容 ＋ 类型 ＋ 长度」的哈希算，而不是由文件名——5.8 章的「内容哈希即身份」同一条思路 | Git · Git Internals · Git Objects | https://git-scm.com/book/en/v2/Git-Internals-Git-Objects |
-| 按魔数识别文件类型的最小实现规范（5.8 章的 `MAGIC` 表是它的子集：只看开头几个字节）。`magic(5)` 不属于 man-pages 计划，`man7.org` 上没有这一页（实测 404），故登记发行版的官方镜像页 | file(1) · magic(5) | https://manpages.ubuntu.com/manpages/jammy/man5/magic.5.html |
+| 按魔数识别文件类型的最小实现规范（5.8 章的 `MAGIC` 表是它的子集：只看开头几个字节）。`magic(5)` 不属于 man-pages 计划，`man7.org` 上没有这一页（实测 404）；Ubuntu 的镜像页时断时续（实测 503／超时，2026-09-22 在 CI 上又回了一次 503），故登记 Arch 的 man 页（实测 200） | file(1) · magic(5) | https://man.archlinux.org/man/magic.5.en |
 | 官方媒体类型注册表：「类型是注册的、后缀只是建议的」（5.8 章「格式按内容判」的权威表述） | IANA · Media Types | https://www.iana.org/assignments/media-types/media-types.xhtml |
 | Python 标准编码表里 `gb18030` 的位置（5.8 章的 `parse_text` 先试 UTF-8、失败再按它解码） | Python · codecs · Standard Encodings | https://docs.python.org/3/library/codecs.html#standard-encodings |
 | 架构图的官方语法（`flowchart LR` / `flowchart TD`）；**图是文本**，所以能进版本库、能被 diff（5.9 章的两张图据此写成） | Mermaid · Flowchart | https://mermaid.js.org/syntax/flowchart.html |

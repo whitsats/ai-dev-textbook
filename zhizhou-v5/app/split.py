@@ -385,11 +385,23 @@ def parse_image(path: Path) -> Doc:
 
     这一条不做「猜一个结果」的兜底：OCR 读不出来就是读不出来，
     硬拼一个空文档进索引，等于把「这份资料没进来」这件事藏起来。
+
+    「没有引擎」有两种形态，**要归到同一档**，因为对读者来说修法是同一条：
+      · **壳不在**：`import pytesseract` 就失败（本机）；
+      · **壳在、引擎不在**：包装装上了，而系统里没有 `tesseract` 二进制
+        （CI 上正是这一种：requirements 装了它，runner 里没有那个二进制）。
+    第二种只有**真去问引擎一次**才会露出来——`import` 成功不等于引擎在。
+    文案两条完全一致：两边都归 Unsupported，差别只在日志里说得清缺的是什么，
+    而给读者的修法就是「两样都装上」，那就没必要分成两种说法。
     """
     try:
         import pytesseract                  # noqa: PLC0415
         from PIL import Image               # noqa: PLC0415
     except ImportError as exc:
+        raise Unsupported("image", "OCR 引擎不在", "pytesseract ＋ Pillow") from exc
+    try:
+        pytesseract.get_tesseract_version()  # 壳在？再问一句引擎在不在
+    except pytesseract.TesseractNotFoundError as exc:
         raise Unsupported("image", "OCR 引擎不在", "pytesseract ＋ Pillow") from exc
     text = pytesseract.image_to_string(Image.open(path), lang="chi_sim+eng")
     return Doc(doc_id=path.stem, title=path.stem, text=clean_text(text), path=path)

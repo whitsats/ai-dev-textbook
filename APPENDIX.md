@@ -20,9 +20,9 @@
 
 | 篇 | 树 | 章 | `app/` 模块 | 测试模块 | 测试用例 | 依赖 |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
-| 第 3 篇 大模型与Agent原理 | `zhizhou-v3/` | 10 | 21 | 11 | 150 | 6 个：`httpx`、`pydantic`、`tiktoken`、`fastapi`、`uvicorn`、`pytest` |
-| 第 4 篇 AI应用开发框架 | `zhizhou-v4/` | 5 | 13 | 5 | 84 | 4 个：`langchain`、`langchain-openai`、`langgraph`、`pytest` |
-| 第 5 篇 RAG与生产级系统 | `zhizhou-v5/` | 9 | 20 | 12 | 178 | 3 个：`langchain`、`langchain-openai`、`pytest` |
+| 第 3 篇 大模型与Agent原理 | `zhizhou-v3/` | 10 | 21 | 11 | 150 | 8 个：`httpx`、`pydantic`、`sqlalchemy`、`alembic`、`tiktoken`、`fastapi`、`uvicorn`、`pytest` |
+| 第 4 篇 AI应用开发框架 | `zhizhou-v4/` | 5 | 13 | 5 | 84 | 5 个：`langchain`、`langchain-openai`、`langgraph`、`openai`、`pytest` |
+| 第 5 篇 RAG与生产级系统 | `zhizhou-v5/` | 9 | 20 | 12 | 178 | 8 个：`langchain`、`langchain-openai`、`pymupdf`、`pillow`、`python-docx`、`python-pptx`、`pytesseract`、`pytest` |
 | 第 6 篇 模型接入与成本工程 | `zhizhou-v6/` | 4 | 7 | 7 | 87 | 零依赖（标准库：dataclasses、hashlib、json、math、pathlib、random、sys） |
 | 第 7 篇 AI应用工程化 | `zhizhou-v7/` | 5 | 10 | 10 | 185 | 零依赖（标准库：base64、collections、dataclasses、difflib、hashlib、json、math、pathlib、random、re、statistics、sys、typing、unicodedata） |
 | 第 8 篇 交付与产品化 | `zhizhou-v8/` | 5 | 19 | 19 | 343 | 零依赖（标准库：dataclasses、fnmatch、math、pathlib、random、sys） |

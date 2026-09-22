@@ -11,20 +11,31 @@ platform.claude.com 与 code.claude.com，OpenAI 文档迁到 developers.openai.
 LangChain 发布 v1 后旧命名空间被移出主线。人工检查几十个链接既慢又容易漏，
 所以做成可复跑的脚本。
 
-关注五种结果
+关注六种结果
 ------------
   OK      2xx/3xx 正常
   跳转    最终域名与请求域名不同 —— 文档搬家了，正文里的引用要跟着改
-  失效    4xx/5xx —— 服务器明确说“没有”，链接已死，必须替换（会拦提交）
+  失效    4xx —— 服务器明确说“没有”，链接已死，必须替换（会拦提交）
+  暂不可用 5xx —— 服务器说“现在给不了”（重试过），**不是**“没有这个东西”：
+          链接可能好好的，是对方维护／限流／上层代理出错。会打印并提醒
+          人工看一眼，但不拦提交
+  超时    瞬时连接失败（超时 / DNS 抖动 / 连接被重置）—— 重跑一次就好的事，
+          **不当作失效**，也不拦提交，但会打印出来提醒
   超时    瞬时连接失败（超时 / DNS 抖动 / 连接被重置）—— 重跑一次就好的事，
           **不当作失效**，也不拦提交，但会打印出来提醒
   连接异常 非瞬时的连接层失败（如证书校验不通过）—— 必须人工确认：
           可能是站点换了域名，也可能是 TLS 配置本身有问题。同样不拦提交
-  拦截    401/403 —— 站点拒绝脚本访问，人工确认即可（不算失效）
+  拦截    401/403/429 —— 站点拒绝脚本访问（含限流），人工确认即可（不算失效）
 
 为何把「超时」单独列一档：早期实现把 status=0 一律归为「失效」，
 结果是本地网络抖一下就提交不了。报警器一旦会因为无关原因响，就会被绕过——
 所以只让服务器明确声明的死链拦提交。
+
+为何把 5xx 从「失效」里拆出来（2026-09-22 补）：原来写的是「4xx/5xx 都算失效」，
+而 CI 上 `manpages.ubuntu.com` 回了一个 503，于是那一笔提交被拦住——可是 503 恰恰
+在说「我现在给不了」，不是在说「没有这一页」。**这与上面那句追问是同一个形状**：
+把「查不出来」当成「查出来是坏的」，会让报警器在无关原因上响。重试之后仍然 5xx
+的列为「暂不可用」：打印、提醒、人工看一眼，不拦提交。
 
 为何还要把「连接异常」从「超时」里拆出来：`www.starlette.io` 的证书在本机
 校验不通过，早期实现把它报成「超时（网络抖一下，忽略即可）」，于是整整一轮
@@ -34,7 +45,7 @@ LangChain 发布 v1 后旧命名空间被移出主线。人工检查几十个链
 用法
 ----
     python tools/check_refs.py                 # 校验全部链接
-    python tools/check_refs.py --only-broken   # 只打印失效项
+    python tools/check_refs.py --only-broken   # 只打印要处理的（失效 / 暂不可用 / 跳转 / 连接异常）
     python tools/check_refs.py --offline       # 只解析链接清单，不发请求
     python tools/check_refs.py --workers 12 --timeout 12
 """
@@ -47,6 +58,7 @@ import re
 import socket
 import ssl
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -108,17 +120,25 @@ def _attempt(url: str, timeout: float) -> dict:
     return {"url": url, "status": 0, "final": url, "error": "无法连接"}
 
 
+def _retryable(r: dict) -> bool:
+    """值不值得重问一次：**连接层失败（status=0）与 5xx 都值得。**
+
+    连接层失败多为瞬时的（限流、DNS、TLS 握手）；5xx 也是同一类东西——503 常带着
+    `Retry-After`，最常见的成因是对方在维护或对脚本限流，而不是那一页没了。
+    4xx 不重试：服务器已经明确答复，重问一次还是同一句话。
+    """
+    return r["status"] == 0 or r["status"] >= 500
+
+
 def check(url: str, timeout: float, attempts: int = 2) -> dict:
-    """带重试的探测。连接层失败多为瞬时的（限流、DNS、TLS 握手），
-    重试一次能挡掉大部分假报警；服务器返回的 4xx/5xx 不重试（那是明确答复）。"""
+    """带重试的探测（判据见 `_retryable`：连接层失败与 5xx 重试，4xx 不重试）。"""
     result = _attempt(url, timeout)
     for _ in range(attempts - 1):
-        if result["status"] != 0:
+        if not _retryable(result):
             break
-        refreshed = _attempt(url, timeout)
-        if refreshed["status"] != 0:
-            return refreshed
-        result = refreshed
+        if result["status"] >= 500:
+            time.sleep(1.5)          # 对方说「等会儿再来」，那就真的等一下
+        result = _attempt(url, timeout)
     return result
 
 
@@ -143,7 +163,9 @@ def verdict(r: dict) -> str:
         # 但要区分「瞬时」与「必须人工确认」。
         return "超时" if is_transient(r["error"]) else "连接异常"
     if st in (401, 403, 429):
-        return "拦截"      # 反爬，非链接失效
+        return "拦截"      # 反爬／限流，非链接失效
+    if st >= 500:
+        return "暂不可用"  # 服务器说「现在给不了」，**不是**「没有这个东西」
     if st >= 400:
         return "失效"
     a, b = urlparse(r["url"]).netloc, urlparse(r["final"]).netloc
@@ -156,7 +178,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="只解析链接，不发请求")
     ap.add_argument("--only-broken", action="store_true",
-                    help="只打印需要处理的项（失效 / 跳转 / 连接异常）")
+                    help="只打印需要处理的项（失效 / 暂不可用 / 跳转 / 连接异常）")
     ap.add_argument("--timeout", type=float, default=10.0)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--file", default=str(REFS), help="要校验的文件，默认 REFERENCES.md")
@@ -187,7 +209,7 @@ def main() -> int:
     for r in results:
         v = verdict(r)
         counts[v] = counts.get(v, 0) + 1
-        if args.only_broken and v not in ("失效", "跳转", "连接异常"):
+        if args.only_broken and v not in ("失效", "暂不可用", "跳转", "连接异常"):
             continue
         tail = f"  → {r['final']}" if r["final"] != r["url"] else ""
         extra = f"  ({r['error']})" if r["error"] and v != "OK" else ""
@@ -197,9 +219,14 @@ def main() -> int:
     broken = counts.get("失效", 0)
     moved = counts.get("跳转", 0)
     timeouts = counts.get("超时", 0)
+    unavailable = counts.get("暂不可用", 0)
     if broken or moved:
         print(f"\n需要处理：{broken} 个失效、{moved} 个跳转。"
               f"请更新 REFERENCES.md，再同步受影响章节。")
+    if unavailable:
+        print(f"\n提示：{unavailable} 个链接服务器回了 5xx（已重试）——这是「现在给不了」，"
+              f"不是「没有这一页」：对方可能在维护，也可能在对脚本限流。不拦提交，"
+              f"但建议过一会儿再跑一次确认；若几次都是它，就换一个出处。")
     if timeouts:
         print(f"\n提示：{timeouts} 个链接连接超时（已重试），多为本地网络或对方限流——"
               f"不算失效，建议稍后重跑确认。")

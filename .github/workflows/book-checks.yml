@@ -87,19 +87,31 @@ jobs:
         with:
           python-version: "3.12"
       # 这一关要真的 import 得动那份代码，所以得装依赖；仍然不需要任何密钥。
-      # **两棵树都要装**：v3 是手写版（httpx / pydantic / fastapi），
-      # v4 是框架版（langchain / langgraph）。只装一棵的话，另一棵的全部模块
-      # 在 CI 里都会报 ModuleNotFoundError——本机因为全局装过，看不出这个问题。
-      - name: 安装参考实现依赖（两棵树）
+      # **有 requirements.txt 的每一棵树都要装**：v3 是手写版（httpx / pydantic /
+      # fastapi / sqlalchemy），v4 与 v5 是框架版（langchain / langgraph，及 v5 的
+      # 五个解析库），v6–v8 零依赖（没有这份文件）。
+      # 只装前两棵的话，v5 的解析路径在 CI 里会报 ModuleNotFoundError——本机因为
+      # 全局装过，看不出这个问题。**2026-09-22 就是这么发现的：门在本机绿、在 GitHub
+      # 红，红的那一边正好是「照不到的那一边」**（与 STYLE 8.5 里那条同一个形状）。
+      - name: 安装参考实现的依赖（有 requirements.txt 的每一棵树）
         run: |
-          pip install -r zhizhou-v3/requirements.txt
-          pip install -r zhizhou-v4/requirements.txt
-      - name: 正文代码块 ↔ 可运行树 一致性与离线自检（v3 + v4）
+          for req in zhizhou-*/requirements.txt; do
+            echo "── $req"
+            pip install -r "$req"
+          done
+      - name: 正文代码块 ↔ 可运行树 一致性与离线自检（六棵树）
         run: python tools/check_runnable.py
-      - name: 参考实现的测试（pytest，两棵树）
+      # pytest 只跑**自己在 requirements.txt 里声明了它**的那几棵树：v6–v8 是零依赖
+      # 树，它们的测试由上面那条 `check_runnable.py` 用自己的驱动跑（那才是本书的
+      # 验收口径，不需要 pytest）。名单从盘上派生，免得往后加一棵树就漏一棵。
+      - name: 参考实现的测试（pytest，声明了它的那几棵树）
         run: |
-          cd zhizhou-v3 && python -m pytest -q
-          cd ../zhizhou-v4 && python -m pytest -q
+          for req in zhizhou-*/requirements.txt; do
+            grep -q '^pytest' "$req" || continue
+            tree=${req%/requirements.txt}
+            echo "── $tree"
+            (cd "$tree" && python -m pytest -q)
+          done
 
   refs:
     name: 官方文档链接校验

@@ -1,6 +1,11 @@
 # 参考实现的依赖。版本区间按 2026-09 的可用版本写，不锁死小版本。
 httpx>=0.27            # 唯一 HTTP 客户端：模型调用全部经它出海
 pydantic>=2.7          # 提示契约与统一响应外壳
+# 下面两行是 2026-09-22 补的：1.1 与 1.12 的正文写着 `pip install sqlalchemy`，
+# 但它们是**在正文里装的**，一直没进过这份文件——本机全局装过所以看不出来，
+# 而 CI 只读这份文件，于是 `app/core/db.py`、`app/models/agent.py` 全部 import 失败。
+sqlalchemy[asyncio]>=2.0  # 1.12 的 ORM（本机 2.0.50）
+alembic>=1.13          # 1.12 的迁移：migrations/（本机 1.19.1）
 tiktoken>=0.7          # 本地估算器（只用来预警，不用来判定）
 fastapi>=0.110         # 新增端点
 uvicorn>=0.29          # 起服务

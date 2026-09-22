@@ -3,6 +3,11 @@
 
     python scripts/serve_reader.py --offline      # 六组，不需要密钥，进提交门
     python scripts/serve_reader.py --self-test    # 夹具自检（三条坏形态必须都被抓出来）
+    python scripts/serve_reader.py --offline --cpus 16
+                                                  # 同上，但把「读机器」的那一处钉死：
+                                                  # ③ 里的默认线程池上限是 min(32, CPU+4)，
+                                                  # 不注入的话它随机器变（本机 16 核是 20，
+                                                  # 4 核的 CI 就是 8）——那一条读数就不能复算了
 
 六组离线读数是：
 
@@ -52,6 +57,13 @@ from app.stream import (StreamWriter, check, encode, parse, publish,      # noqa
 
 CASES = ROOT / "tests" / "rag" / "eval_cases.jsonl"
 K = 3
+
+#: `--cpus N` 注入的 CPU 数。**只影响一处**：③ 里那个默认线程池上限
+#: （`min(32, CPU+4)`）——它是这本书里少数几个「读数读的是机器」的地方：
+#: 本机 16 核报 20，4 核的 CI runner 报 8，同一份代码、同一份文档，两个数。
+#: 而正文要的是一个能复算的数，所以把机器这个变量挪到命令行上来。
+CPUS: int | None = None
+CPU_FORMULA = "min(32, CPU+4)"
 
 
 def _hr(title: str) -> None:
@@ -243,12 +255,18 @@ def read_concurrency() -> dict:
     # 默认线程池的上限（官方文档给的是 min(32, CPU+4)）
     import concurrent.futures
     import os
-    pool = concurrent.futures.ThreadPoolExecutor()
-    print(f"\n默认线程池上限：min(32, CPU+4) ＝ {min(32, os.cpu_count() + 4)}"
-          f"（本机 CPU {os.cpu_count()}；实测 max_workers ＝ {pool._max_workers}）")
+    if CPUS is None:
+        pool = concurrent.futures.ThreadPoolExecutor()
+        print(f"\n默认线程池上限：{CPU_FORMULA} ＝ {min(32, os.cpu_count() + 4)}"
+              f"（本机 CPU {os.cpu_count()}；实测 max_workers ＝ {pool._max_workers}）")
+        pool.shutdown()
+    else:
+        # 注入的那一支：**不报本机实测**，因为那个数恰好是要消掉的变量。
+        # 公式本身照官方给的那个，把 CPU 换成命令行的值。
+        print(f"\n默认线程池上限：{CPU_FORMULA} ＝ {min(32, CPUS + 4)}"
+              f"（按注入 CPU {CPUS} 算）")
     print("→ 丢进线程不是「无限并发」：**超过这个数的请求会排队**，"
           "而它的失败模式不是报错，是变慢。")
-    pool.shutdown()
     return {"without": without, "with": with_flight,
             "serial_ms": round(t_serial * 1000, 1), "thread_ms": round(t_thread * 1000, 1)}
 
@@ -566,7 +584,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="5.7 在线侧读数")
     ap.add_argument("--offline", action="store_true", help="六组离线读数（进提交门）")
     ap.add_argument("--self-test", action="store_true", help="夹具自检")
+    ap.add_argument("--cpus", type=int, default=None, metavar="N",
+                    help="注入 CPU 数：让 ③ 的默认线程池上限可复算（否则它随机器变）")
     args = ap.parse_args()
+    global CPUS
+    CPUS = args.cpus
     if args.self_test:
         return self_test()
     read_cache()

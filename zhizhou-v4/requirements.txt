@@ -1,12 +1,22 @@
-# 框架版（第 4 篇）的依赖。与 zhizhou-v3/requirements.txt 同一套写法：写区间，不锁死小版本。
+# 框架版（第 4 篇）的依赖。
 #
-# 但**下面这四个是本机实测版本**，第 4 篇正文里的 API 名称与默认值都以它们的实际行为为准：
-#   langchain 1.3.2 ｜ langchain-core 1.4.0 ｜ langchain-openai 1.2.2 ｜ langgraph 1.2.2
+# **这一份锁死版本**，与 zhizhou-v3 的「写区间，不锁死小版本」相反——理由是 2026-09-22
+# CI 上的一个实测：同一份代码，按区间装到 langchain 1.4.2 ／ langchain-openai 1.6.3 ／
+# langgraph 1.2.12 之后，下面两件事同时发生：
+#   · `HumanInTheLoopMiddleware(interrupt_on={"工具": {"when": …}})` 直接 ValueError
+#     （它要求 allowed_decisions 是个非空清单）；
+#   · 本机 1.3.2 上同一份配置**不报错、只是不生效**。
+# 也就是：同一行代码在两个小版本上一个报错、一个沉默。正文里的 API 名称、默认值与
+# 「版本边界上发生了什么」都以下面三行为准；要升级就改这三行，并重跑
+# `python tools/check_runnable.py`（那条按版本分支的用例会自己转到另一支）。
+#
+# 本机实测版本：langchain 1.3.2 ｜ langchain-core 1.4.0 ｜ langchain-openai 1.2.2 ｜ langgraph 1.2.2
 # 框架层不写默认值时，实际生效的是下游 `openai` SDK 的常量（本机 2.36.0：读超时 600 秒、
-# 重试 2 次）——这也是那一节要讲的「有默认值不等于有边界」。
-langchain>=1.3,<2
-langchain-openai>=1.2,<2
-langgraph>=1.2,<2
+# 重试 2 次）——`openai` 一并锁住，否则那条「默认值是哪来的」的读数会随它漂。
+langchain==1.3.2
+langchain-openai==1.2.2
+langgraph==1.2.2
+openai==2.36.0
 
 # 只在跑测试时需要（本书的验收不依赖它：python tools/check_runnable.py 会用同一批测试函数自己驱动）
 pytest>=8.0
