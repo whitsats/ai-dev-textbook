@@ -157,6 +157,9 @@
 ├── APPENDIX.md        ← 读者附录（由脚本生成，勿手改）：六棵树速查、门脚本速查、总量与复算入口
 ├── LEARNING.md        ← 分层学习计划（由脚本生成，勿手改）：四层起点（零基础 / 会写代码 / 有工程经验 / 求职冲刺）各自的章集合、阶段与验收物、假定已具备什么
 ├── CROSSCHECK.md      ← 跨篇结论对账（由脚本生成，勿手改）：已判过的「同一条结论」在各篇里的说法差异——分歧点、各篇口径、建议改法、逐格实跑值
+├── zensical.toml      ← 教材站点的生成器配置（Zensical）：站点名、地址、主题、启用的语法；`docs_dir` 指向构建期拼出来的 `site-src/`
+├── requirements-docs.txt ← 站点构建工具（锌到精确版本，`uvx` 隔离运行；不是本书的运行依赖）
+├── .github/workflows/ ← `book-checks.yml`（正文与链接校验，绕过本机钩子也在 CI 拦）＋ `docs.yml`（推送时重建站点并发布到 Pages）
 ├── raw/               ← 原始资料归档（295MB，未纳入 git，原件未做任何删改）
 │   ├── pdf/           ← 12 个原始 PDF
 │   ├── md/            ← 3 个原始面试题 markdown
@@ -176,6 +179,8 @@
 │   ├── audit_coverage.py       逐章素材覆盖度审计
 │   ├── totals.py               全书汇总数字的单一来源：生成 / 对账 / 夹具
 │   ├── check_refs.py           官方文档链接有效性校验
+│   ├── build_site.py           教材站点（GitHub Pages）的拼装：把正文与根级文档
+│   │                              拼进 site-src/，并把跨目录链接与中文硬换行理顺（只动副本）
 │   ├── lint_book.py            正文一致性校验（体例 / 术语 / 术语日志对账 / 引用 / 链接 / 篇幅 / 重复）
 │   ├── index_book.py           全书索引：由术语表与正文生成 INDEX.md（术语 → 章节、树与脚本、小节目录）
 │   ├── style_claims.py         书侧数字的对账：STYLE/README 里那句「某工具 N 条夹具」必须等于实跑
@@ -265,9 +270,19 @@ python tools/totals.py --sites             # 站点清单与匹配数：看检�
 python tools/totals.py --self-test         # 夹具：每类站点改一格必须红，且 --sync 能修回
 
 # 3. 校验官方文档链接
-python tools/check_refs.py                 # 校验全部（并发 HEAD，报告失效与跳转）
+python tools/check_refs.py                 # 校验全部（并发 HEAD，报告失效与跳转；加 --cache 后重复跑只需几秒）
 python tools/check_refs.py --only-broken   # 只看失效与跳转
 python tools/check_refs.py --offline       # 只解析链接清单，不发请求
+# 提交门跑的就是下面这一条：只探相对 HEAD 新增的链接，带缓存与 45 秒硬预算
+python tools/check_refs.py --changed-only --cache --max-seconds 45
+python tools/check_refs.py --self-test     # 夹具（diff 取链接 / 缓存 TTL / 预算 / 判定极性）
+
+# 3b. 教材站点（GitHub Pages）：推送时 CI 自动构建并发布到
+#     https://whitsats.github.io/ai-dev-textbook/ ；本地想先看一眼就跑前两条
+python tools/build_site.py --self-test     # 夹具（链接改写 / 章序 / 去硬换行不接错）
+python tools/build_site.py                 # 拼装出 site-src/
+uvx --with-requirements requirements-docs.txt zensical serve   # 本地预览（默认 8000）
+uvx --with-requirements requirements-docs.txt zensical build --strict --clean
 
 # 4. 校验正文一致性（每章写完必跑，零错误才算定稿）
 python tools/lint_book.py                  # 校验全部章节（含 GLOSSARY 术语日志逐章对账）
@@ -345,8 +360,9 @@ python tools/install_hooks.py --uninstall  # 卸载
 | 篇幅口径 | 有效字数 = 汉字 + 15 × 有效代码行（**围栏行不计入**） | 「代码密集」被误判成偷工减料，或反过来放宽容差遮盖真问题 |
 | 口径自检 | `tools/lint_book.py --self-test` | 算法静默退化：曾把围栏行也算作内容，全书虚增 20,130 字而输出看着正常 |
 | 门槛自检 | `tools/audit_coverage.py --self-test` | 对账靠「解析文档里的句子」，句式一变就落空成摆设；夹具从**当前真实文档**派生错误，书在长也不用改 |
-| 强制流程 | `.githooks/pre-commit`（git 钩子） | 漏跑校验就提交不了 |
-| 最后一道门 | `.github/workflows/book-checks.yml` | 绕过钩子也会在 CI 被拦住 |
+| 教材站点 | `.github/workflows/docs.yml`（＋ `tools/build_site.py`） | 推送时拼装并以 `--strict` 构建：**死链就是构建失败**。站点是正文的产物，仓库里只存一份正文（拼装只改副本） |
+| 强制流程 | `.githooks/pre-commit`（git 钩子） | 漏跑校验就提交不了。本地那一档必须**跑得完**：跑不完的门会被 `SKIP_BOOK_CHECKS=1` 连坐绕过，而那跳的是整条链（见 [`STYLE.md`](STYLE.md) 8.5「跑不完」那一条） |
+| 最后一道门 | `.github/workflows/book-checks.yml` | 绕过钩子也会在 CI 被拦住；链接的**全量**扫描与每周一次的定时也只在这里跑 |
 
 每章走五步闭环（规范见 [`STYLE.md`](STYLE.md) 第八节）：
 
@@ -358,8 +374,11 @@ python tools/install_hooks.py --uninstall  # 卸载
 → 跑 lint 到零错误 → 一章一提交
 ```
 
-紧急情况可绕过本机钩子（`SKIP_BOOK_CHECKS=1 git commit ...` 或 `--no-verify`），
-但 CI 会用同一套脚本再跑一遍——**绕过只是推迟，不是豁免**。
+绕过分两档，两档都会打印自己跳了什么：网络不通时用 `SKIP_BOOK_LINKS=1`（只跳
+「联网探测新增链接」那一档，其余各档照跑）；镜像／紧急情况才用
+`SKIP_BOOK_CHECKS=1`（跳全部，**须在 PR 里说明原因**）或 `--no-verify`。
+但 CI 会用同一套脚本再跑一遍，而且链接那一侧在 CI 上是**全量**（含每周一次的定时）
+——**绕过只是推迟，不是豁免**。
 
 依赖：`pdftotext`（poppler）、Python 3.10+。
 

@@ -1,0 +1,22 @@
+# 教材站点（GitHub Pages）的构建工具。
+#
+# 这不是本书的运行依赖 —— 只读书稿、跑 zhizhou-v3…v8 六棵树的人都不需要它。
+# zensical 是个 CLI 工具，所以用 uvx 隔离运行，不往本机装包、也不碰任何 venv：
+#
+#   python tools/build_site.py                                    # 先拼装（见该脚本）
+#   uvx --with-requirements requirements-docs.txt zensical serve   # 本地预览
+#   uvx --with-requirements requirements-docs.txt zensical build --strict --clean
+#
+# CI 用同样两条命令并部署到 GitHub Pages，见 .github/workflows/docs.yml。
+#
+# 本机提示：这台机器的全局 uv 配置（%APPDATA%/uv/uv.toml）把默认索引指到了
+# 清华镜像，而 zensical 从那里拉会 403（它不在那个镜像里）。本地跑时临时换回官方索引：
+#
+#   UV_DEFAULT_INDEX=https://pypi.org/simple uvx --with-requirements requirements-docs.txt zensical serve
+#
+# CI 不受影响（runner 上没有这份配置）。没有动全局配置，也没往本机装任何包。
+#
+# 锁到精确版本，不跟着小版本走：它还是 0.0.x，任何一个小版本都可能有破坏性改动
+# （课程站那份依赖文件里有同一条约定与一次实测）。升级时先本地跑一次
+# `zensical build --strict`，看页数与死链报告有没有变化。
+zensical==0.0.64

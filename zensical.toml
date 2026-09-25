@@ -1,0 +1,74 @@
+# 教材站点（GitHub Pages）
+#
+# 生成器用 Zensical —— Material for MkDocs 的官方继任者（同一团队 squidfunk）。
+# 与 whitsats/langgraph-agent-course 用同一套，理由也一样：mkdocs-material 已定于
+# 2026-11-05 EOL（9.7.0 是最后一版），底层 MkDocs 1.x 自 2024-08 起无人维护，
+# 且 MkDocs 2.0 明确没有迁移路径。
+#
+# ⚠️ 动手前必须先跑拼装脚本——`docs_dir` 指向 site-src/，那是构建期拼出来的目录，
+#    不是仓库里的源文件（仓库里只有一份正文，见 tools/build_site.py 顶部注释）：
+#
+#      python tools/build_site.py                                    # 生成 site-src/
+#      uvx --with-requirements requirements-docs.txt zensical serve   # 本地预览
+#      uvx --with-requirements requirements-docs.txt zensical build --strict --clean
+#
+# ⚠️ docs_dir 不能写成点开头的目录（如 .site-src）：Zensical 会跳过隐藏目录，
+#    结果构建「成功」、产出 0 页、而且一句警告都不报。课程站上实测踩过，别改回去。
+#
+# **这里故意没有 `nav`**：导航由目录结构自动生成，标题取各页的 H1。
+# 手写 83 行 nav 就是第二份会漂的清单——新增一章忘了改 nav，那一章在站上直接消失，
+# 而构建照样绿（与 INDEX.md / 附录 / 台账那几处是同一个坑）。章序由文件名保证：
+# tools/build_site.py 把次版本号补零（1.2 → 1.02），否则 1.10 会排到 1.2 前面。
+[project]
+site_name = "AI 应用开发就业实战：从语法地基到 Offer"
+site_description = "面向在校生与转行求职者的 AI 应用开发教材：10 篇 69 章，从 Python / FastAPI 地基到 RAG 与生产级工程，落到简历与面试"
+site_url = "https://whitsats.github.io/ai-dev-textbook/"
+repo_url = "https://github.com/whitsats/ai-dev-textbook"
+repo_name = "whitsats/ai-dev-textbook"
+docs_dir = "site-src"
+site_dir = "site-out"
+
+[project.theme]
+# classic = 保留 Material for MkDocs 的外观（Zensical 自带的主题变体）
+variant = "classic"
+language = "zh"
+features = [
+    "navigation.tracking",
+    "navigation.top",
+    "navigation.footer",
+    "content.code.copy",
+    "content.tooltips",
+    "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "indigo"
+toggle.icon = "lucide/sun"
+toggle.name = "切到深色"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "indigo"
+toggle.icon = "lucide/moon"
+toggle.name = "切到浅色"
+
+# 正文里实际用到的语法：表格 4398 行、围栏 1314 块、引用块 811 行、脚注 13 处。
+# **没有** admonition（`!!!` 0 处）与 tabbed（`===` 那 106 行全在代码围栏里，是 shell
+# 记录而不是语法），所以这两条不装——装了反而会把 `=== wt-export 连接状态 ===` 这种
+# 代码行当成分页签语法。数学扩展同理：正文里的 `$` 是 shell 变量与价格，不是公式。
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.highlight = {}
+pymdownx.inlinehilite = {}
+pymdownx.superfences = {}
+pymdownx.tasklist.custom_checkbox = true

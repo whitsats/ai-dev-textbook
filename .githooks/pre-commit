@@ -7,14 +7,23 @@
 #        而这类引用不产生任何数字，前三关一个都不会响。）
 #
 # 规则：
-#   0. 先跑**十三个工具**的自检夹具（--self-test），工具坏了就没必要往下走。
+#   0. 先跑**十五个工具**的自检夹具（--self-test），工具坏了就没必要往下走。
 #      （其中一个是 `check_runnable.py`：它有 127 条夹具，而以前**没有任何一道门跑它**——
 #       夹具写了却不跑，与没写一样。）
 #   1. 每次都跑 tools/lint_book.py（纯本地、秒级）。
-#   2. 默认只离线解析链接清单；只有 REFERENCES.md 被改动时才联网全量校验
-#      （避免每次提交都发几十个网络请求）。
-#   3. 镜像/紧急情况可临时跳过：SKIP_BOOK_CHECKS=1 git commit ...
-#      但 CI 仍会跑同样检查（见 .github/workflows/book-checks.yml）。
+#   2. 链接这一档按**成本**分两层，不按「改没改那张单子」分：离线解析清单每次都跑
+#      （有界）；联网只探**这次新增的链接**，且带结果缓存与硬预算。全量 485 条交给
+#      CI 的 refs job 与它的 schedule —— 链接按自己的节奏腐坏，不按你改没改
+#      REFERENCES.md 的节奏。
+#      （教训：原来「改了 REFERENCES.md 就全量联网」，那一档实测要几分钟到几十分钟，
+#       超过任何一次命令的时限；而 SKIP_BOOK_CHECKS=1 跳的是**整条链**，于是「省一次
+#       联网」要拿十四个夹具与四道对账来换。**跑不完的报警器与会乱响的报警器一样
+#       会被绕过，而且它绕过的是整条链。**）
+#   3. 绕过分两档，都会打印自己跳了什么：
+#        SKIP_BOOK_LINKS=1  —— 只跳「联网探测新增链接」那一档（网络不通时用）；
+#        SKIP_BOOK_CHECKS=1 —— 跳全部（镜像 / 紧急情况）。
+#      两档都只是推迟：CI 仍会跑同样检查，且链接那一侧是**全量**跑
+#      （见 .github/workflows/book-checks.yml）。
 #
 # 安装：python tools/install_hooks.py
 
@@ -47,7 +56,7 @@ fi
 #   · lint_book.py 的 code_lines_of 曾把围栏行也算作内容（671 个围栏虚增 20,130 字）；
 #   · audit_coverage.py 的对账靠「解析文档里的句子」，句式一变就落空成摆设。
 # 两者都有夹具，而夹具不跑就等于没有，所以放在第一步。
-echo "[pre-commit] 1/5 工具自检（字数口径 / 对账门 / 汇总数字）..."
+echo "[pre-commit] 1/5 工具自检（字数口径 / 对账门 / 汇总数字 / 链接这一档 / 站点拼装）..."
 # 第 1 关跑**每一支**夹具，第 4 那些关跑对账。附录生成器也在这一关：它的夹具里
 # 有一条专门盯「少扫一段会变成一句错话」（阶段切分漏行 → 把 `check_refs.py` 写到 4f/5）。
 if ! "$PY" tools/lint_book.py --self-test; then
@@ -113,6 +122,21 @@ fi
 if ! "$PY" tools/learning_path.py --self-test >/dev/null; then
     echo "" >&2
     echo "[pre-commit] ✖ 分层学习计划的夹具不过，提交被拦下：先修 tools/learning_path.py。" >&2
+    exit 1
+fi
+# 链接这一档也有夹具了：它最容易坏的地方不是网络，是 diff 取正则一旦配错，
+# 新增链接会数成 0 条而输出写着「无事可做」——**扫描退化成空与一切正常长得一样**。
+if ! "$PY" tools/check_refs.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 链接这一档的夹具不过，提交被拦下：先修 tools/check_refs.py。" >&2
+    exit 1
+fi
+# 站点拼装：夹具守的是「站上会静默地少东西」那三种方式（链接指向站里没有的页 /
+# 章序被排序排错 / 把代码表格当散文接回去）。**真的拼装不在钩子里**（它要写
+# site-src/，而站点在 CI 按 --strict 构建）；这里只跑夹具，保持本地这一档有界。
+if ! "$PY" tools/build_site.py --self-test >/dev/null; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 站点拼装的夹具不过，提交被拦下：先修 tools/build_site.py。" >&2
     exit 1
 fi
 
@@ -251,23 +275,38 @@ if ! "$PY" tools/crosscheck.py --check; then
     exit 1
 fi
 
-# 下面两关跟 REFERENCES.md 有关，所以它们才需要「暂存区里有没有它」这个判断。
+# 5/5 链接这一档：本地**永远有界**。
+#   ① 离线解析清单——0.15 秒，无论改了什么每次都跑（它守「清单还解析得出来」）；
+#   ② 联网探测——只探**这次新增的链接**（通常 1–5 条，几秒），带一周的缓存与
+#      45 秒硬预算；预算用尽的记「未查」，**不拦提交**（没轮到的既不算通过、
+#      也不算失效）。
+# 全量 485 条的联网扫描不在这里——它在 CI。这是刻意的：全量那一趟没有上界，
+# 而提交门必须有上界，否则它就会被 SKIP_BOOK_CHECKS=1 连坐绕过。
+echo "[pre-commit] 5/5 链接清单自检（离线、有界、每次提交都跑）..."
+if ! "$PY" tools/check_refs.py --offline >/dev/null; then
+    echo "[pre-commit] ✖ 链接清单解析失败，提交被拦下。" >&2
+    exit 1
+fi
+
+# 下面这一档跟 REFERENCES.md 有关，所以它才需要「暂存区里有没有它」这个判断。
 # **4g／4h／4i 不属于这里**：它们与临时改动什么无关，必须每次都跑。
 # （4g／4h 曾被写在这个 `if` 里面——于是只有改动 REFERENCES.md 的那几笔提交会跑通读普查，
-#  其余提交里那一关从来不跑，而输出里一个字都不会少：又一例「没跑与跑过长得一样」。）
+#  其余提交里那一关从来不跑，而输出里一个字都不会少：又一例「没跑与跑过长得一样」。
+#  5/5 的离线那一半同理：它现在写在 `if` 外面，每次提交都跑。）
 staged=$(git diff --cached --name-only)
 
 if printf '%s\n' "$staged" | grep -q 'REFERENCES\.md'; then
-    echo "[pre-commit] 5/5 REFERENCES.md 有改动 → 联网校验全部链接 ..."
-    if ! "$PY" tools/check_refs.py --only-broken; then
-        echo "[pre-commit] ✖ 存在失效链接，提交被拦下：先修 REFERENCES.md，再同步受影响章节。" >&2
-        exit 1
-    fi
-else
-        echo "[pre-commit] 5/5 链接清单自检（离线）..."
-    if ! "$PY" tools/check_refs.py --offline >/dev/null; then
-        echo "[pre-commit] ✖ 链接清单解析失败，提交被拦下。" >&2
-        exit 1
+    if [ "${SKIP_BOOK_LINKS:-0}" = "1" ]; then
+        echo "[pre-commit] 5b/5 ⚠️  SKIP_BOOK_LINKS=1：只跳过了「联网探测新增链接」这一档（其余各档照跑；"
+        echo "                    CI 仍会全量校验 485 条链接）。网络不通时用它，别用 SKIP_BOOK_CHECKS=1。"
+    else
+        echo "[pre-commit] 5b/5 REFERENCES.md 有改动 → 只联网探测这次新增的链接（预算 45 秒、带缓存）..."
+        if ! "$PY" tools/check_refs.py --changed-only --cache --timeout 8 --max-seconds 45; then
+            echo "" >&2
+            echo "[pre-commit] ✖ 新增的链接里有失效的（服务器明确回了 4xx），提交被拦下：" >&2
+            echo "            修法：改 REFERENCES.md 里那一条，再同步受影响章节。" >&2
+            exit 1
+        fi
     fi
 fi
 

@@ -5,6 +5,14 @@ name: 教材校验
 #
 # 说明：链接校验需要访问外网。它把「失效」视为失败（退出码 1），
 # 把「跳转」只作为提示打印（文档换域名时应更新 REFERENCES.md）。
+#
+# **全量链接扫描待在这里，而且多加了一条按时间的 schedule**（见下）：
+# 本机那一档只探「这次 diff 新增的链接」（几秒、有预算），因为它必须跑得完——
+# 跑不完的门会被 SKIP_BOOK_CHECKS=1 连坐绕过，而那跳的是整条链。
+# 链接腐坏按时间发生，不按「有人改了 REFERENCES.md」发生；把全量挂在改动上，
+# 会同时得到「越少动出处越晚发现死链」与「一动出处就被罚几分钟」。
+# 所以全量在这里：① 每次 push / PR；② 每周一次（下面那个 cron）——
+# 后者是唯一能抓到「没人动过出处、而链接已经死了」的那一趟。
 
 on:
   push:
@@ -16,10 +24,15 @@ on:
       - ".github/workflows/book-checks.yml"
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"   # 每周一 03:17 UTC：链接的腐坏与提交无关，得按时间问一遍
 
 jobs:
+  # 定时那一趟（schedule）**只跑链接**：链接的腐坏与提交无关，是唯一一件
+  # 「没人动过任何文件也该问一遍」的事；其余几关都由改动触发，定时跑只是白烧时间。
   lint:
     name: 正文一致性校验
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +57,8 @@ jobs:
           python tools/appendix.py --self-test
           python tools/crosscheck.py --self-test
           python tools/learning_path.py --self-test
+          python tools/check_refs.py --self-test
+          python tools/build_site.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
       - name: 文档数字对账（PLAN / COVERAGE vs 实测）
@@ -92,6 +107,7 @@ jobs:
 
   runnable:
     name: 可运行树一致性
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -133,11 +149,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: 校验 REFERENCES.md 中的链接
+      # 这里是**全量**那一趟（485 条）：没有时限，所以能这么跑。
+      # 本机钩子跑不了它——那一档得在几十秒内有结果，否则就会被绕过。
+      # 不开 `--cache`：CI 是干净检出，没有缓存可采信，也不该把缓存带进判定。
+      - name: 校验 REFERENCES.md 中的链接（全量）
         run: python tools/check_refs.py --only-broken
 
   hooks:
     name: 钩子安装脚本自检
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -68,7 +68,10 @@ def install() -> int:
         pass
     show_status()
     print("\n以后每次 git commit 都会先跑 tools/lint_book.py，有错误直接拦下。")
-    print("紧急绕过：SKIP_BOOK_CHECKS=1 git commit ...（CI 仍会检查）")
+    # 绕过分两档：窄的那一档只跳「联网探测新增链接」，网络不通时用它——
+    # 若只有核选项，人就会为了省一次联网把本地所有的门一起关掉（见 STYLE 8.5）。
+    print("网络不通：SKIP_BOOK_LINKS=1 git commit ...（只跳联网探测那一档，其余各档照跑）")
+    print("镜像/紧急：SKIP_BOOK_CHECKS=1 git commit ...（跳全部；CI 仍会检查，且链接是全量）")
     return 0
 
 

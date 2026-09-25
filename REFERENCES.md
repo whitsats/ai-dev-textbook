@@ -680,7 +680,14 @@ python tools/check_refs.py --only-broken
 
 # 离线：只解析出链接清单，不发请求
 python tools/check_refs.py --offline
+
+# 只探相对 HEAD 新增的链接（提交门跑这一条：几秒、带缓存与硬预算）
+python tools/check_refs.py --changed-only --cache --max-seconds 45
 ```
+
+分工：**本地只查新增的**（提交门必须在几十秒内出结果，否则它会被绕过），
+**全量 485 条按时间在 CI 跑**（每次 push/PR，以及每周一次的定时）——链接腐坏按时间
+发生，不按有没有人改动本文件发生。
 
 链接大面积失效（或报告域名跳转）时，先更新本文件，再据此修订受影响章节——
 本文件是全书技术准确性的**单一事实来源**。

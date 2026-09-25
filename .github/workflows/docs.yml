@@ -1,0 +1,84 @@
+name: docs
+
+# 推送到 main 时重建教材站点，部署到 GitHub Pages
+# （地址见 zensical.toml 的 site_url：https://whitsats.github.io/ai-dev-textbook/）。
+#
+# Pages 站点已开（2026-09-26，`build_type: workflow`，即 Source = GitHub Actions），
+# 所以 `deploy-pages` 有地方可发。这一项在**仓库自己的** Settings → Pages 里
+# （github.com/<owner>/<repo>/settings/pages，只有管理员看得见）——**不在账号设置里**，
+# 别去个人 Settings 找。命令行开法（换仓库或重建仓库时照抄）：
+#     gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow
+# 课程站（whitsats/langgraph-agent-course）当时是手点开的，等价。
+#
+# 只碰**会进站点**的东西才触发 —— 改六棵可运行树（zhizhou-*/）、素材（sources/）、
+# 或提交门的脚本，都不该重发站点。漏列一条的后果是「推上去了而线上还是旧的」，
+# 且没有任何报错，所以下面这份清单是照着 tools/build_site.py 的计划抄的。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "book/**"
+      - "README.md"
+      - "GLOSSARY.md"
+      - "LEARNING.md"
+      - "INDEX.md"
+      - "REFERENCES.md"
+      - "STYLE.md"
+      - "LEDGER.md"
+      - "PLAN.md"
+      - "PROJECT.md"
+      - "COVERAGE.md"
+      - "GAPS.md"
+      - "APPENDIX.md"
+      - "REVISIT.md"
+      - "CROSSCHECK.md"
+      - "zensical.toml"
+      - "requirements-docs.txt"
+      - "tools/build_site.py"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+# 权限按 job 最小化：build 只读仓库，deploy 才需要 Pages 的写权限与 id-token
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/configure-pages@v6
+      - uses: actions/checkout@v7
+      # 先单独跑一次拼装：它是纯标准库脚本，坏了要在这里就红，而不是等 zensical
+      # 报一句看不懂的错（最典型的是「0 页」——docs_dir 没了或变成隐藏目录）。
+      # 自检夹具也在这里跑：夹具写了不跑，与没写一样（见 STYLE 8.5）。
+      - name: 拼装站点源文件（含自检夹具）
+        run: |
+          python3 tools/build_site.py --self-test
+          python3 tools/build_site.py
+      # ⚠️ 这里是精确版本，不是 @v10 —— astral-sh/setup-uv 不发布浮动的主版本标签，
+      # 写成 @v10 会直接报「unable to find version v10」。课程站上实测踩过。
+      - name: 安装 uv（为了拿到 uvx）
+        uses: astral-sh/setup-uv@v10.2.0
+      # zensical 装在 uvx 的隔离环境里，不往 runner 上装一堆无关的包。
+      # --strict：把警告（失效链接、指到站里没有的页）当成错误。
+      - name: 构建站点
+        run: uvx --with-requirements requirements-docs.txt zensical build --strict --clean
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site-out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

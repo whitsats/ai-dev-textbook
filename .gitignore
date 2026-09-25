@@ -30,3 +30,8 @@ dist/
 *.pdf
 *.epub
 !raw/**
+
+# 教材站点（GitHub Pages）的拼装与构建产物：
+# 仓库里只存一份正文，站点是它的产物（见 tools/build_site.py 顶部注释）。
+site-src/
+site-out/
