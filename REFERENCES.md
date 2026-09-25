@@ -430,6 +430,8 @@
 | 托管重排 API 的产品视角（接口与计费口径）（5.4 章） | Cohere · Rerank | https://docs.cohere.com/docs/rerank-overview |
 | HyDE：先编一段假设答案再检索（5.4 章，**本章未实现**） | Gao 等 · Precise Zero-Shot Dense Retrieval without Relevance Labels (2022) | https://arxiv.org/abs/2212.10496 |
 | 「密集／稀疏／混合三条路各有赢面」的评测依据（5.4 章，仅作口径对照） | BEIR 论文 | https://arxiv.org/abs/2104.08663 |
+| 5.4.9 最后一条手法的官方实现与文档：实体—关系抽取后双路融合（5.4 章，**本章未实现**，只列出处） | Microsoft · GraphRAG | https://github.com/microsoft/graphrag |
+| **为什么图适合全局性问题**：全局性问题（「这批数据在讲什么」）才是图的地盘，而 who／what／when／where 这类局部问题向量路更好；也是「不做先验摘要」那条路的出处（5.4 章、10.3 章；访问日期 2026-09-25） | Microsoft Research · LazyGraphRAG | https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost/ |
 | **引用可以是一等能力**：模型输出带结构化出处、可被下游核验（5.5 章） | Anthropic · Citations | https://platform.claude.com/docs/en/build-with-claude/citations |
 | 框架侧的 CRAG 参考实现：评估—分档—三支动作（含「网络搜索」那一支）（5.5 章） | LangGraph · Corrective RAG 教程 | https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_crag/ |
 | 框架内置的中心化判分器接口（把「评估器」做成可替换的一层）（5.5 章，仅作契约对照） | LangChain · Retrieval 里的 document graders | https://docs.langchain.com/oss/python/langchain/retrieval |

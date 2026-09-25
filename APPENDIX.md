@@ -151,7 +151,7 @@
 | 量 | 值 | 怎么复算 |
 | --- | --- | --- |
 | 正文篇章 | 69 / 69 章（10 篇） | `python tools/totals.py --check`（那一行印的就是这个比值） |
-| 正文有效字 | 852,584 | `python tools/totals.py --check`（同一行，`852,584 字`） |
+| 正文有效字 | 853,135 | `python tools/totals.py --check`（同一行，`853,135 字`） |
 | 可运行树 | 6 棵、1,027 条用例（v3 150 ／ v4 84 ／ v5 178 ／ v6 87 ／ v7 185 ／ v8 343） | `python tools/check_runnable.py` |
 | 术语词条 | 365 条 | `python tools/index_book.py --check` |
 | 练习 | 301 条（基础 113／进阶 105／挑战 83） | `python tools/appendix.py --check`（本附录自己算的，口径见 `STYLE`） |
