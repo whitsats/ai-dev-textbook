@@ -113,6 +113,7 @@
 | `bank_index.py` | 第 10 篇的交付物：**把题库收敛成一份可核对的考点索引。** | `--bank`／`--offline`／`--counts`／`--check`／`--self-test` | 1/5；4b/5 |
 | `check_refs.py` | 校验 REFERENCES.md 中的官方文档链接是否仍然有效。 | `--offline`／`--only-broken`／`--timeout`／`--workers`／`--file` | 5/5 |
 | `check_runnable.py` | 可运行树的一致性门（`zhizhou-v3/` 手写版与 `zhizhou-v4/` 框架版）。 | `--self-test` | 1/5；4/5 |
+| `crosscheck.py` | 跨篇结论对账（crosscheck.py） | `--sync`／`--check`／`--show`／`--self-test` | 1/5；4j/5 |
 | `extract_sources.py` | 把 raw/ 中的原始资料转换为 sources/ 下的纯文本素材库。 | `--report` | 素材：`--report` 把 `raw/` 转成 `sources/`，与书稿无关 |
 | `index_book.py` | 全书索引（index_book.py） | `--sync`／`--check`／`--self-test` | 1/5；4f/5 |
 | `install_hooks.py` | 安装提交前校验钩子（install_hooks.py） | `--uninstall`／`--status`／`--self-test` | 装机：`python tools/install_hooks.py` 装一次提交钩子 |
@@ -140,6 +141,7 @@
 | 4g/5 | 通读普查（体例形状 / 常见坑条数，与 REVISIT.md 逐行比） |
 | 4h/5 | 附录（六棵树速查 / 门脚本速查 / 总量与复算入口） |
 | 4i/5 | 分层学习计划（四层起点 / 前置闭合 / 并集 ＝ 全书） |
+| 4j/5 | 跨篇结论对账（出处 / 计数 / 普查计数，与 CROSSCHECK.md 逐行比） |
 | 5/5 | REFERENCES.md 有改动 → 联网校验全部链接／链接清单自检（离线） |
 
 ## 附录 C　全书的总量，与它们的复算入口
@@ -155,4 +157,4 @@
 | 练习 | 301 条（基础 113／进阶 105／挑战 83） | `python tools/appendix.py --check`（本附录自己算的，口径见 `STYLE`） |
 | 常见坑 | 968 条（其中 2 章用表格） | 同上 |
 | 素材站点 | 20 类、100 处 | `python tools/totals.py --check`（同一行） |
-| 门脚本 | 16 支（其中 13 支跑在提交门里；另 1 支是零入口的库） | `python tools/appendix.py --check`（附录 B 就是那份表） |
+| 门脚本 | 17 支（其中 14 支跑在提交门里；另 1 支是零入口的库） | `python tools/appendix.py --check`（附录 B 就是那份表） |

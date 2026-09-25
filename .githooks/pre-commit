@@ -7,7 +7,7 @@
 #        而这类引用不产生任何数字，前三关一个都不会响。）
 #
 # 规则：
-#   0. 先跑**十二个工具**的自检夹具（--self-test），工具坏了就没必要往下走。
+#   0. 先跑**十三个工具**的自检夹具（--self-test），工具坏了就没必要往下走。
 #      （其中一个是 `check_runnable.py`：它有 127 条夹具，而以前**没有任何一道门跑它**——
 #       夹具写了却不跑，与没写一样。）
 #   1. 每次都跑 tools/lint_book.py（纯本地、秒级）。
@@ -103,6 +103,11 @@ fi
 if ! "$PY" tools/appendix.py --self-test >/dev/null; then
     echo "" >&2
     echo "[pre-commit] ✖ 附录生成器的夹具不过，提交被拦下：先修 tools/appendix.py。" >&2
+    exit 1
+fi
+if ! "$PY" tools/crosscheck.py --self-test >/dev/null; then
+    echo "[pre-commit] ✖ tools/crosscheck.py --self-test 未通过：" >&2
+    "$PY" tools/crosscheck.py --self-test >&2
     exit 1
 fi
 if ! "$PY" tools/learning_path.py --self-test >/dev/null; then
@@ -229,6 +234,20 @@ if ! "$PY" tools/learning_path.py --check; then
     echo "[pre-commit] ✖ 学习计划与盘上不一致（或四层漏了章、前置没闭合），提交被拦下。" >&2
     echo "            修法：python tools/learning_path.py --check 看是哪一条，" >&2
     echo "            再改 tools/learning_path.py 里的四层定义（改完 --sync 重生成）。" >&2
+    exit 1
+fi
+
+# 跨篇结论对账（`CROSSCHECK.md`）：**分歧不是失败，清单里的谎才是失败**。
+# 这一关与前面几关的差别写清：本书确实还有两条结论在几篇里说法不一，它们被记下来、
+# 打印出来，但**不拦提交**——真拦的话绿灯要等到有人重写完十章措辞，
+# 而报警器一旦会因为「还没修完」而响，就会被绕过。拦提交的是清单自身的三种错：
+# 那一处已不在正文里、正文改了清单没跟、判定与实跑反了（两个方向都红）。
+echo "[pre-commit] 4j/5 跨篇结论对账（出处 / 计数 / 普查计数，与 CROSSCHECK.md 逐行比）..."
+if ! "$PY" tools/crosscheck.py --check; then
+    echo "" >&2
+    echo "[pre-commit] ✖ 跨篇结论清单自身有问题（过期 / 与正文不符 / 判定与实跑反了），提交被拦下。" >&2
+    echo "            修法：python tools/crosscheck.py --show <条目> 看逐格读数；" >&2
+    echo "            改完 tools/crosscheck.py 的登记表后 `--sync` 重生成 CROSSCHECK.md。" >&2
     exit 1
 fi
 

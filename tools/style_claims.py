@@ -47,7 +47,7 @@ _CLAIM = re.compile(r"([\d,]+)[\s*_]{0,4}条夹具")
 #: 已接线的工具：它们在自检末尾调 `report()`（名单跟作实跑值一起变）。
 #: 文档里引用了「N 条夹具」而名字不在这里的工具，由 `unwired_tools()` 报出来。
 WIRED: tuple[str, ...] = ("lint_book", "index_book", "totals", "check_runnable", "appendix",
-                         "learning_path")
+                         "learning_path", "crosscheck")
 
 
 def clauses(line: str) -> list[str]:

@@ -42,6 +42,7 @@ jobs:
           python tools/check_runnable.py --self-test
           python tools/revisit.py --self-test
           python tools/appendix.py --self-test
+          python tools/crosscheck.py --self-test
           python tools/learning_path.py --self-test
       - name: 校验正文（体例 / 术语 / 术语日志对账 / 引用 / 篇幅 / 重复）
         run: python tools/lint_book.py
@@ -83,6 +84,11 @@ jobs:
       # 那就是把读者扔在半路，而四张表各自看着都是完整的（与 index_book 同一个形状）。
       - name: 分层学习计划（四层起点 / 前置闭合 / 并集 ＝ 全书）
         run: python tools/learning_path.py --check
+      # 跨篇结论对账：已判过的「同一条结论」逐格去盘上复算。
+      # **分歧不拦提交**（本书确实还有两条结论在几篇里说法不一），
+      # 拦的是清单自身的三种错：那一处已不在正文里、正文改了清单没跟、判定与实跑反了。
+      - name: 跨篇结论对账（出处 / 计数 / 普查计数，与 CROSSCHECK.md 逐行比）
+        run: python tools/crosscheck.py --check
 
   runnable:
     name: 可运行树一致性
