@@ -6160,6 +6160,8 @@ Harness 三章合计 **1.28 > 1.0**；顺着这个警告倒推，才发现 **2.1
 
 ### 2026-09-26 教材站点上线：这本书也能看页面了（与课程站同一套做法）
 
+**补一笔：站点自带离线全文搜索，中文可用，零代码变更（同日实测）**。起因是想「给站点加搜索」，逐层验下来发现它**已经在了**：页眉「查找」按钮（Ctrl+K）、`search.json` 索引（**2,258 条，小节级**，5.7MB）、搜索 worker，三样都随默认构建产出。两个差点误判的点记下来：① 搜索弹层渲染在 **Shadow DOM** 里，`querySelector` 全是假阴性，判「有没有」必须看渲染结果或截图；② 分词语言**不在页面 `__config` 里**，而在 `search.json` 自己的 `config.lang`（值 `["zh"]`，随 `theme.language` 写入）——只查页面 config 会得出「中文分词没开」的错结论。实测（浏览器真跑）：搜「幂等」**86 条**、首条正中 1.8.6「方法、幂等性与 REST 设计」；搜「提示注入」**112 条**、首条正中 2.1 同名小节，均带高亮摘录。边界：窄屏（<60em）按钮藏进抽屉菜单，是响应式不是缺失；索引体积 5.7MB 是全书 85 万字的代价，按需再优化。官方口径（zensical.org/docs/setup/search/）：搜索默认开启、纯客户端离线、语言取自 `theme.language`、MkDocs 的 `lang` 插件项不支持——所以**不要**往 `zensical.toml` 加 `[project.plugins.search] lang`，0.0.60+ 会报 unknown option。
+
 **要做的事**：把 69 章书稿像 `whitsats/langgraph-agent-course` 那样发成页面，地址 `https://whitsats.github.io/ai-dev-textbook/`。先看课程站是怎么发的：`.github/workflows/docs.yml` → （`build_site.py` 拼装 → `uvx … zensical build --strict --clean`）→ `upload-pages-artifact` → `deploy-pages`。**没有 gh-pages 分支、产物不进仓库**，所以这边也只能重建，不能拷现成的东西。
 
 **新增**：`zensical.toml`、`requirements-docs.txt`、`tools/build_site.py`（18 条夹具）、`.github/workflows/docs.yml`；`.gitignore` 收 `site-src/` 与 `site-out/`；钩子 1/5 与 CI 各跑一次拼装夹具（它们守的不是「页好不好看」，是**站上会静默地少东西**那三种方式）。

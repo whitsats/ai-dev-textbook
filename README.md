@@ -279,6 +279,9 @@ python tools/check_refs.py --self-test     # 夹具（diff 取链接 / 缓存 TT
 
 # 3b. 教材站点（GitHub Pages）：推送时 CI 自动构建并发布到
 #     https://whitsats.github.io/ai-dev-textbook/ ；本地想先看一眼就跑前两条
+#     站上自带离线全文搜索（页眉「查找」或 Ctrl+K，零依赖不联网）：中文可用——
+#     分词语言随 theme.language=zh 一起写进 search.json 的 config，由浏览器
+#     Intl.Segmenter 分词；窄屏（<60em）按钮藏进抽屉菜单，是响应式不是缺失
 python tools/build_site.py --self-test     # 夹具（链接改写 / 章序 / 去硬换行不接错）
 python tools/build_site.py                 # 拼装出 site-src/
 uvx --with-requirements requirements-docs.txt zensical serve   # 本地预览（默认 8000）
